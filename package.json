@@ -1,0 +1,29 @@
+{
+  "name": "synq",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "dotenv -e .env.local turbo dev",
+    "dev:web": "dotenv -e .env.local -- turbo run dev --filter=web...",
+    "dev:landing": "dotenv -e .env.local -- turbo run dev --filter=landing...",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clean": "turbo clean",
+    "generate-types": "turbo generate-types"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^8.0.0",
+    "prettier": "^3.2.5",
+    "turbo": "^2.3.3"
+  },
+  "engines": {
+    "node": ">=18",
+    "yarn": ">=1.22.19"
+  },
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {}
+}
