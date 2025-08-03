@@ -1,0 +1,51 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "globalEnv": [
+    "NODE_ENV",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "RESEND_API_KEY"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "generate-types": {
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "@synq/ui:dev": {
+      "persistent": true
+    },
+    "web:dev": {
+      "dependsOn": ["@synq/ui:dev"],
+      "persistent": true
+    },
+    "clean": {
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "node_modules/**",
+        "dist/**",
+        ".turbo/**"
+      ]
+    },
+    "deploy": {
+      "dependsOn": ["clean", "^build"]
+    }
+  }
+}
