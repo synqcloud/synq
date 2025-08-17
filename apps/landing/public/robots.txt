@@ -5,7 +5,7 @@ Disallow: /private/
 Disallow: /admin/
 
 # Host
-Host: https://trysynq.com
+Host: https://www.trysynq.com
 
 # Sitemaps
-Sitemap: https://trysynq.com/sitemap.xml
+Sitemap: https://www.trysynq.com/sitemap.xml

@@ -12,12 +12,12 @@ export const metadata: Metadata = {
     "Inventory management software built specifically for trading card game sellers. Track inventory, manage transactions, and grow your TCG business. Built by sellers, for sellers.",
   keywords:
     "TCG inventory management, trading card game software, card shop inventory, local game store software, TCG seller tools, card inventory tracking, game store management, open source inventory software",
-  metadataBase: new URL("https://trysynq.com"),
+  metadataBase: new URL("https://www.trysynq.com"),
   openGraph: {
     title: "Synq - Inventory Software Built for Card Shops and Sellers",
     description:
       "Inventory management software built specifically for trading card game sellers. Track inventory, manage transactions, and grow your TCG business. Built by sellers, for sellers.",
-    url: "https://trysynq.com",
+    url: "https://www.trysynq.com",
     type: "website",
     siteName: "Synq",
     images: [
@@ -47,11 +47,8 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "your-google-verification-code",
-  },
   alternates: {
-    canonical: "https://trysynq.com",
+    canonical: "https://www.trysynq.com",
   },
 };
 
@@ -64,6 +61,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <SchemaMarkup />
+        <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
       </head>
       <body className={`${inter.className} bg-background text-foreground`}>
         <LandingProviders>{children}</LandingProviders>

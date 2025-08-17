@@ -4,12 +4,17 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Allow API routes, root route, and static assets
+  // Allow API routes, root route, static assets, sitemaps, robots.txt, and important pages
   if (
     pathname.startsWith("/api") ||
     pathname === "/" ||
     pathname.includes(".") ||
-    pathname.startsWith("/_next")
+    pathname.startsWith("/_next") ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/sitemap-0.xml" ||
+    pathname === "/robots.txt" ||
+    pathname === "/terms" ||
+    pathname === "/privacy"
   ) {
     return NextResponse.next();
   }
