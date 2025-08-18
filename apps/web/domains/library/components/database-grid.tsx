@@ -1,16 +1,21 @@
+// Components
 import { DatabaseCard } from "./database-card";
-import { Database } from "../data/synq-databases";
+
+// Services
+import { LibraryItemsWithStatus } from "@synq/supabase/services";
 
 interface DatabaseGridProps {
-  databases: Database[];
-  onInstall: (databaseName: string) => void;
-  onConfigure?: (databaseName: string) => void;
+  databases: LibraryItemsWithStatus[];
+  onInstall: (databaseId: string) => void;
+  onRemove: (databaseId: string) => void;
+  isLoading: boolean
 }
 
 export function DatabaseGrid({
   databases,
   onInstall,
-  onConfigure,
+  onRemove,
+  isLoading
 }: DatabaseGridProps) {
   return (
     <div className="space-y-12 p-6">
@@ -20,7 +25,8 @@ export function DatabaseGrid({
             key={database.id}
             database={database}
             onInstall={onInstall}
-            onConfigure={onConfigure}
+            onRemove={onRemove}
+            isLoading= {isLoading}
           />
         ))}
       </div>

@@ -13,7 +13,6 @@ interface RemoveDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isRemoving: boolean;
-  databaseName: string | null;
   removeData: boolean;
   onRemoveDataChange: (removeData: boolean) => void;
   onRemove: () => void;
@@ -23,7 +22,6 @@ export function RemoveDialog({
   open,
   onOpenChange,
   isRemoving,
-  databaseName,
   removeData,
   onRemoveDataChange,
   onRemove,
@@ -33,7 +31,7 @@ export function RemoveDialog({
       <DialogContent className="sm:max-w-md border border-border bg-card shadow-sm rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-light tracking-tight text-foreground">
-            Remove {databaseName}
+            Remove Library
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-6 py-6">
@@ -42,7 +40,7 @@ export function RemoveDialog({
               <Spinner size="lg" variant="destructive" className="h-8 w-8" />
               <div className="text-center space-y-2">
                 <p className="text-sm font-light text-foreground">
-                  Removing {databaseName}...
+                  Removing...
                 </p>
                 <p className="text-xs text-muted-foreground">
                   This may take a few moments
@@ -74,8 +72,7 @@ export function RemoveDialog({
                         Remove all data
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Delete all transactions and stock data for{" "}
-                        {databaseName}
+                        Delete all transactions and stock data for this library.
                       </div>
                     </div>
                   </Label>
@@ -97,7 +94,7 @@ export function RemoveDialog({
                         Keep all data
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Preserve your transactions and stock data
+                        Preserve your transactions and stock data.
                       </div>
                     </div>
                   </Label>
@@ -117,7 +114,7 @@ export function RemoveDialog({
                   variant="destructive"
                   className="flex-1"
                 >
-                  Remove Database
+                  Remove Library
                 </Button>
               </div>
             </>

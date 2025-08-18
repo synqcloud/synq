@@ -1,168 +1,82 @@
 "use client";
-// CORE
-import { useState, useEffect } from "react";
+
 // COMPONENTS
-import {
-  DatabaseGrid,
-  InstallDialog,
-  RemoveDialog,
-  ImportableGroupsDialog,
-} from "@/domains/library/components";
+import { toast } from "sonner";
+import { DatabaseGrid } from "@/domains/library/components";
 
 // DATA
-import { mockData } from "@/domains/library/data/synq-databases";
-import { getImportableGroups } from "@/domains/library/data/importable-groups";
-import { toast } from "sonner";
+import { LibraryItemsWithStatus, LibraryService } from "@synq/supabase/services";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function LibraryPage() {
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [showInstallDialog, setShowInstallDialog] = useState(false);
-  const [installingDatabase, setInstallingDatabase] = useState<string | null>(
-    null,
-  );
-  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
-  const [removingDatabase, setRemovingDatabase] = useState<string | null>(null);
-  const [removeData, setRemoveData] = useState(false);
-  const [showImportableGroupsDialog, setShowImportableGroupsDialog] =
-    useState(false);
-  const [selectedDatabase, setSelectedDatabase] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    document.title = "Library";
-  }, []);
+  // Fetch library items
+  const { data: libraryItems = [], isLoading } = useQuery({
+    queryKey: ["libraryItems"],
+    queryFn: async () => LibraryService.getLibraryItems("client"),
+  });
 
-  const handleInstall = async (databaseName: string) => {
-    const database = mockData.find((db) => db.name === databaseName);
+  // Install mutation
+  const installMutation = useMutation({
+    mutationFn: (databaseId: string) => LibraryService.installLibraryToUser("client", databaseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraryItems"] });
+    },
+  });
 
-    if (database?.status === "active") {
-      // Show remove confirmation dialog
-      setRemovingDatabase(databaseName);
-      setShowRemoveDialog(true);
-      return;
+  // Remove mutation
+  const removeMutation = useMutation({
+    mutationFn: (databaseId: string) => LibraryService.removeLibraryToUser("client", databaseId, false),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraryItems"] });
+    },
+  });
+
+  // Handlers
+  const handleInstall = async (databaseId: string) => {
+
+    try {
+      await installMutation.mutateAsync(databaseId);
+      toast.success("Installed successfully!", {
+        description: "The Library is now available on your inventory.",
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.error("Installation failed", {
+        description: String(error),
+        duration: 3000,
+      });
     }
-
-    // Check if this database has importable groups
-    const importableGroups = getImportableGroups(databaseName);
-    const hasImportableGroups = importableGroups.length > 0;
-
-    if (hasImportableGroups) {
-      // Show importable groups dialog
-      setSelectedDatabase(databaseName);
-      setShowImportableGroupsDialog(true);
-      return;
-    }
-
-    // Fall back to direct installation
-    setInstallingDatabase(databaseName);
-    setShowInstallDialog(true);
-    setIsInstalling(true);
-
-    // Simulate installation process
-    setTimeout(() => {
-      setIsInstalling(false);
-      setShowInstallDialog(false);
-      setInstallingDatabase(null);
-      // Here you would typically update the database status
-    }, 3000);
   };
 
-  const handleConfigure = async (databaseName: string) => {
-    // Check if this database has importable groups
-    const importableGroups = getImportableGroups(databaseName);
-    const hasImportableGroups = importableGroups.length > 0;
+  const handleRemove = async (databaseId: string) => {
 
-    if (hasImportableGroups) {
-      // Show importable groups dialog for configuration
-      setSelectedDatabase(databaseName);
-      setShowImportableGroupsDialog(true);
-      return;
+    try {
+      await removeMutation.mutateAsync(databaseId);
+      toast.success("Successfully Removed!", {
+        description: "The Library is not anymore on your inventory.",
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.error("Something went wrong :/", {
+        description: String(error),
+        duration: 3000,
+      });
     }
-
-    // For databases without importable groups, show a simple configuration dialog
-    toast.info("Configuration", {
-      description: `Configure ${databaseName} settings`,
-      duration: 3000,
-    });
-  };
-
-  const handleImportableGroupsInstall = async (
-    databaseName: string,
-    groupId?: string,
-  ) => {
-    setShowImportableGroupsDialog(false);
-    setSelectedDatabase(null);
-
-    setInstallingDatabase(databaseName);
-    setShowInstallDialog(true);
-    setIsInstalling(true);
-
-    // Simulate installation process
-    setTimeout(() => {
-      setIsInstalling(false);
-      setShowInstallDialog(false);
-      setInstallingDatabase(null);
-      // Here you would typically update the database status and handle group-specific installation
-    }, 3000);
-  };
-
-  const handleRemove = async () => {
-    setIsInstalling(true);
-
-    // Simulate removal process
-    setTimeout(() => {
-      setIsInstalling(false);
-      setShowRemoveDialog(false);
-      setRemovingDatabase(null);
-      setRemoveData(false);
-      // Here you would typically update the database status and handle data removal
-    }, 2000);
   };
 
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6">
-          <DatabaseGrid
-            databases={mockData}
-            onInstall={handleInstall}
-            onConfigure={handleConfigure}
-          />
-        </div>
+        <DatabaseGrid
+          databases={libraryItems as LibraryItemsWithStatus[]}
+          onInstall={handleInstall}
+          onRemove={handleRemove}
+          isLoading={isLoading}
+        />
       </div>
-
-      {/* Dialogs */}
-      <InstallDialog
-        open={showInstallDialog}
-        onOpenChange={setShowInstallDialog}
-        databaseName={installingDatabase}
-        isInstalling={isInstalling}
-      />
-
-      <RemoveDialog
-        open={showRemoveDialog}
-        onOpenChange={setShowRemoveDialog}
-        databaseName={removingDatabase}
-        isRemoving={isInstalling}
-        removeData={removeData}
-        onRemoveDataChange={setRemoveData}
-        onRemove={handleRemove}
-      />
-
-      <ImportableGroupsDialog
-        open={showImportableGroupsDialog}
-        onOpenChange={setShowImportableGroupsDialog}
-        databaseName={selectedDatabase || ""}
-        onInstall={handleImportableGroupsInstall}
-        installedGroups={
-          mockData.find((db) => db.name === selectedDatabase)
-            ?.installedGroups || []
-        }
-        isConfigureMode={
-          mockData.find((db) => db.name === selectedDatabase)?.status ===
-          "active"
-        }
-      />
     </div>
   );
 }
