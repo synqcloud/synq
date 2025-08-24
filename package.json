@@ -4,8 +4,8 @@
   "scripts": {
     "build": "turbo build",
     "dev": "dotenv -e .env.local turbo dev",
-    "dev:web": "dotenv -e .env.local -- turbo run dev --filter=web...",
-    "dev:landing": "dotenv -e .env.local -- turbo run dev --filter=landing...",
+    "dev:app": "dotenv -e .env.local -- turbo run dev --filter=synq-app...",
+    "dev:landing": "dotenv -e .env.local -- turbo run dev --filter=synq-landing...",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "clean": "turbo clean",

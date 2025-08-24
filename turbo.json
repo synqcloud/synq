@@ -31,7 +31,7 @@
     "@synq/ui:dev": {
       "persistent": true
     },
-    "web:dev": {
+    "app:dev": {
       "dependsOn": ["@synq/ui:dev"],
       "persistent": true
     },

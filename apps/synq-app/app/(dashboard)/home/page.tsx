@@ -12,19 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@synq/ui/component";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { motion, HTMLMotionProps, MotionProps } from "framer-motion";
-import { Stack, HStack, VStack } from "@synq/ui/component";
+import { VStack } from "@synq/ui/component";
 
 // Make a custom type that correctly extends HTMLMotionProps
 type MotionDivProps = HTMLMotionProps<"div"> &
@@ -327,38 +317,6 @@ const stockAlertData = [
     recommendedOrder: 0,
     lastRestock: "2024-01-25",
     category: "Yu-Gi-Oh",
-  },
-];
-
-// Inventory issues data
-const inventoryIssuesData = [
-  {
-    issue: "Slow Moving Inventory",
-    value: 45000,
-    skuCount: 850,
-    impact: "High",
-    category: "Supplies & Board Games",
-  },
-  {
-    issue: "Low Margin Products",
-    value: 28000,
-    skuCount: 1200,
-    impact: "Medium",
-    category: "Supplies",
-  },
-  {
-    issue: "Overstocked Items",
-    value: 32000,
-    skuCount: 450,
-    impact: "Medium",
-    category: "Accessories",
-  },
-  {
-    issue: "Expired Products",
-    value: 8000,
-    skuCount: 120,
-    impact: "High",
-    category: "TCG Products",
   },
 ];
 
@@ -692,13 +650,7 @@ export default function HomePage() {
                         {stockAlertData.slice(0, 6).map((item, index) => (
                           <div
                             key={index}
-                            className={`flex items-center justify-between p-3 border-b border-border hover:bg-accent/50 transition-colors last:border-b-0 ${
-                              item.status === "critical"
-                                ? "bg-red-50/20"
-                                : item.status === "warning"
-                                  ? "bg-yellow-50/20"
-                                  : ""
-                            }`}
+                            className={`flex items-center justify-between p-3 border-b border-border hover:bg-accent/50 transition-colors last:border-b-0`}
                           >
                             <div className="flex-1 min-w-0">
                               <div className="font-medium text-foreground text-xs font-light tracking-[-0.01em] truncate">
