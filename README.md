@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="./apps/web/public/brand/synq-icon.png" alt="Synq Logo" width="50" height="50"  />
+  <img src="./apps/synq-app/public/brand/synq-icon.png" alt="Synq Logo" width="50" height="50"  />
   <p>Inventory management for card game stores.</p>
 </div>
 <br />
 
-  <img src="./apps/landing/public/brand/synq-eyecatcher-dark.png" alt="Synq Dashboard" width="100%" height="100%"  />
+  <img src="./apps/synq-landing/public/brand/synq-eyecatcher-dark.png" alt="Synq Dashboard" width="100%" height="100%"  />
 
 ## About
 
@@ -53,8 +53,9 @@ Synq is open source. You can self-host the platform on your own servers, giving 
 ```
 synq-collectibles/
 ├── apps/                    # Applications
-│   ├── web/                 # Next.js web application (dashboard)
-│   └── landing/             # Next.js landing page
+│   ├── synq-app/                 # Next.js web application (dashboard)
+│   └── synq-landing/             # Next.js landing page
+│   └── synq-desktop/             # Next.js desktop application
 ├── packages/                # Shared packages
 │   ├── ui/                  # Shared UI components
 │   ├── supabase/            # Supabase client and services
@@ -126,6 +127,7 @@ synq-collectibles/
 The applications will be available at:
 
 - Web Application (Dashboard): http://localhost:3000
+- Desktop Application: http://localhost:8585
 - Landing Page: http://localhost:3001
 - Supabase Dashboard: http://localhost:54323
 - Auth Emails: http://localhost:54324
@@ -133,7 +135,8 @@ The applications will be available at:
 ### Development Scripts
 Run from root:
 - `yarn dev` - Start development server with Turbopack
-- `yarn dev:web` - Start the web platform development server with Turbopack
+- `yarn dev:app` - Start the web platform development server with Turbopack
+- `yarn dev:desktop` - Start the desktop application development server with Turbopack
 - `yarn dev:landing` - Start the landing page development server with Turbopack
 - `yarn build` - Build the application
 - `yarn lint` - Run ESLint

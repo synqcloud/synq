@@ -159,6 +159,65 @@ export type Database = {
           },
         ]
       }
+      user_card_stock: {
+        Row: {
+          cogs: number | null
+          condition: string
+          core_card_id: string
+          created_at: string | null
+          estimated_value: number | null
+          grading: string | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          notes: string | null
+          quantity: number
+          sku: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cogs?: number | null
+          condition?: string
+          core_card_id: string
+          created_at?: string | null
+          estimated_value?: number | null
+          grading?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          notes?: string | null
+          quantity?: number
+          sku?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cogs?: number | null
+          condition?: string
+          core_card_id?: string
+          created_at?: string | null
+          estimated_value?: number | null
+          grading?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          notes?: string | null
+          quantity?: number
+          sku?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_card_stock_core_card_id_fkey"
+            columns: ["core_card_id"]
+            isOneToOne: false
+            referencedRelation: "core_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_library_access: {
         Row: {
           core_library_id: string

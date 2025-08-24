@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SynqProviders, Theme } from "./providers";
+import { SynqProviders } from "./providers";
 import { Toaster } from "@synq/ui/component";
 import { cookies } from "next/headers";
 
@@ -19,7 +19,9 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <SynqProviders initialTheme={theme as Theme}>{children}</SynqProviders>
+        <SynqProviders initialTheme={theme as "light" | "dark" | "system"}>
+          {children}
+        </SynqProviders>
         <Toaster />
       </body>
     </html>

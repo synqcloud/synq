@@ -1,1 +1,1 @@
-## Web
+## Synq web application

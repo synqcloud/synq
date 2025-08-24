@@ -71,6 +71,22 @@ CREATE TABLE IF NOT EXISTS public.user_library_access (
     UNIQUE(user_id, core_library_id)
 );
 
+
+-- =============================================
+-- Core Library Materialized View
+-- =============================================
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS public.materialized_core_library (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    core_library_id UUID NOT NULL REFERENCES public.core_libraries(id) ON DELETE CASCADE,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    UNIQUE(user_id, core_library_id)
+);
+
 -- =============================================
 -- Indexes for Performance
 -- =============================================

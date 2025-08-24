@@ -12,7 +12,7 @@ export function createClient() {
       },
       global: {
         headers: {
-          "X-Client-Info": "synq-web",
+          "X-Client-Info": "synq-app",
         },
       },
       // Add timeout settings for better connection handling

@@ -1,9 +1,10 @@
 "use client";
 
+// Core
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 
-// UI Components
+// Components
 import {
   Button,
   Dialog,
@@ -46,6 +47,9 @@ import {
   X,
 } from "lucide-react";
 
+// Services
+import { PublicCard } from "@synq/supabase/services";
+
 // Mock data types
 interface MockStock {
   id: string;
@@ -68,12 +72,16 @@ interface MockItem {
 }
 
 interface ItemEditPageProps {
-  item: MockItem;
-  collectionId: string;
-  subCollections: Array<{ id: string; name: string }>;
-  isImportedCollection: boolean;
-  collectionRarities: Array<{ name: string; color: string }>;
+  item: PublicCard;
 }
+
+const collectionRarities = [
+  { name: "common", color: "#E5E7EB" },
+  { name: "uncommon", color: "#A7F3D0" },
+  { name: "rare", color: "#FCD34D" },
+  { name: "mythic", color: "#F472B6" },
+  { name: "special", color: "#8B5CF6" },
+];
 
 // Mock market data for demonstration
 const mockMarketData = {
@@ -91,17 +99,7 @@ const mockMarketData = {
   },
 };
 
-function ItemEditPage({
-  item,
-  subCollections = [],
-  collectionRarities = [
-    { name: "common", color: "#E5E7EB" },
-    { name: "uncommon", color: "#A7F3D0" },
-    { name: "rare", color: "#FCD34D" },
-    { name: "mythic", color: "#F472B6" },
-    { name: "special", color: "#8B5CF6" },
-  ],
-}: ItemEditPageProps) {
+function ItemEditPage({ item }: ItemEditPageProps) {
   const [showAddStockDialog, setShowAddStockDialog] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
 
@@ -135,26 +133,20 @@ function ItemEditPage({
     ],
   };
 
-  // Mock subcollections if not provided
-  const mockSubCollections =
-    subCollections.length > 0
-      ? subCollections
-      : [
-          { id: "mock-collection-1", name: "Pokemon TCG" },
-          { id: "mock-collection-2", name: "Magic: The Gathering" },
-        ];
-
   // Calculate inventory summary
   const inventorySummary = useMemo(() => {
-    const stock = mockItem.stock || [];
-    const totalQuantity = stock.reduce((sum, s) => sum + (s.quantity || 0), 0);
+    const stock = item.user_card_stock || [];
+    const totalQuantity = stock.reduce(
+      (sum: any, s: any) => sum + (s.quantity || 0),
+      0,
+    );
     const totalCogs = stock.reduce(
-      (sum, s) => sum + (s.cogs || 0) * (s.quantity || 0),
+      (sum: any, s: any) => sum + (s.cogs || 0) * (s.quantity || 0),
       0,
     );
     // For now, use cogs as estimated value since we don't have that field yet
     const totalValue = stock.reduce(
-      (sum, s) => sum + (s.cogs || 0) * (s.quantity || 0),
+      (sum: any, s: any) => sum + (s.cogs || 0) * (s.quantity || 0),
       0,
     );
     const margin =
@@ -169,14 +161,14 @@ function ItemEditPage({
         stock.length > 0
           ? new Date(
               Math.max(
-                ...stock.map((s) =>
+                ...stock.map((s: any) =>
                   new Date(s.created_at || new Date()).getTime(),
                 ),
               ),
             ).toLocaleDateString()
           : "Never",
     };
-  }, [mockItem.stock]);
+  }, [item.user_card_stock]);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -196,34 +188,34 @@ function ItemEditPage({
             <div className="flex items-center gap-4">
               <div>
                 <h1 className="text-2xl font-light tracking-[-0.01em] text-foreground">
-                  {mockItem.name}
+                  {item.name}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge
                     variant="outline"
                     className="text-xs font-light tracking-[-0.01em]"
                   >
-                    {mockSubCollections.find(
-                      (sub) => sub.id === mockItem.collection_id,
-                    )?.name || "Collection"}
+                    {/* {mockSubCollections.find(
+                      (sub) => sub.id === mockItem.collection_id
+                    )?.name || "Collection"} */}
+                    collection name placeholder
                   </Badge>
                   <Badge
                     variant="outline"
                     className="text-xs font-light tracking-[-0.01em]"
                     style={{
                       backgroundColor:
-                        collectionRarities.find(
-                          (r) => r.name === mockItem.rarity,
-                        )?.color + "20",
+                        collectionRarities.find((r) => r.name === item.rarity)
+                          ?.color + "20",
                       borderColor: collectionRarities.find(
-                        (r) => r.name === mockItem.rarity,
+                        (r) => r.name === item.rarity,
                       )?.color,
                       color: collectionRarities.find(
-                        (r) => r.name === mockItem.rarity,
+                        (r) => r.name === item.rarity,
                       )?.color,
                     }}
                   >
-                    {mockItem.rarity || "Unknown"}
+                    {item.rarity || "Unknown"}
                   </Badge>
                   <Badge
                     variant="outline"
@@ -236,14 +228,14 @@ function ItemEditPage({
             </div>
 
             {/* Card Image Thumbnail */}
-            {mockItem.image_url && (
+            {item.image_url && (
               <div
                 className="relative w-20 h-28 rounded-lg overflow-hidden border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
                 onClick={() => setShowImageModal(true)}
               >
                 <Image
-                  src={mockItem.image_url}
-                  alt={mockItem.name}
+                  src={item.image_url}
+                  alt={item.name}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-200"
                 />
@@ -338,6 +330,7 @@ function ItemEditPage({
               </h2>
               <Button
                 onClick={() => setShowAddStockDialog(true)}
+                variant="outline"
                 className="text-xs font-light tracking-[-0.01em]"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -363,9 +356,6 @@ function ItemEditPage({
                         Cost
                       </TableHead>
                       <TableHead className="text-xs font-light tracking-[-0.01em]">
-                        Value
-                      </TableHead>
-                      <TableHead className="text-xs font-light tracking-[-0.01em]">
                         SKU
                       </TableHead>
                       <TableHead className="text-xs font-light tracking-[-0.01em]">
@@ -380,7 +370,7 @@ function ItemEditPage({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(mockItem.stock || []).map((stock) => (
+                    {(item.user_card_stock || []).map((stock: any) => (
                       <TableRow key={stock.id}>
                         <TableCell className="text-sm font-light tracking-[-0.01em]">
                           {stock.condition || "Unknown"}
@@ -395,13 +385,13 @@ function ItemEditPage({
                           {stock.cogs ? formatCurrency(stock.cogs) : "-"}
                         </TableCell>
                         <TableCell className="text-sm font-light tracking-[-0.01em]">
-                          {stock.cogs ? formatCurrency(stock.cogs) : "-"}
+                          {stock.sku || "-"}
                         </TableCell>
                         <TableCell className="text-sm font-light tracking-[-0.01em]">
-                          {stock.certification_id || "-"}
+                          {stock.location || "-"}
                         </TableCell>
                         <TableCell className="text-sm font-light tracking-[-0.01em]">
-                          {stock.note || "-"}
+                          {stock.notes || "-"}
                         </TableCell>
                         <TableCell className="text-sm font-light tracking-[-0.01em]">
                           {stock.created_at
@@ -458,7 +448,7 @@ function ItemEditPage({
                         </TableCell>
                       </TableRow>
                     ))}
-                    {(mockItem.stock || []).length === 0 && (
+                    {(item.user_card_stock || []).length === 0 && (
                       <TableRow>
                         <TableCell
                           colSpan={9}
@@ -633,8 +623,8 @@ function ItemEditPage({
               </div>
               <div className="relative w-full h-[600px]">
                 <Image
-                  src={mockItem.image_url}
-                  alt={mockItem.name}
+                  src={item.image_url}
+                  alt={item.name}
                   fill
                   className="object-contain"
                   priority
@@ -642,16 +632,17 @@ function ItemEditPage({
               </div>
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
                 <h3 className="text-white text-lg font-light tracking-[-0.01em] mb-2">
-                  {mockItem.name}
+                  {item.name}
                 </h3>
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="secondary"
                     className="text-xs font-light tracking-[-0.01em]"
                   >
-                    {mockSubCollections.find(
-                      (sub) => sub.id === mockItem.collection_id,
-                    )?.name || "Collection"}
+                    {/* {mockSubCollections.find(
+                      (sub) => sub.id === mockItem.collection_id
+                    )?.name || "Collection"} */}{" "}
+                    Collection name placeholder
                   </Badge>
                   <Badge
                     variant="secondary"

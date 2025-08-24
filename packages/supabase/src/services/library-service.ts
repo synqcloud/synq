@@ -13,7 +13,7 @@ export class LibraryService extends ServiceBase {
    * @returns An api response object with a sucess indicator
    */
   static async getLibraryItems(
-    context: "server" | "client" = "server"
+    context: "server" | "client" = "server",
   ): Promise<any[]> {
     const userId = await this.getCurrentUserId(context);
 
@@ -33,7 +33,7 @@ export class LibraryService extends ServiceBase {
             user_library_access!left (
               core_library_id
             )
-            `
+            `,
           )
           .eq("user_library_access.user_id", userId)
           .order("name");
@@ -46,13 +46,13 @@ export class LibraryService extends ServiceBase {
         service: "LibraryService",
         method: "getLibraryItems",
         userId: userId || undefined,
-      }
+      },
     );
   }
 
   static async installLibraryToUser(
     context: "server" | "client" = "client",
-    coreLibraryId: string
+    coreLibraryId: string,
   ): Promise<boolean> {
     const userId = await this.getCurrentUserId(context);
 
@@ -75,7 +75,7 @@ export class LibraryService extends ServiceBase {
         service: "LibraryService",
         method: "grantUserAccessToLibrary",
         userId: userId || undefined,
-      }
+      },
     );
   }
 
@@ -86,7 +86,7 @@ export class LibraryService extends ServiceBase {
   static async removeLibraryToUser(
     context: "server" | "client" = "client",
     coreLibraryId: string,
-    eraseRelatedData: boolean
+    eraseRelatedData: boolean,
   ): Promise<boolean> {
     const userId = await this.getCurrentUserId(context);
 
@@ -110,7 +110,35 @@ export class LibraryService extends ServiceBase {
         service: "LibraryService",
         method: "removeUserAccessToLibrary",
         userId: userId || undefined,
-      }
+      },
+    );
+  }
+
+  static async getUserLibraries(
+    context: "server" | "client" = "client",
+  ): Promise<string[]> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data: libraryIds, error } = await client
+          .from("user_library_access")
+          .select("core_library_id")
+          .eq("user_id", userId);
+
+        if (error) {
+          throw error;
+        }
+
+        return libraryIds.map(({ core_library_id }) => core_library_id);
+      },
+      {
+        service: "LibraryService",
+        method: "getUserAccess",
+        userId: userId || undefined,
+      },
     );
   }
 }

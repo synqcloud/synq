@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 import { SearchIcon, Plus, ShoppingCart, ScanBarcode } from "lucide-react";
 import {
@@ -125,31 +125,9 @@ const AppHeader: React.FC = () => {
         </TooltipProvider>
       </div>
       <SearchCommand open={openSearch} onOpenChange={setOpenSearch} />
+      <ScanBarcode className="h-4 w-4" />
     </header>
   );
 };
 
 export default AppHeader;
-
-function QuickActions() {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4" />
-          New...
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem>
-          <Plus className="h-4 w-4" />
-          New Inventory
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Plus className="h-4 w-4" />
-          New Booster Pack
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}

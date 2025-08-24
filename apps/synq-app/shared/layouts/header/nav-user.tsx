@@ -1,9 +1,9 @@
 "use client";
 
 // CORE
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useTheme } from "next-themes";
 
 // API
@@ -68,12 +68,6 @@ export function NavUser({ isCollapsed = false }: NavUserProps) {
       console.error("Failed to load user:", error);
       // Don't redirect immediately, let the middleware handle authentication
       // Only redirect if we're certain the user is not authenticated
-      if (
-        error instanceof Error &&
-        error.message.includes("not authenticated")
-      ) {
-        router.push("/login");
-      }
     } finally {
       setIsLoading(false);
     }
