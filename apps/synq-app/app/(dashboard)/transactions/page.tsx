@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+// Core
+import { useEffect, useState } from "react";
 import { motion, HTMLMotionProps, MotionProps } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+
+// UI
 import {
   TransactionsFilters,
   TransactionsTable,
 } from "@/domains/transactions/components";
-import { mockTransactions } from "@/domains/transactions/data/mock-transactions";
+
+// Services
+import {
+  TransactionService,
+  UserTransaction,
+  UserTransactionItem,
+} from "@synq/supabase/services";
 
 // Make a custom type that correctly extends HTMLMotionProps
 type MotionDivProps = HTMLMotionProps<"div"> &
@@ -20,28 +30,34 @@ const MotionDiv = motion.div as React.ComponentType<MotionDivProps>;
 // Animation variants - more subtle
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: "easeOut" },
-  },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+
+// Extend transaction type for table
+type ExtendedTransaction = UserTransaction & {
+  totalQuantity: number;
+  user_transaction_items?: UserTransactionItem[];
 };
 
 export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const sectionRef = useRef(null);
+
+  // Fetch transactions with React Query
+  const {
+    data: transactions = [],
+    isLoading,
+    error,
+  } = useQuery<ExtendedTransaction[]>({
+    queryKey: ["userTransactions"],
+    queryFn: () => TransactionService.fetchUserTransactions("client"),
+  });
 
   useEffect(() => {
     document.title = "Transactions";
@@ -49,7 +65,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Fixed Filters Section */}
+      {/* Filters */}
       <MotionDiv
         initial="hidden"
         animate="visible"
@@ -66,22 +82,31 @@ export default function TransactionsPage() {
         />
       </MotionDiv>
 
-      {/* Table Content */}
+      {/* Table */}
       <div className="flex-1">
         <MotionDiv
-          ref={sectionRef}
+          ref={null}
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
           className="p-6"
         >
-          <TransactionsTable
-            transactions={mockTransactions}
-            showHeader={false}
-            showViewAll={false}
-            variant="full"
-            className="h-full"
-          />
+          {isLoading ? (
+            <div className="text-center py-10 text-muted-foreground">
+              Loading transactions...
+            </div>
+          ) : error ? (
+            <div className="text-center py-10 text-red-500">
+              Failed to load transactions.
+            </div>
+          ) : (
+            <TransactionsTable
+              transactions={transactions}
+              showHeader={false}
+              showViewAll={false}
+              className="h-full"
+            />
+          )}
         </MotionDiv>
       </div>
     </div>

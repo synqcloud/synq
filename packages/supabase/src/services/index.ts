@@ -10,3 +10,8 @@ export {
   type CoreCard,
   type UserStock,
 } from "./inventory-service";
+export {
+  TransactionService,
+  type UserTransaction,
+  type UserTransactionItem,
+} from "./transaction-service";

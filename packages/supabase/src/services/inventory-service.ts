@@ -1,6 +1,7 @@
 import { Database } from "src/lib/types";
 import { ServiceBase } from "./base-service";
 import { LibraryService } from "./library-service";
+import { sumNestedQuantities } from "src/lib/utils";
 
 export type CoreLibrary = Database["public"]["Tables"]["core_libraries"]["Row"];
 export type CoreSet = Database["public"]["Tables"]["core_sets"]["Row"];
@@ -10,17 +11,6 @@ export type UserStock = Database["public"]["Tables"]["user_card_stock"]["Row"];
 export type PublicCard = CoreCard & UserStock;
 
 export class InventoryService extends ServiceBase {
-  /**
-   * Calculate total stock from an array of stock entries
-   */
-  private static calculateStock(
-    stockEntries: Array<{ quantity: number | null }> | null,
-  ): number {
-    return (
-      stockEntries?.reduce((sum, entry) => sum + (entry.quantity || 0), 0) || 0
-    );
-  }
-
   /**
    * Get card details with stock information
    */
@@ -69,15 +59,12 @@ export class InventoryService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
 
-        // First get all libraries the user has access to
         const { data: libraries, error: libError } = await client
           .from("core_libraries")
           .select("id, name")
           .in("id", userLibraries);
-
         if (libError) throw libError;
 
-        // Then get stock data for these libraries
         const { data: stockData, error: stockError } = await client
           .from("user_card_stock")
           .select(
@@ -92,19 +79,16 @@ export class InventoryService extends ServiceBase {
           )
           .eq("user_id", userId)
           .in("core_cards.core_sets.core_library_id", userLibraries);
-
         if (stockError) throw stockError;
 
-        // Aggregate stock by library
+        // Aggregate stock by library using utility function
         const libraryStockMap = new Map<string, number>();
-
         stockData?.forEach((stock: any) => {
           const libraryId = stock.core_cards.core_sets.core_library_id;
           const currentStock = libraryStockMap.get(libraryId) || 0;
           libraryStockMap.set(libraryId, currentStock + (stock.quantity || 0));
         });
 
-        // Return all libraries with their stock (0 if no stock)
         return (libraries || []).map((library) => ({
           id: library.id,
           name: library.name,
@@ -132,15 +116,12 @@ export class InventoryService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
 
-        // First get all sets in the library
         const { data: sets, error: setsError } = await client
           .from("core_sets")
           .select("id, name")
           .eq("core_library_id", libraryId);
-
         if (setsError) throw setsError;
 
-        // Then get stock data for these sets
         const { data: stockData, error: stockError } = await client
           .from("user_card_stock")
           .select(
@@ -156,19 +137,15 @@ export class InventoryService extends ServiceBase {
             "core_cards.core_set_id",
             (sets || []).map((s) => s.id),
           );
-
         if (stockError) throw stockError;
 
-        // Aggregate stock by set
         const setStockMap = new Map<string, number>();
-
         stockData?.forEach((stock: any) => {
           const setId = stock.core_cards.core_set_id;
           const currentStock = setStockMap.get(setId) || 0;
           setStockMap.set(setId, currentStock + (stock.quantity || 0));
         });
 
-        // Return all sets with their stock (0 if no stock)
         return (sets || []).map((set) => ({
           id: set.id,
           name: set.name,
@@ -184,7 +161,7 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
-   * Get cards by set with stock totals
+   * Get cards by set with stock totals using sumNestedQuantities
    */
   static async fetchCardsBySet(
     context: "client" | "server" = "client",
@@ -196,25 +173,23 @@ export class InventoryService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
 
-        // Get all cards in set with their stock
         const { data, error } = await client
           .from("core_cards")
           .select(
             `
             id,
             name,
-            user_card_stock!left(quantity)
+            user_card_stock!left(*)
           `,
           )
           .eq("core_set_id", setId)
           .eq("user_card_stock.user_id", userId);
-
         if (error) throw error;
 
         return (data || []).map((card) => ({
           id: card.id,
           name: card.name,
-          stock: this.calculateStock(card.user_card_stock as any),
+          stock: sumNestedQuantities(card.user_card_stock, "", "quantity"),
         }));
       },
       {
@@ -242,7 +217,6 @@ export class InventoryService extends ServiceBase {
           .select("*")
           .eq("core_card_id", cardId)
           .eq("user_id", userId);
-
         if (error) throw error;
         return data || [];
       },
