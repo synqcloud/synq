@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+
 import "@synq/ui/globals.css";
+
 import { LandingProviders } from "./providers";
 import { SchemaMarkup } from "../components/schema-markup";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,7 +64,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <SchemaMarkup />
-        <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+        <Analytics />
+        <link
+          rel="sitemap"
+          type="application/xml"
+          title="Sitemap"
+          href="/sitemap.xml"
+        />
       </head>
       <body className={`${inter.className} bg-background text-foreground`}>
         <LandingProviders>{children}</LandingProviders>
