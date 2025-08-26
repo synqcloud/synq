@@ -19,12 +19,7 @@ export default function TermsOfService() {
 
       <main className="pt-32 pb-16">
         <div className="max-w-4xl mx-auto px-8 lg:px-12">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            className="space-y-8"
-          >
+          <motion.div initial="hidden" animate="visible" variants={fadeIn}>
             <div>
               <h1 className="text-3xl sm:text-4xl font-light tracking-[-0.01em] text-foreground mb-4">
                 Terms of Service

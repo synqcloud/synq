@@ -112,7 +112,6 @@ export function ContactForm() {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-100px" }}
-      className="space-y-8"
     >
       <motion.div variants={fadeInUp}>
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-[-0.01em] text-foreground mb-6 mt-0">
@@ -125,7 +124,7 @@ export function ContactForm() {
       </motion.div>
 
       <motion.form
-        id="contact-form"
+        id="contact"
         onSubmit={handleSubmit}
         className="max-w-lg mx-auto"
         role="form"

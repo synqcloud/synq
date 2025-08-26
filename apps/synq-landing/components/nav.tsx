@@ -20,13 +20,13 @@ export function Nav() {
         </div>
         <div className="flex items-center gap-4">
           <a
-            href="#showcase"
+            href="#features"
             className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
           >
             Features
           </a>
           <a
-            href="#contact-form"
+            href="#contact"
             className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
           >
             Contact Us

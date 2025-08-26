@@ -5,8 +5,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/private/", "/admin/"],
+      disallow: ["/api/", "/admin/", "/private/", "/_next/", "/static/"],
     },
-    sitemap: "https://trysynq.com/sitemap.xml",
+    sitemap: "https://www.trysynq.com/sitemap.xml",
+    host: "https://www.trysynq.com",
   };
 }

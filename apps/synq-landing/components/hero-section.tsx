@@ -66,14 +66,14 @@ export function HeroSection() {
             size="sm"
             className="text-center text-[10px] uppercase tracking-[0.2em]"
           >
-            <a href="#showcase">See Features</a>
+            <a href="#features">See Features</a>
           </Button>
           <Button
             asChild
             size="sm"
             className="text-center text-[10px] uppercase tracking-[0.2em]"
           >
-            <a href="#contact-form">Contact Us</a>
+            <a href="#contact">Contact Us</a>
           </Button>
         </motion.div>
         <motion.p

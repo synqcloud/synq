@@ -269,7 +269,7 @@ export function Showcase() {
               <div className="text-center">
                 <div className="inline-flex items-center gap-4">
                   <a
-                    href="#contact-form"
+                    href="#contact"
                     className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                   >
                     Contact Us

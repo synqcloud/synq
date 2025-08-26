@@ -77,7 +77,7 @@ export function StoryContent() {
             </p>
             <p>We want to hear about your experience.</p>
             <p className="text-sm text-muted-foreground italic underline">
-              <Link href="#contact-form">Share your setup with us here</Link>
+              <Link href="#contact">Share your setup with us here</Link>
             </p>
           </div>
         </Section>

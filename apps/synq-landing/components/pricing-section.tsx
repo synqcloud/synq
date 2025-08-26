@@ -73,7 +73,8 @@ export function PricingSection() {
             Simple Pricing
           </h2>
           <p className="text-base font-light tracking-[-0.01em] text-muted-foreground max-w-2xl mx-auto">
-            Choose the plan that fits your needs. All plans include core features.
+            Choose the plan that fits your needs. All plans include core
+            features.
           </p>
         </motion.div>
 
@@ -85,8 +86,8 @@ export function PricingSection() {
                 index === 0
                   ? "bg-card/50 shadow-sm border-primary/20 p-10 h-[500px]"
                   : index === 1
-                  ? "bg-card/50 p-8 h-[450px]"
-                  : "bg-card/50 p-6 h-[400px]"
+                    ? "bg-card/50 p-8 h-[450px]"
+                    : "bg-card/50 p-6 h-[400px]"
               }`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -97,8 +98,6 @@ export function PricingSection() {
                 delay: index * 0.1,
               }}
             >
-
-
               <div className={`${index === 0 ? "flex flex-col h-full" : ""}`}>
                 {index === 0 && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -145,7 +144,7 @@ export function PricingSection() {
                     }`}
                     size="sm"
                   >
-                    <a href="#contact-form">{plan.cta}</a>
+                    <a href="#contact">{plan.cta}</a>
                   </Button>
                 </div>
               </div>
@@ -167,4 +166,4 @@ export function PricingSection() {
       </div>
     </motion.div>
   );
-} 
+}

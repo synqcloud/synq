@@ -13,13 +13,13 @@ export function Footer() {
           </div>
           <div className="flex items-center gap-4">
             <a
-              href="#showcase"
+              href="#features"
               className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
             >
               Features
             </a>
             <a
-              href="#learn-more"
+              href="#about-us"
               className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
             >
               Our Story
@@ -59,13 +59,13 @@ export function Footer() {
           {/* Navigation links centered and evenly spaced */}
           <div className="flex justify-center items-center gap-6">
             <a
-              href="#showcase"
+              href="#features"
               className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
             >
               Features
             </a>
             <a
-              href="#learn-more"
+              href="#about-us"
               className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
             >
               Our Story
