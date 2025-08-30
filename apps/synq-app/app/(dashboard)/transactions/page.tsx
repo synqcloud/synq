@@ -1,113 +1,120 @@
 "use client";
 
-// Core
 import { useEffect, useState } from "react";
-import { motion, HTMLMotionProps, MotionProps } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-
-// UI
 import {
   TransactionsFilters,
   TransactionsTable,
 } from "@/domains/transactions/components";
+import { TransactionService, TransactionType } from "@synq/supabase/services";
 
-// Services
-import {
-  TransactionService,
-  UserTransaction,
-  UserTransactionItem,
-} from "@synq/supabase/services";
+// Simple hook for cookie persistence
+function useCookieState<T>(
+  key: string,
+  defaultValue: T,
+): [T, (value: T) => void] {
+  const [value, setValue] = useState<T>(defaultValue);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-// Make a custom type that correctly extends HTMLMotionProps
-type MotionDivProps = HTMLMotionProps<"div"> &
-  MotionProps & {
-    className?: string;
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          setValue(JSON.parse(saved));
+        } catch {
+          // Ignore invalid JSON
+        }
+      }
+      setIsHydrated(true);
+    }
+  }, [key]);
+
+  const setValueAndSave = (newValue: T) => {
+    setValue(newValue);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(key, JSON.stringify(newValue));
+    }
   };
 
-// Create a typed motion.div component
-const MotionDiv = motion.div as React.ComponentType<MotionDivProps>;
-
-// Animation variants - more subtle
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-};
-
-// Extend transaction type for table
-type ExtendedTransaction = UserTransaction & {
-  totalQuantity: number;
-  user_transaction_items?: UserTransactionItem[];
-};
+  return [value, setValueAndSave];
+}
 
 export default function TransactionsPage() {
+  const [typeFilter, setTypeFilter] = useCookieState<TransactionType[]>(
+    "transactionTypes",
+    [],
+  );
+  const [dateRange, setDateRange] = useState<{
+    start: Date | null;
+    end: Date | null;
+  }>({
+    start: null,
+    end: null,
+  });
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Fetch transactions with React Query
+  // Track hydration
+  useEffect(() => {
+    setIsHydrated(true);
+    document.title = "Transactions";
+  }, []);
+
   const {
     data: transactions = [],
     isLoading,
     error,
-  } = useQuery<ExtendedTransaction[]>({
-    queryKey: ["userTransactions"],
-    queryFn: () => TransactionService.fetchUserTransactions("client"),
+  } = useQuery({
+    queryKey: [
+      "userTransactions",
+      typeFilter,
+      dateRange.start?.toISOString(),
+      dateRange.end?.toISOString(),
+      searchQuery,
+    ],
+    queryFn: () =>
+      TransactionService.fetchUserTransactions("client", {
+        types: typeFilter.length ? typeFilter : undefined,
+        startDate: dateRange.start || undefined,
+        endDate: dateRange.end || undefined,
+        searchQuery: searchQuery || undefined,
+      }),
+    enabled: isHydrated,
+    staleTime: 30000, // 30 seconds
   });
 
-  useEffect(() => {
-    document.title = "Transactions";
-  }, []);
+  if (!isHydrated || isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-muted-foreground">Loading transactions...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-red-500">Failed to load transactions.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Filters */}
-      <MotionDiv
-        initial="hidden"
-        animate="visible"
-        variants={fadeInUp}
-        className="flex-shrink-0 p-6"
-      >
+      <div className="flex-shrink-0 p-6 border-b">
         <TransactionsFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
           typeFilter={typeFilter}
           onTypeFilterChange={setTypeFilter}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
         />
-      </MotionDiv>
+      </div>
 
-      {/* Table */}
-      <div className="flex-1">
-        <MotionDiv
-          ref={null}
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="p-6"
-        >
-          {isLoading ? (
-            <div className="text-center py-10 text-muted-foreground">
-              Loading transactions...
-            </div>
-          ) : error ? (
-            <div className="text-center py-10 text-red-500">
-              Failed to load transactions.
-            </div>
-          ) : (
-            <TransactionsTable
-              transactions={transactions}
-              showHeader={false}
-              showViewAll={false}
-              className="h-full"
-            />
-          )}
-        </MotionDiv>
+      <div className="flex-1 p-6">
+        <TransactionsTable transactions={transactions} />
       </div>
     </div>
   );

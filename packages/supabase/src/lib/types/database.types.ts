@@ -159,6 +159,56 @@ export type Database = {
           },
         ]
       }
+      user_card_listings: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          id: string
+          last_synced_at: string | null
+          listed_price: number | null
+          listed_quantity: number
+          listing_url: string | null
+          marketplace: Database["public"]["Enums"]["marketplace_type"]
+          marketplace_listing_id: string | null
+          stock_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          last_synced_at?: string | null
+          listed_price?: number | null
+          listed_quantity: number
+          listing_url?: string | null
+          marketplace: Database["public"]["Enums"]["marketplace_type"]
+          marketplace_listing_id?: string | null
+          stock_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          last_synced_at?: string | null
+          listed_price?: number | null
+          listed_quantity?: number
+          listing_url?: string | null
+          marketplace?: Database["public"]["Enums"]["marketplace_type"]
+          marketplace_listing_id?: string | null
+          stock_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_card_listings_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "user_card_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_card_stock: {
         Row: {
           cogs: number | null
@@ -169,6 +219,7 @@ export type Database = {
           grading: string | null
           id: string
           is_active: boolean | null
+          language: string | null
           location: string | null
           notes: string | null
           quantity: number
@@ -185,6 +236,7 @@ export type Database = {
           grading?: string | null
           id?: string
           is_active?: boolean | null
+          language?: string | null
           location?: string | null
           notes?: string | null
           quantity?: number
@@ -201,6 +253,7 @@ export type Database = {
           grading?: string | null
           id?: string
           is_active?: boolean | null
+          language?: string | null
           location?: string | null
           notes?: string | null
           quantity?: number
@@ -317,41 +370,82 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_integration: boolean
           net_amount: number | null
           performed_by: string | null
           source: string | null
-          transaction_type: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_integration?: boolean
           net_amount?: number | null
           performed_by?: string | null
           source?: string | null
-          transaction_type: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_integration?: boolean
           net_amount?: number | null
           performed_by?: string | null
           source?: string | null
-          transaction_type?: string
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
           user_id?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      user_transaction_items_with_cards: {
+        Row: {
+          card_name: string | null
+          core_card_id: string | null
+          item_id: string | null
+          quantity: number | null
+          stock_id: string | null
+          transaction_id: string | null
+          unit_price: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_card_stock_core_card_id_fkey"
+            columns: ["core_card_id"]
+            isOneToOne: false
+            referencedRelation: "core_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_transaction_items_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "user_card_stock"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_transaction_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "user_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      marketplace_type: "CardTrader" | "TCGplayer" | "eBay"
+      transaction_type:
+        | "BUY"
+        | "SELL"
+        | "STOCK_MOVEMENT"
+        | "MARKETPLACE_LISTING"
     }
     CompositeTypes: {
       [_ in never]: never

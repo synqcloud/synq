@@ -14,4 +14,5 @@ export {
   TransactionService,
   type UserTransaction,
   type UserTransactionItem,
+  type TransactionType,
 } from "./transaction-service";

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 
-import { SearchIcon, Plus, ShoppingCart, ScanBarcode } from "lucide-react";
+import { SearchIcon, ScanBarcode, ShoppingCart } from "lucide-react";
 import {
   SidebarTrigger,
   Button,
@@ -10,10 +10,6 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@synq/ui/component";
 
 import { SearchCommand } from "@/shared/command/search-command";

@@ -70,6 +70,7 @@ export default function StockTable({ cardId }: { cardId: string }) {
             Cost (COGS)
           </span>
           <span>SKU</span>
+          <span>Language</span>
           <span>Location</span>
           <span>Updated</span>
           <span>Actions</span>
