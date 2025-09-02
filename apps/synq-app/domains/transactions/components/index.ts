@@ -1,2 +1,2 @@
-export * from "./transactions-filters";
-export { default as TransactionsTable } from "./transactions-table";
+export * from "./table/transactions-filters";
+export * from "./table/transactions-table";

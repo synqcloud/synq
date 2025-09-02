@@ -6,10 +6,9 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type') THEN
         CREATE TYPE transaction_type AS ENUM (
-            'BUY',
-            'SELL',
-            'STOCK_MOVEMENT',
-            'MARKETPLACE_LISTING'
+            'ORDER',
+            'SALE',
+            'LISTING'
         );
     END IF;
 END$$;
@@ -36,7 +35,6 @@ CREATE TABLE IF NOT EXISTS public.user_transactions (
 
     -- Net amount (positive or negative depending on transaction)
     net_amount NUMERIC(10,2),
-
 
     -- Indicates if transaction was created via user integration (webhook, API sync, etc.)
     is_integration BOOLEAN NOT NULL DEFAULT FALSE,
@@ -76,74 +74,74 @@ SELECT
     uti.quantity,
     uti.unit_price,
     ucs.core_card_id,
-    cc.name AS card_name
+    cc.name AS card_name,
+    cs.name AS set_name,
+    cl.name AS game_name,
+    ucs.condition,
+    ucs.grading,
+    ucs.language,
+    ucs.sku,
+    ucs.location
 FROM public.user_transaction_items uti
 JOIN public.user_card_stock ucs ON uti.stock_id = ucs.id
-JOIN public.core_cards cc ON ucs.core_card_id = cc.id;
+JOIN public.core_cards cc ON ucs.core_card_id = cc.id
+JOIN public.core_sets cs ON cc.core_set_id = cs.id
+JOIN public.core_libraries cl ON cc.core_library_id = cl.id;
 
 
 -- =============================================
--- Stock update trigger
+-- Function: get_user_transactions
 -- =============================================
 
--- =============================================
--- Stock update trigger (aligned with new enum)
--- =============================================
-
-CREATE OR REPLACE FUNCTION apply_stock_change()
-RETURNS TRIGGER AS $$
-DECLARE
-  tx_type transaction_type;
+CREATE OR REPLACE FUNCTION public.get_user_transactions(
+    p_user_id UUID,
+    p_start_date TIMESTAMPTZ DEFAULT NULL,
+    p_end_date TIMESTAMPTZ DEFAULT NULL,
+    p_types transaction_type[] DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID,
+    user_id UUID,
+    transaction_type transaction_type,
+    performed_by UUID,
+    source TEXT,
+    net_amount NUMERIC(10,2),
+    is_integration BOOLEAN,
+    created_at TIMESTAMPTZ,
+    total_quantity INTEGER
+) AS $$
 BEGIN
-  SELECT transaction_type INTO tx_type
-  FROM user_transactions
-  WHERE id = NEW.transaction_id;
-
-  IF tx_type = 'SELL' THEN
-    -- Decrease stock
-    PERFORM 1
-    FROM user_card_stock
-    WHERE id = NEW.stock_id AND quantity >= NEW.quantity;
-
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'Not enough stock for stock_id %, requested %, available less',
-        NEW.stock_id, NEW.quantity;
-    END IF;
-
-    UPDATE user_card_stock
-    SET quantity = quantity - NEW.quantity,
-        updated_at = NOW()
-    WHERE id = NEW.stock_id;
-
-  ELSIF tx_type = 'BUY' THEN
-    -- Increase stock
-    UPDATE user_card_stock
-    SET quantity = quantity + NEW.quantity,
-        updated_at = NOW()
-    WHERE id = NEW.stock_id;
-
-  ELSIF tx_type = 'STOCK_MOVEMENT' THEN
-    -- Movement: could be positive or negative
-    UPDATE user_card_stock
-    SET quantity = quantity + NEW.quantity,
-        updated_at = NOW()
-    WHERE id = NEW.stock_id;
-
-  ELSIF tx_type = 'MARKETPLACE_LISTING' THEN
-    -- No stock change, just a record
-    RETURN NEW;
-  END IF;
-
-  RETURN NEW;
+    RETURN QUERY
+    SELECT
+        t.id,
+        t.user_id,
+        t.transaction_type,
+        t.performed_by,
+        t.source,
+        t.net_amount,
+        t.is_integration,
+        t.created_at,
+        COALESCE(SUM(uti.quantity)::integer, 0) AS total_quantity
+    FROM public.user_transactions t
+    LEFT JOIN public.user_transaction_items uti
+        ON t.id = uti.transaction_id
+    WHERE t.user_id = p_user_id
+      AND (p_start_date IS NULL OR t.created_at >= p_start_date)
+      AND (p_end_date IS NULL OR t.created_at <= p_end_date)
+      AND (p_types IS NULL OR t.transaction_type = ANY(p_types))
+    GROUP BY
+        t.id,
+        t.user_id,
+        t.transaction_type,
+        t.performed_by,
+        t.source,
+        t.net_amount,
+        t.is_integration,
+        t.created_at
+    ORDER BY t.created_at DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
--- Recreate trigger
-DROP TRIGGER IF EXISTS trg_apply_stock_change ON public.user_transaction_items;
-CREATE TRIGGER trg_apply_stock_change
-BEFORE INSERT ON public.user_transaction_items
-FOR EACH ROW
-EXECUTE FUNCTION apply_stock_change();
 
 
 -- =============================================

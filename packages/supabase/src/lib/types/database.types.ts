@@ -404,9 +404,16 @@ export type Database = {
       user_transaction_items_with_cards: {
         Row: {
           card_name: string | null
+          condition: string | null
           core_card_id: string | null
+          game_name: string | null
+          grading: string | null
           item_id: string | null
+          language: string | null
+          location: string | null
           quantity: number | null
+          set_name: string | null
+          sku: string | null
           stock_id: string | null
           transaction_id: string | null
           unit_price: number | null
@@ -437,15 +444,29 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_user_transactions: {
+        Args: {
+          p_user_id: string
+          p_start_date?: string
+          p_end_date?: string
+          p_types?: Database["public"]["Enums"]["transaction_type"][]
+        }
+        Returns: {
+          id: string
+          user_id: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          performed_by: string
+          source: string
+          net_amount: number
+          is_integration: boolean
+          created_at: string
+          total_quantity: number
+        }[]
+      }
     }
     Enums: {
       marketplace_type: "CardTrader" | "TCGplayer" | "eBay"
-      transaction_type:
-        | "BUY"
-        | "SELL"
-        | "STOCK_MOVEMENT"
-        | "MARKETPLACE_LISTING"
+      transaction_type: "ORDER" | "SALE" | "LISTING"
     }
     CompositeTypes: {
       [_ in never]: never

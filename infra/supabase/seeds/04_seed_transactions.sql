@@ -35,8 +35,10 @@ BEGIN
 
     -- Possible transaction sources
     -- CardTrader will be the only integration source
+
+    -- Phase 1: Orders (~3,000)
     FOR i IN 1..3000 LOOP
-        tx_type := 'BUY';
+        tx_type := 'ORDER';
         tx_source := (ARRAY['in-store','eBay','Whatnot','CardMarket','TCGplayer','CardTrader'])[floor(random()*6+1)];
 
         INSERT INTO public.user_transactions (
@@ -59,6 +61,7 @@ BEGIN
         )
         RETURNING id INTO transaction_uuid;
 
+        -- Random items per order
         FOR item_count IN 1..(floor(random()*3)+1) LOOP
             stock_id := stock_ids[floor(random()*stock_count + 1)];
             qty := floor(random()*5)+1;
@@ -79,6 +82,7 @@ BEGIN
             );
         END LOOP;
 
+        -- Update net amount
         UPDATE public.user_transactions
         SET net_amount = (
             SELECT SUM(quantity * unit_price)
@@ -88,9 +92,9 @@ BEGIN
         WHERE id = transaction_uuid;
     END LOOP;
 
-    -- Phase 2: Mixed transactions (~2,000)
+    -- Phase 2: Sales + Listings (~2,000)
     FOR i IN 1..2000 LOOP
-        tx_type := (ARRAY['SELL','STOCK_MOVEMENT','MARKETPLACE_LISTING']::transaction_type[])[floor(random()*3+1)];
+        tx_type := (ARRAY['SALE','LISTING']::transaction_type[])[floor(random()*2+1)];
         tx_source := (ARRAY['in-store','eBay','Whatnot','CardMarket','TCGplayer','CardTrader'])[floor(random()*6+1)];
 
         INSERT INTO public.user_transactions (
@@ -113,10 +117,11 @@ BEGIN
         )
         RETURNING id INTO transaction_uuid;
 
-        FOR item_count IN 1..(floor(random()*3)+1) LOOP
-            stock_id := stock_ids[floor(random()*stock_count + 1)];
+        -- Items only for sales
+        IF tx_type = 'SALE' THEN
+            FOR item_count IN 1..(floor(random()*3)+1) LOOP
+                stock_id := stock_ids[floor(random()*stock_count + 1)];
 
-            IF tx_type = 'SELL' THEN
                 SELECT quantity INTO max_qty
                 FROM public.user_card_stock
                 WHERE id = stock_id;
@@ -126,32 +131,31 @@ BEGIN
                 END IF;
 
                 qty := LEAST(floor(random()*5)+1, max_qty);
-            ELSE
-                qty := floor(random()*5)+1;
-            END IF;
 
-            INSERT INTO public.user_transaction_items (
-                transaction_id,
-                stock_id,
-                quantity,
-                unit_price,
-                created_at
+                INSERT INTO public.user_transaction_items (
+                    transaction_id,
+                    stock_id,
+                    quantity,
+                    unit_price,
+                    created_at
+                )
+                VALUES (
+                    transaction_uuid,
+                    stock_id,
+                    qty,
+                    round((random()*150)::numeric,2),
+                    NOW()
+                );
+            END LOOP;
+
+            -- Update net amount
+            UPDATE public.user_transactions
+            SET net_amount = (
+                SELECT SUM(quantity * unit_price)
+                FROM public.user_transaction_items
+                WHERE transaction_id = transaction_uuid
             )
-            VALUES (
-                transaction_uuid,
-                stock_id,
-                qty,
-                round((random()*150)::numeric,2),
-                NOW()
-            );
-        END LOOP;
-
-        UPDATE public.user_transactions
-        SET net_amount = (
-            SELECT SUM(quantity * unit_price)
-            FROM public.user_transaction_items
-            WHERE transaction_id = transaction_uuid
-        )
-        WHERE id = transaction_uuid;
+            WHERE id = transaction_uuid;
+        END IF;
     END LOOP;
 END $$;
