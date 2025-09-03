@@ -9,6 +9,7 @@ import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
+  Separator,
 } from "@synq/ui/component";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -112,6 +113,12 @@ export function LoginForm({ className }: LoginFormProps) {
 
         <GoogleLoginButton />
 
+        <div className="flex items-center gap-2">
+          <Separator className="flex-1" />
+          <span className="text-sm text-muted-foreground">or</span>
+          <Separator className="flex-1" />
+        </div>
+
         {showOTP ? (
           <OTPForm
             otp={otp}
@@ -141,7 +148,7 @@ const HeaderSection = () => (
   <div className="flex flex-col items-center gap-4">
     <SynqIcon className="w-10 h-10" />
     <div className="flex flex-col items-center gap-1">
-      <h1 className="text-2xl font-semibold tracking-tight">Welcome to Synq</h1>
+      <h1 className="text-2xl font-light tracking-tight">Welcome to Synq</h1>
       <p className="text-sm text-muted-foreground text-center">
         Enter your email to sign in or create a new account
       </p>
@@ -150,11 +157,7 @@ const HeaderSection = () => (
 );
 
 const GoogleLoginButton = () => (
-  <Button
-    variant="outline"
-    className="w-full h-10"
-    disabled
-  >
+  <Button variant="outline" className="w-full h-10" disabled>
     <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
       <path
         fill="currentColor"
@@ -319,7 +322,7 @@ const EmailForm = ({
             <Spinner /> Sending code...
           </>
         ) : (
-          "Continue with Email"
+          "Continue"
         )}
       </Button>
     </div>

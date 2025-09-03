@@ -23,6 +23,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  Separator,
 } from "@synq/ui/component";
 
 import {
@@ -35,6 +36,8 @@ import {
   BookOpen,
   ScrollText,
   Siren,
+  ClockFading,
+  Bell,
 } from "lucide-react";
 
 // SHARED COMPONENTS
@@ -172,7 +175,7 @@ const NavGroup = ({
   <SidebarGroup>
     <SidebarGroupContent className={contentClassName}>
       {label && (
-        <SidebarGroupLabel className="text-xs font-light tracking-[-0.01em] text-muted-foreground px-3 mb-3 uppercase tracking-wider">
+        <SidebarGroupLabel className="text-xs font-light text-muted-foreground px-3 mb-3 uppercase tracking-wider">
           {label}
         </SidebarGroupLabel>
       )}
@@ -224,12 +227,15 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         className={`flex flex-col h-full px-0${isCollapsed ? " items-center" : ""}`}
       >
         <NavGroup items={navItems} isCollapsed={isCollapsed} />
+        {isCollapsed && <Separator className="w-8 my-4" />}
         <NavGroup
           items={featureItems}
           label="Logistics"
           contentClassName="pt-8"
           isCollapsed={isCollapsed}
         />
+        {isCollapsed && <Separator className="w-8 my-4" />}
+
         <NavGroup
           items={settingsItems}
           label="Settings"
