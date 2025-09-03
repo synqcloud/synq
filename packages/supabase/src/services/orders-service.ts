@@ -1,14 +1,13 @@
 import { ServiceBase } from "./base-service";
 import { Database } from "../lib/types/database.types";
 
-export type UserTransaction =
-  Database["public"]["Tables"]["user_transactions"]["Row"];
-export type UserTransactionItem =
-  Database["public"]["Tables"]["user_transaction_items"]["Row"];
-export type TransactionType =
-  Database["public"]["Tables"]["user_transactions"]["Row"]["transaction_type"];
+export type UserOrder = Database["public"]["Tables"]["user_orders"]["Row"];
+export type UserOrderItem =
+  Database["public"]["Tables"]["user_order_items"]["Row"];
+export type OrderStatus =
+  Database["public"]["Tables"]["user_orders"]["Row"]["order_status"];
 export type ProductType =
-  Database["public"]["Views"]["user_transaction_items_with_cards"]["Row"];
+  Database["public"]["Views"]["user_order_items_with_cards"]["Row"];
 export type ProductTypePartial = Pick<
   ProductType,
   | "item_id"
@@ -24,80 +23,72 @@ export type ProductTypePartial = Pick<
   | "sku"
   | "location"
 >;
-
-export type TransactionWithQuantity = UserTransaction & {
+export type OrderWithQuantity = UserOrder & {
   total_quantity: number;
 };
 
-interface TransactionFilters {
-  types?: TransactionType[];
+interface OrderFilters {
+  statuses?: OrderStatus[];
   sources?: string[];
   integrationOnly?: boolean;
   startDate?: Date;
   endDate?: Date;
 }
 
-export class TransactionService extends ServiceBase {
+export class OrderService extends ServiceBase {
   /**
-   * Fetch user transactions with search by card name
+   * Fetch user orders with search by card name
    */
-  static async fetchUserTransactions(
+  static async fetchUserOrders(
     context: "server" | "client" = "server",
-    filters?: TransactionFilters,
-  ): Promise<Array<TransactionWithQuantity>> {
+    filters?: OrderFilters,
+  ): Promise<Array<OrderWithQuantity>> {
     const userId = await this.getCurrentUserId(context);
-
     return this.execute(
       async () => {
         const client = await this.getClient(context);
-
-        // Llamada a la función RPC para obtener transacciones con total_quantity ya calculado
-        const { data, error } = await client.rpc("get_user_transactions", {
+        // Call RPC function to get orders with total_quantity already calculated
+        const { data, error } = await client.rpc("get_user_orders", {
           p_user_id: userId,
           p_start_date: filters?.startDate?.toISOString() ?? null,
           p_end_date: filters?.endDate?.toISOString() ?? null,
-          p_types: filters?.types ?? null,
+          p_statuses: filters?.statuses ?? null,
         });
-
         if (error) throw error;
-
-        // data ya contiene totalQuantity como número, listo para usar
+        // data already contains totalQuantity as number, ready to use
         return data ?? [];
       },
       {
-        service: "TransactionService",
-        method: "fetchUserTransactions",
+        service: "OrderService",
+        method: "fetchUserOrders",
         userId: userId || undefined,
       },
     );
   }
 
   /**
-   * Fetch transaction items for a specific transaction
+   * Fetch order items for a specific order
    */
-  static async fetchUserTransactionItems(
+  static async fetchUserOrderItems(
     context: "server" | "client",
-    transactionId: string,
+    orderId: string,
   ): Promise<Array<ProductTypePartial>> {
     const userId = await this.getCurrentUserId(context);
-
     return this.execute(
       async () => {
         const client = await this.getClient(context);
-
         const { data, error } = await client
-          .from("user_transaction_items_with_cards")
+          .from("user_order_items_with_cards")
           .select(
             "item_id, quantity, core_card_id, card_name, unit_price, set_name, game_name, condition, grading, language, sku, location",
           )
-          .eq("transaction_id", transactionId);
-
+          .eq("order_id", orderId);
         if (error) throw error;
         return data;
       },
       {
-        service: "TransactionService",
-        method: "fetchUserTransactionItems",
+        service: "OrderService",
+        method: "fetchUserOrderItems",
         userId: userId || undefined,
       },
     );

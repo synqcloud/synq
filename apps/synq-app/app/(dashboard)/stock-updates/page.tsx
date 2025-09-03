@@ -4,12 +4,12 @@ import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 // Components
 import { TransactionsFilters } from "@/domains/transactions/components";
-import { OrdersTable } from "@/features/transactions/components/table/orders-table";
+import { StockTable } from "@/features/stock-updates/components/table/stock-update-table";
 import { Spinner } from "@synq/ui/component";
 // Services
-import { OrderService } from "@synq/supabase/services";
+import { StockService } from "@synq/supabase/services";
 
-export default function TransactionsPage() {
+export default function StockUpdatesPage() {
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
     end: Date | null;
@@ -27,16 +27,17 @@ export default function TransactionsPage() {
   );
 
   useEffect(() => {
-    document.title = "Orders";
+    document.title = "Stock Updates";
   }, []);
 
   const {
-    data: transactions = [],
+    data: stockUpdates = [],
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["userTransactions", filters],
-    queryFn: () => OrderService.fetchUserOrders("client", filters),
+    queryKey: ["userStockUpdatesWithCard", filters],
+    queryFn: () =>
+      StockService.fetchUserStockUpdatesWithCard("client", filters),
     staleTime: 60_000,
   });
 
@@ -51,7 +52,7 @@ export default function TransactionsPage() {
   if (error) {
     return (
       <div className="h-full flex items-center justify-center text-red-500">
-        Failed to load orders.
+        Failed to load stock updates.
       </div>
     );
   }
@@ -66,11 +67,17 @@ export default function TransactionsPage() {
         />
       </div>
 
-      {/* Orders Content */}
+      {/* Stock Updates Content */}
       <div className="flex-1 p-4 overflow-auto min-h-0">
-        <div className="overflow-x-auto w-full">
-          <OrdersTable transactions={transactions} />
-        </div>
+        {stockUpdates.length === 0 ? (
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            No stock updates yet.
+          </div>
+        ) : (
+          <div className="overflow-x-auto w-full">
+            <StockTable updates={stockUpdates} />
+          </div>
+        )}
       </div>
     </div>
   );

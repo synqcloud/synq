@@ -8,20 +8,19 @@ import { Package, Search, Loader2 } from "lucide-react";
 import { cn } from "@synq/ui/utils";
 import { formatCurrency } from "@/shared/utils/format-currency";
 // Services
-import { TransactionService } from "@synq/supabase/services";
+import { OrderService } from "@synq/supabase/services";
 
-export function TransactionItemsRows({
-  transactionId,
+export function OrderItemsRows({
+  orderId,
   isIntegration,
 }: {
-  transactionId: string;
+  orderId: string;
   isIntegration: boolean;
 }) {
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ["transactionItems", transactionId],
-    queryFn: () =>
-      TransactionService.fetchUserTransactionItems("client", transactionId),
-    enabled: !!transactionId,
+    queryKey: ["transactionItems", orderId],
+    queryFn: () => OrderService.fetchUserOrderItems("client", orderId),
+    enabled: !!orderId,
   });
 
   if (isLoading) {

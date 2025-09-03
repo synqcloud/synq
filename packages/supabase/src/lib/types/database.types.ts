@@ -303,6 +303,81 @@ export type Database = {
           },
         ]
       }
+      user_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          quantity: number
+          stock_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          quantity: number
+          stock_id: string
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          stock_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "user_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_order_items_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "user_card_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_orders: {
+        Row: {
+          created_at: string
+          id: string
+          is_integration: boolean
+          net_amount: number | null
+          order_status: Database["public"]["Enums"]["order_status"]
+          performed_by: string | null
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_integration?: boolean
+          net_amount?: number | null
+          order_status: Database["public"]["Enums"]["order_status"]
+          performed_by?: string | null
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_integration?: boolean
+          net_amount?: number | null
+          order_status?: Database["public"]["Enums"]["order_status"]
+          performed_by?: string | null
+          source?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           created_at: string | null
@@ -324,84 +399,47 @@ export type Database = {
         }
         Relationships: []
       }
-      user_transaction_items: {
+      user_stock_updates: {
         Row: {
           created_at: string
           id: string
-          quantity: number
+          note: string | null
+          quantity_change: number
           stock_id: string
-          transaction_id: string
-          unit_price: number
+          update_type: string
+          user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          quantity: number
+          note?: string | null
+          quantity_change: number
           stock_id: string
-          transaction_id: string
-          unit_price: number
+          update_type: string
+          user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          quantity?: number
+          note?: string | null
+          quantity_change?: number
           stock_id?: string
-          transaction_id?: string
-          unit_price?: number
+          update_type?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_transaction_items_stock_id_fkey"
+            foreignKeyName: "user_stock_updates_stock_id_fkey"
             columns: ["stock_id"]
             isOneToOne: false
             referencedRelation: "user_card_stock"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_transaction_items_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "user_transactions"
-            referencedColumns: ["id"]
-          },
         ]
-      }
-      user_transactions: {
-        Row: {
-          created_at: string
-          id: string
-          is_integration: boolean
-          net_amount: number | null
-          performed_by: string | null
-          source: string | null
-          transaction_type: Database["public"]["Enums"]["transaction_type"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_integration?: boolean
-          net_amount?: number | null
-          performed_by?: string | null
-          source?: string | null
-          transaction_type: Database["public"]["Enums"]["transaction_type"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_integration?: boolean
-          net_amount?: number | null
-          performed_by?: string | null
-          source?: string | null
-          transaction_type?: Database["public"]["Enums"]["transaction_type"]
-          user_id?: string
-        }
-        Relationships: []
       }
     }
     Views: {
-      user_transaction_items_with_cards: {
+      user_order_items_with_cards: {
         Row: {
           card_name: string | null
           condition: string | null
@@ -411,11 +449,11 @@ export type Database = {
           item_id: string | null
           language: string | null
           location: string | null
+          order_id: string | null
           quantity: number | null
           set_name: string | null
           sku: string | null
           stock_id: string | null
-          transaction_id: string | null
           unit_price: number | null
         }
         Relationships: [
@@ -427,34 +465,34 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_transaction_items_stock_id_fkey"
-            columns: ["stock_id"]
+            foreignKeyName: "user_order_items_order_id_fkey"
+            columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "user_card_stock"
+            referencedRelation: "user_orders"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_transaction_items_transaction_id_fkey"
-            columns: ["transaction_id"]
+            foreignKeyName: "user_order_items_stock_id_fkey"
+            columns: ["stock_id"]
             isOneToOne: false
-            referencedRelation: "user_transactions"
+            referencedRelation: "user_card_stock"
             referencedColumns: ["id"]
           },
         ]
       }
     }
     Functions: {
-      get_user_transactions: {
+      get_user_orders: {
         Args: {
           p_user_id: string
           p_start_date?: string
           p_end_date?: string
-          p_types?: Database["public"]["Enums"]["transaction_type"][]
+          p_statuses?: Database["public"]["Enums"]["order_status"][]
         }
         Returns: {
           id: string
           user_id: string
-          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          order_status: Database["public"]["Enums"]["order_status"]
           performed_by: string
           source: string
           net_amount: number
@@ -463,10 +501,20 @@ export type Database = {
           total_quantity: number
         }[]
       }
+      get_user_sales_dashboard: {
+        Args: {
+          p_user_id: string
+          p_months?: number
+        }
+        Returns: {
+          monthly: Json
+          top_stock: Json
+        }[]
+      }
     }
     Enums: {
       marketplace_type: "CardTrader" | "TCGplayer" | "eBay"
-      transaction_type: "ORDER" | "SALE" | "LISTING"
+      order_status: "PENDING" | "IN_PROGRESS" | "COMPLETED"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -4,36 +4,64 @@ import { format } from "date-fns";
 // Components
 import { TableCell, TableRow } from "@synq/ui/component";
 import { Clock, Package, Boxes, Zap, ChevronRight } from "lucide-react";
-import { TransactionItemsRows } from "./product-row";
+import { OrderItemsRows } from "./orders-product-row";
 import { MarketplaceIcon } from "../marketplace-icon";
+
 // Utils
 import { formatCurrency } from "@/shared/utils/format-currency";
-import { getTransactionTypeColor, getTransactionTypeLabel } from "./utils";
+
 import { cn } from "@synq/ui/utils";
 // Services
-import { UserTransaction } from "@synq/supabase/services";
+import { UserOrder } from "@synq/supabase/services";
 
-export function TransactionRowGroup({
-  transaction: tx,
+export function OrderRowGroup({
+  order,
 }: {
-  transaction: UserTransaction & { total_quantity: number };
+  order: UserOrder & { total_quantity: number };
 }) {
   const [expanded, setExpanded] = useState(false);
 
+  // Inline functions for order status styling and labels
+  const getOrderStatusColor = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "bg-yellow-200";
+      case "IN_PROGRESS":
+        return "bg-blue-200";
+      case "COMPLETED":
+        return "bg-emerald-200";
+      default:
+        return "bg-slate-200";
+    }
+  };
+
+  const getOrderStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "Pending";
+      case "IN_PROGRESS":
+        return "In Progress";
+      case "COMPLETED":
+        return "Completed";
+      default:
+        return status;
+    }
+  };
+
   return (
     <>
-      {/* Main Transaction Row */}
+      {/* Main Order Row */}
       <TableRow
         className={cn(
           "group hover:bg-muted/30 transition-colors cursor-pointer border-b",
           expanded
             ? "border-b-0 border-l-2 border-l-blue-500/70"
             : "last:border-0",
-          tx.is_integration && !expanded && "bg-primary/10",
+          order.is_integration && !expanded && "bg-primary/10",
         )}
         onClick={() => setExpanded(!expanded)}
       >
-        {/* Type */}
+        {/* Status */}
         <TableCell className="py-4 px-4 align-middle">
           <div className="flex items-center gap-2 min-w-0">
             <div className="flex items-center justify-center flex-shrink-0">
@@ -45,12 +73,12 @@ export function TransactionRowGroup({
               />
             </div>
             <div
-              className={`w-2 h-2 rounded-full flex-shrink-0 ${getTransactionTypeColor(tx.transaction_type)}`}
+              className={`w-2 h-2 rounded-full flex-shrink-0 ${getOrderStatusColor(order.order_status)}`}
             />
             <span className="text-sm font-light truncate">
-              {getTransactionTypeLabel(tx.transaction_type)}
+              {getOrderStatusLabel(order.order_status)}
             </span>
-            {tx.is_integration && (
+            {order.is_integration && (
               <div className="flex items-center flex-shrink-0">
                 <Zap className="h-3 w-3 text-blue-500/70 ml-1" />
               </div>
@@ -61,14 +89,14 @@ export function TransactionRowGroup({
         {/* Products */}
         <TableCell className="py-4 px-4 align-middle">
           <div className="flex items-center gap-2 min-w-0">
-            {tx.total_quantity > 1 ? (
+            {order.total_quantity > 1 ? (
               <Boxes className="h-4 w-4 text-muted-foreground/60 flex-shrink-0" />
             ) : (
               <Package className="h-4 w-4 text-muted-foreground/60 flex-shrink-0" />
             )}
             <span className="font-light text-sm truncate">
-              {tx.total_quantity ?? 0} item
-              {tx.total_quantity !== 1 ? "s" : ""}
+              {order.total_quantity ?? 0} item
+              {order.total_quantity !== 1 ? "s" : ""}
             </span>
           </div>
         </TableCell>
@@ -77,8 +105,8 @@ export function TransactionRowGroup({
         <TableCell className="py-4 px-4 align-middle">
           <div className="min-w-0">
             <MarketplaceIcon
-              marketplace={tx.source || "Manual"}
-              isIntegration={tx.is_integration}
+              marketplace={order.source || "Manual"}
+              isIntegration={order.is_integration}
             />
           </div>
         </TableCell>
@@ -89,7 +117,7 @@ export function TransactionRowGroup({
             className="text-sm font-medium"
             style={{ color: "hsl(var(--chart-3))" }}
           >
-            {formatCurrency(tx.net_amount ?? 0)}
+            {formatCurrency(order.net_amount ?? 0)}
           </p>
         </TableCell>
 
@@ -98,17 +126,17 @@ export function TransactionRowGroup({
           <div className="flex items-center gap-2 justify-end min-w-0">
             <Clock className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
             <span className="text-sm font-light text-muted-foreground/80 truncate">
-              {format(new Date(tx.created_at), "MMM dd")}
+              {format(new Date(order.created_at), "MMM dd")}
             </span>
           </div>
         </TableCell>
       </TableRow>
 
-      {/* Child Rows for Transaction Items */}
+      {/* Child Rows for Order Items */}
       {expanded && (
-        <TransactionItemsRows
-          transactionId={tx.id}
-          isIntegration={tx.is_integration}
+        <OrderItemsRows
+          orderId={order.id}
+          isIntegration={order.is_integration}
         />
       )}
     </>

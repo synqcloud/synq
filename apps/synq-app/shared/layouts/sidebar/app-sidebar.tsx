@@ -50,7 +50,10 @@ interface NavItem {
 }
 
 // NAV ITEMS
-const navItems: NavItem[] = [{ title: "Home", url: "/home", icon: Home }];
+const navItems: NavItem[] = [
+  { title: "Home", url: "/home", icon: Home },
+  { title: "Stock Updates", url: "/stock-updates", icon: ClockFading },
+];
 
 // FEATURE ITEMS
 const featureItems: NavItem[] = [

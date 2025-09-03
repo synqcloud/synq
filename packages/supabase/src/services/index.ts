@@ -1,4 +1,3 @@
-// Export new service classes (recommended approach)
 export { ServiceBase, ServiceError } from "./base-service";
 export { UserService, type ProfileData } from "./user-service";
 export { LibraryService, type LibraryItemsWithStatus } from "./library-service";
@@ -11,8 +10,13 @@ export {
   type UserStock,
 } from "./inventory-service";
 export {
-  TransactionService,
-  type UserTransaction,
-  type UserTransactionItem,
-  type TransactionType,
-} from "./transaction-service";
+  OrderService,
+  type UserOrder,
+  type UserOrderItem,
+  type OrderStatus,
+} from "./orders-service";
+export {
+  StockService,
+  type UserStockUpdate,
+  type StockUpdateWithCard,
+} from "./stock-service";
