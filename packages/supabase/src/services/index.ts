@@ -20,3 +20,8 @@ export {
   type UserStockUpdate,
   type StockUpdateWithCard,
 } from "./stock-service";
+export {
+  DashboardService,
+  type MonthlyData,
+  type TopStockData,
+} from "./dashboard-service";
