@@ -169,3 +169,5 @@ Feel free to open issues or submit pull requests if you have suggestions for imp
 ## License
 
 This project is licensed under the AGPL-3.0 for non-commercial use.
+
+  <sub>author: <a href="https://github.com/tberoiz">Telmo Beroiz Bilbao</a></sub>
