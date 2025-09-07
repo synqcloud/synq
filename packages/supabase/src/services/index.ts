@@ -10,11 +10,11 @@ export {
   type UserStock,
 } from "./inventory-service";
 export {
-  OrderService,
-  type UserOrder,
-  type UserOrderItem,
-  type OrderStatus,
-} from "./orders-service";
+  TransactionService,
+  type UserTransaction,
+  type UserTransactionItem,
+  type TransactionStatus,
+} from "./transactions-service";
 export {
   StockService,
   type UserStockUpdate,

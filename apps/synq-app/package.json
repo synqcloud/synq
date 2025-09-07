@@ -10,7 +10,7 @@
     "lint": "next lint --max-warnings 0",
     "check-types": "tsc --noEmit",
     "clean": "rm -rf .turbo node_modules",
-    "scan": "next dev & npx react-scan@latest localhost:3000"
+    "scan": "next dev --turbopack & npx react-scan@latest localhost:3000"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.10.0",

@@ -29,8 +29,8 @@
     --radius: 0.325rem;
     --chart-1: 220 70% 75%; /* pastel blue for positive bars */
     --chart-2: 45 85% 75%; /* pastel yellow for negative bars */
-    --chart-3: 148 30% 46%; /* pastel green for neutral bars */
-    --chart-4: 220 40% 50%;
+    --chart-3: 148 30% 46%; /* pastel green for positive bars */
+    --chart-4: 8 70% 62%; /* pastel red for negative bars */
     --chart-5: 220 30% 35%;
     --sidebar-background: 220 15% 97%;
     --sidebar-foreground: 220 70% 15%;
@@ -67,7 +67,7 @@
     --chart-1: 220 60% 70%; /* soft blue for positive bars */
     --chart-2: 45 70% 70%; /* muted yellow for contrast */
     --chart-3: 148 30% 46%; /* soft purple */
-    --chart-4: 160 50% 70%; /* soft green */
+    --chart-4: 8 70% 62%; /* pastel red for negative bars */
     --chart-5: 20 60% 70%; /* soft orange */
     --sidebar-background: 220 15% 22%;
     --sidebar-foreground: 220 10% 90%;

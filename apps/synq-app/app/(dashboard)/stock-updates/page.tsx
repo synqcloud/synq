@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 // Components
-import { TransactionsFilters } from "@/domains/transactions/components";
+import { StockUpdatesFilters } from "@/features/stock-updates/components/table/stock-updates-table-filters";
 import { StockTable } from "@/features/stock-updates/components/table/stock-update-table";
 import { Spinner } from "@synq/ui/component";
 // Services
@@ -61,7 +61,7 @@ export default function StockUpdatesPage() {
     <div className="h-full flex flex-col bg-background">
       {/* Filters Row */}
       <div className="flex items-center justify-between p-2 border-b">
-        <TransactionsFilters
+        <StockUpdatesFilters
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
         />

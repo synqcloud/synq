@@ -14,15 +14,15 @@ import {
 } from "@synq/ui/component";
 import { Calendar as CalendarIcon, X } from "lucide-react";
 
-interface TransactionsFiltersProps {
+interface StockUpdatesFiltersProps {
   dateRange: { start: Date | null; end: Date | null };
   onDateRangeChange: (range: { start: Date | null; end: Date | null }) => void;
 }
 
-export function TransactionsFilters({
+export function StockUpdatesFilters({
   dateRange,
   onDateRangeChange,
-}: TransactionsFiltersProps) {
+}: StockUpdatesFiltersProps) {
   const [open, setOpen] = useState(false);
   const hasDateFilter = !!dateRange.start || !!dateRange.end;
 

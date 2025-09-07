@@ -16,30 +16,30 @@ DECLARE
     start_date DATE := date_trunc('month', current_date) - INTERVAL '1 month' * (p_months - 1);
 BEGIN
     -- Monthly revenue & profit (last N months)
-    -- Note: Assuming SALE orders have positive net_amount
+    -- Note: Assuming SALE transactions have positive net_amount
     monthly := (
         SELECT json_agg(row_to_json(t))
         FROM (
             SELECT
-                to_char(date_trunc('month', o.created_at), 'Mon') AS month,
-                COALESCE(SUM(CASE WHEN o.net_amount > 0 THEN uoi.quantity * uoi.unit_price END), 0) AS revenue,
-                COALESCE(SUM(CASE WHEN o.net_amount > 0 THEN uoi.quantity * COALESCE(ucs.cogs, 0) END), 0) AS cost,
-                COALESCE(SUM(CASE WHEN o.net_amount > 0 THEN uoi.quantity * uoi.unit_price END), 0) -
-                COALESCE(SUM(CASE WHEN o.net_amount > 0 THEN uoi.quantity * COALESCE(ucs.cogs, 0) END), 0) AS profit
-            FROM public.user_orders o
-            LEFT JOIN public.user_order_items uoi
-                ON o.id = uoi.order_id
+                to_char(date_trunc('month', t.created_at), 'Mon') AS month,
+                COALESCE(SUM(CASE WHEN t.net_amount > 0 THEN uti.quantity * uti.unit_price END), 0) AS revenue,
+                COALESCE(SUM(CASE WHEN t.net_amount > 0 THEN uti.quantity * COALESCE(ucs.cogs, 0) END), 0) AS cost,
+                COALESCE(SUM(CASE WHEN t.net_amount > 0 THEN uti.quantity * uti.unit_price END), 0) -
+                COALESCE(SUM(CASE WHEN t.net_amount > 0 THEN uti.quantity * COALESCE(ucs.cogs, 0) END), 0) AS profit
+            FROM public.user_transaction t
+            LEFT JOIN public.user_transaction_items uti
+                ON t.id = uti.transaction_id
             LEFT JOIN public.user_card_stock ucs
-                ON uoi.stock_id = ucs.id
-            WHERE o.user_id = p_user_id
-              AND o.created_at >= start_date
-            GROUP BY date_trunc('month', o.created_at)
-            ORDER BY date_trunc('month', o.created_at)
+                ON uti.stock_id = ucs.id
+            WHERE t.user_id = p_user_id
+              AND t.created_at >= start_date
+            GROUP BY date_trunc('month', t.created_at)
+            ORDER BY date_trunc('month', t.created_at)
         ) t
     );
 
     -- Top performing stock (all-time by total sold)
-    -- Note: Assuming sales orders have positive net_amount
+    -- Note: Assuming sales transactions have positive net_amount
     top_stock := (
         SELECT json_agg(row_to_json(c))
         FROM (
@@ -47,28 +47,28 @@ BEGIN
                 ucs.id AS stock_id,
                 ucs.core_card_id,
                 cc.name AS card_name,
-                SUM(uoi.quantity) AS sold_count,
-                SUM(uoi.quantity * uoi.unit_price) AS revenue,
+                SUM(uti.quantity) AS sold_count,
+                SUM(uti.quantity * uti.unit_price) AS revenue,
                 CASE
-                    WHEN SUM(uoi.quantity * uoi.unit_price) = 0 THEN 0
+                    WHEN SUM(uti.quantity * uti.unit_price) = 0 THEN 0
                     ELSE ROUND(
-                        (SUM(uoi.quantity * uoi.unit_price) - SUM(COALESCE(ucs.cogs, 0) * uoi.quantity))::numeric
-                        / SUM(uoi.quantity * uoi.unit_price) * 100, 2
+                        (SUM(uti.quantity * uti.unit_price) - SUM(COALESCE(ucs.cogs, 0) * uti.quantity))::numeric
+                        / SUM(uti.quantity * uti.unit_price) * 100, 2
                     )
                 END AS margin_pct,
                 ROUND(
-                    SUM(uoi.quantity) / GREATEST(EXTRACT(DAY FROM (current_date - MIN(o.created_at))) + 1, 1),
+                    SUM(uti.quantity) / GREATEST(EXTRACT(DAY FROM (current_date - MIN(t.created_at))) + 1, 1),
                     1
                 ) AS per_day
-            FROM public.user_order_items uoi
-            JOIN public.user_orders o
-                ON uoi.order_id = o.id
+            FROM public.user_transaction_items uti
+            JOIN public.user_transaction t
+                ON uti.transaction_id = t.id
             JOIN public.user_card_stock ucs
-                ON uoi.stock_id = ucs.id
+                ON uti.stock_id = ucs.id
             JOIN public.core_cards cc
                 ON ucs.core_card_id = cc.id
-            WHERE o.user_id = p_user_id
-              AND o.net_amount > 0  -- Assuming positive net_amount indicates sales
+            WHERE t.user_id = p_user_id
+              AND t.net_amount > 0  -- Assuming positive net_amount indicates sales
             GROUP BY ucs.id, ucs.core_card_id, cc.name
             ORDER BY sold_count DESC, per_day DESC
             LIMIT 10

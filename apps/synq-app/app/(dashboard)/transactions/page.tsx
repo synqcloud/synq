@@ -1,46 +1,30 @@
 "use client";
 // Core
-import { useEffect, useState, useMemo } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 // Components
-import { TransactionsFilters } from "@/domains/transactions/components";
-import { OrdersTable } from "@/features/transactions/components/table/orders-table";
-import { Spinner } from "@synq/ui/component";
+import { TransactionTable } from "@/features/transactions/components/table/transaction-table";
+import { Button, HStack, Spinner } from "@synq/ui/component";
 // Services
-import { OrderService } from "@synq/supabase/services";
+import { TransactionService } from "@synq/supabase/services";
 
 export default function TransactionsPage() {
-  const [dateRange, setDateRange] = useState<{
-    start: Date | null;
-    end: Date | null;
-  }>({
-    start: null,
-    end: null,
-  });
-
-  const filters = useMemo(
-    () => ({
-      startDate: dateRange.start || undefined,
-      endDate: dateRange.end || undefined,
-    }),
-    [dateRange],
-  );
-
   useEffect(() => {
-    document.title = "Orders";
+    document.title = "Transactions";
   }, []);
 
+  // Fetch transactions without source filter
   const {
     data: transactions = [],
-    isLoading,
+    isLoading: transactionsLoading,
     error,
   } = useQuery({
-    queryKey: ["userTransactions", filters],
-    queryFn: () => OrderService.fetchUserOrders("client", filters),
+    queryKey: ["userTransactions"],
+    queryFn: () => TransactionService.fetchUserTransactions("client"),
     staleTime: 60_000,
   });
 
-  if (isLoading) {
+  if (transactionsLoading) {
     return (
       <div className="h-full flex items-center justify-center">
         <Spinner />
@@ -48,6 +32,7 @@ export default function TransactionsPage() {
     );
   }
 
+  // TODO: Refactor empty placeholder
   if (error) {
     return (
       <div className="h-full flex items-center justify-center text-red-500">
@@ -57,20 +42,15 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Filters Row */}
-      <div className="flex items-center justify-between p-2 border-b">
-        <TransactionsFilters
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-        />
-      </div>
-
-      {/* Orders Content */}
-      <div className="flex-1 p-4 overflow-auto min-h-0">
-        <div className="overflow-x-auto w-full">
-          <OrdersTable transactions={transactions} />
-        </div>
+    <div className="p-4">
+      <HStack align="center" justify="between" className="p-2">
+        <div /> {/* Empty div to maintain layout */}
+        <Button size="sm" variant="outline">
+          Add record
+        </Button>
+      </HStack>
+      <div className="h-full overflow-y-scroll md:p-4">
+        <TransactionTable transactions={transactions} />
       </div>
     </div>
   );
