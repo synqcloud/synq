@@ -9,7 +9,7 @@ import { Search } from "lucide-react";
 // Utils
 import { cn } from "@synq/ui/utils";
 
-export function StockRow({ update }: { update: StockUpdateWithCard }) {
+export function StockUpdateRow({ update }: { update: StockUpdateWithCard }) {
   const isPositive = update.quantity_change > 0;
   return (
     <TableRow

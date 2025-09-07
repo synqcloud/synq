@@ -92,6 +92,7 @@ export function TransactionTableRow({
           <MarketplaceIcon
             marketplace={order.source || "Manual"}
             isIntegration={order.is_integration}
+            showLabel={true}
           />
         </TableCell>
 

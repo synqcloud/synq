@@ -159,55 +159,26 @@ export type Database = {
           },
         ]
       }
-      user_card_listings: {
+      marketplaces: {
         Row: {
           created_at: string | null
-          currency: string | null
           id: string
-          last_synced_at: string | null
-          listed_price: number | null
-          listed_quantity: number
-          listing_url: string | null
-          marketplace: Database["public"]["Enums"]["marketplace_type"]
-          marketplace_listing_id: string | null
-          stock_id: string
+          name: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
-          currency?: string | null
           id?: string
-          last_synced_at?: string | null
-          listed_price?: number | null
-          listed_quantity: number
-          listing_url?: string | null
-          marketplace: Database["public"]["Enums"]["marketplace_type"]
-          marketplace_listing_id?: string | null
-          stock_id: string
+          name: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
-          currency?: string | null
           id?: string
-          last_synced_at?: string | null
-          listed_price?: number | null
-          listed_quantity?: number
-          listing_url?: string | null
-          marketplace?: Database["public"]["Enums"]["marketplace_type"]
-          marketplace_listing_id?: string | null
-          stock_id?: string
+          name?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_card_listings_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "user_card_stock"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_card_stock: {
         Row: {
@@ -323,6 +294,45 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_stock_listings: {
+        Row: {
+          created_at: string | null
+          id: string
+          marketplace_id: string
+          stock_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          marketplace_id: string
+          stock_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          marketplace_id?: string
+          stock_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stock_listings_marketplace_id_fkey"
+            columns: ["marketplace_id"]
+            isOneToOne: false
+            referencedRelation: "marketplaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_stock_listings_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "user_card_stock"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_stock_updates: {
         Row: {
@@ -495,6 +505,18 @@ export type Database = {
       }
     }
     Functions: {
+      get_card_stock: {
+        Args: {
+          p_core_card_id: string
+        }
+        Returns: {
+          stock_id: string
+          quantity: number
+          condition: string
+          grading: string
+          marketplaces: string[]
+        }[]
+      }
       get_user_marketplaces: {
         Args: {
           p_user_id: string
@@ -537,7 +559,6 @@ export type Database = {
       }
     }
     Enums: {
-      marketplace_type: "CardTrader" | "TCGplayer" | "eBay"
       transaction_status: "PENDING" | "IN_PROGRESS" | "COMPLETED"
       transaction_type: "sale" | "purchase" | "grading_submit" | "refund"
     }

@@ -6,14 +6,14 @@ export type CoreLibrary = Database["public"]["Tables"]["core_libraries"]["Row"];
 export type CoreSet = Database["public"]["Tables"]["core_sets"]["Row"];
 export type CoreCard = Database["public"]["Tables"]["core_cards"]["Row"];
 export type UserStock = Database["public"]["Tables"]["user_card_stock"]["Row"];
-export type UserCardListing =
-  Database["public"]["Tables"]["user_card_listings"]["Row"];
+export type UserStockListings =
+  Database["public"]["Tables"]["user_stock_listings"]["Row"];
 
 export type PublicCard = CoreCard & UserStock;
 
 // Enhanced UserStock type with marketplace listings
 export type UserStockWithListings = UserStock & {
-  user_card_listings?: UserCardListing[];
+  user_stock_listings?: UserStockListings[];
 };
 
 export class InventoryService extends ServiceBase {
@@ -244,18 +244,13 @@ export class InventoryService extends ServiceBase {
     return this.execute(
       async () => {
         const client = await this.getClient(context);
-        const { data, error } = await client
-          .from("user_card_stock")
-          .select(
-            `
-            *,
-            user_card_listings(*)
-          `,
-          )
-          .eq("core_card_id", cardId)
-          .eq("user_id", userId);
+
+        const { data, error } = await client.rpc("get_card_stock", {
+          p_core_card_id: cardId,
+        });
 
         if (error) throw error;
+
         return data || [];
       },
       {
@@ -267,133 +262,38 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
-   * Get marketplace listings for a specific stock entry
+   * Get list of available marketplaces
    */
-  static async fetchListingsByStock(
+  static async getAvailableMarketplaces(
+    context: "client" | "server" = "client",
+  ): Promise<string[]> {
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data, error } = await client
+          .from("marketplaces")
+          .select("name")
+          .order("name", { ascending: true });
+
+        if (error) throw error;
+
+        return (data || []).map((marketplace) => marketplace.name);
+      },
+      {
+        service: "InventoryService",
+        method: "getAvailableMarketplaces",
+      },
+    );
+  }
+
+  /**
+   * Add marketplace to stock item
+   */
+  static async addMarketplaceToStock(
     context: "client" | "server" = "client",
     stockId: string,
-  ): Promise<UserCardListing[]> {
-    const userId = await this.getCurrentUserId(context);
-
-    return this.execute(
-      async () => {
-        const client = await this.getClient(context);
-        const { data, error } = await client
-          .from("user_card_listings")
-          .select(
-            `
-            *,
-            user_card_stock!inner(user_id)
-          `,
-          )
-          .eq("stock_id", stockId)
-          .eq("user_card_stock.user_id", userId);
-
-        if (error) throw error;
-        return data || [];
-      },
-      {
-        service: "InventoryService",
-        method: "fetchListingsByStock",
-        userId: userId || undefined,
-      },
-    );
-  }
-
-  /**
-   * Create a new marketplace listing
-   */
-  static async createListing(
-    context: "client" | "server" = "client",
-    listing: Omit<
-      UserCardListing,
-      "id" | "created_at" | "updated_at" | "last_synced_at"
-    >,
-  ): Promise<UserCardListing> {
-    const userId = await this.getCurrentUserId(context);
-
-    return this.execute(
-      async () => {
-        const client = await this.getClient(context);
-
-        // Verify the stock belongs to the user
-        const { data: stockCheck, error: stockError } = await client
-          .from("user_card_stock")
-          .select("user_id")
-          .eq("id", listing.stock_id)
-          .single();
-
-        if (stockError || stockCheck.user_id !== userId) {
-          throw new Error("Unauthorized: Stock does not belong to user");
-        }
-
-        const { data, error } = await client
-          .from("user_card_listings")
-          .insert(listing)
-          .select()
-          .single();
-
-        if (error) throw error;
-        return data;
-      },
-      {
-        service: "InventoryService",
-        method: "createListing",
-        userId: userId || undefined,
-      },
-    );
-  }
-
-  /**
-   * Update an existing marketplace listing
-   */
-  static async updateListing(
-    context: "client" | "server" = "client",
-    listingId: string,
-    updates: Partial<Omit<UserCardListing, "id" | "stock_id" | "created_at">>,
-  ): Promise<UserCardListing> {
-    const userId = await this.getCurrentUserId(context);
-
-    return this.execute(
-      async () => {
-        const client = await this.getClient(context);
-
-        const { data, error } = await client
-          .from("user_card_listings")
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", listingId)
-          .select(
-            `
-            *,
-            user_card_stock!inner(user_id)
-          `,
-          )
-          .single();
-
-        if (error) throw error;
-        if ((data as any).user_card_stock.user_id !== userId) {
-          throw new Error("Unauthorized: Listing does not belong to user");
-        }
-
-        return data;
-      },
-      {
-        service: "InventoryService",
-        method: "updateListing",
-        userId: userId || undefined,
-      },
-    );
-  }
-
-  /**
-   * Delete a marketplace listing
-   */
-  static async deleteListing(
-    context: "client" | "server" = "client",
-    listingId: string,
+    marketplace: string,
   ): Promise<void> {
     const userId = await this.getCurrentUserId(context);
 
@@ -401,33 +301,68 @@ export class InventoryService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
 
-        // Verify ownership before deletion
-        const { data: listing, error: fetchError } = await client
-          .from("user_card_listings")
-          .select(
-            `
-            id,
-            user_card_stock!inner(user_id)
-          `,
-          )
-          .eq("id", listingId)
+        // First, get the marketplace ID by name
+        const { data: marketplaceData, error: marketplaceError } = await client
+          .from("marketplaces")
+          .select("id")
+          .eq("name", marketplace)
           .single();
 
-        if (fetchError) throw fetchError;
-        if ((listing as any).user_card_stock.user_id !== userId) {
-          throw new Error("Unauthorized: Listing does not belong to user");
-        }
+        if (marketplaceError) throw marketplaceError;
 
-        const { error } = await client
-          .from("user_card_listings")
-          .delete()
-          .eq("id", listingId);
+        // Create a new listing for this stock item and marketplace
+        const { error: listingError } = await client
+          .from("user_stock_listings")
+          .insert({
+            stock_id: stockId,
+            marketplace_id: marketplaceData.id,
+          });
 
-        if (error) throw error;
+        if (listingError) throw listingError;
       },
       {
         service: "InventoryService",
-        method: "deleteListing",
+        method: "addMarketplaceToStock",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Remove marketplace from stock item
+   */
+  static async removeMarketplaceFromStock(
+    context: "client" | "server" = "client",
+    stockId: string,
+    marketplace: string,
+  ): Promise<void> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        // First, get the marketplace ID by name
+        const { data: marketplaceData, error: marketplaceError } = await client
+          .from("marketplaces")
+          .select("id")
+          .eq("name", marketplace)
+          .single();
+
+        if (marketplaceError) throw marketplaceError;
+
+        // Delete the listing for this stock item and marketplace
+        const { error: deleteError } = await client
+          .from("user_stock_listings")
+          .delete()
+          .eq("stock_id", stockId)
+          .eq("marketplace_id", marketplaceData.id);
+
+        if (deleteError) throw deleteError;
+      },
+      {
+        service: "InventoryService",
+        method: "removeMarketplaceFromStock",
         userId: userId || undefined,
       },
     );

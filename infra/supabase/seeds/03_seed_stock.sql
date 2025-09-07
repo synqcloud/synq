@@ -1,5 +1,15 @@
 -- =============================================
--- Seed: large user stock (~5000 items)
+-- Seed: Marketplaces
+-- =============================================
+INSERT INTO public.marketplaces (name, created_at, updated_at)
+VALUES
+    ('TCGplayer', NOW(), NOW()),
+    ('CardMarket', NOW(), NOW()),
+    ('CardTrader', NOW(), NOW())
+ON CONFLICT (name) DO NOTHING;
+
+-- =============================================
+-- Seed: Large user stock (~5000 items)
 -- =============================================
 DO $$
 DECLARE
@@ -10,7 +20,6 @@ BEGIN
     SELECT id INTO test_user_uuid
     FROM auth.users
     WHERE email = 'test@synq.com';
-
     IF test_user_uuid IS NULL THEN
         RAISE EXCEPTION 'Test user not found. Run user seed first.';
     END IF;
@@ -18,7 +27,6 @@ BEGIN
     -- Count available core cards
     SELECT COUNT(*) INTO core_card_count
     FROM public.core_cards;
-
     IF core_card_count = 0 THEN
         RAISE EXCEPTION 'No core cards found. Seed core cards first.';
     END IF;
@@ -51,44 +59,46 @@ BEGIN
 END $$;
 
 -- =============================================
--- Seed user_card_listings for test user
+-- Seed: user_stock_listings for test user
 -- =============================================
 DO $$
 DECLARE
     stock_rec RECORD;
-    marketplaces TEXT[] := ARRAY['CardTrader','TCGplayer','eBay'];
-    random_marketplace TEXT;
+    marketplace_rec RECORD;
+    marketplace_ids UUID[];
+    selected_marketplace_id UUID;
+    num_marketplaces INT;
 BEGIN
+    -- Get all marketplace IDs
+    SELECT ARRAY(SELECT id FROM public.marketplaces ORDER BY name) INTO marketplace_ids;
+
+    -- For each stock item, create listings on 1-2 random marketplaces
     FOR stock_rec IN
         SELECT id FROM public.user_card_stock
         WHERE user_id = (SELECT id FROM auth.users WHERE email = 'test@synq.com')
     LOOP
-        -- Assign 1-2 random marketplaces for each stock item
-        FOR i IN 1..(floor(random()*2)+1) LOOP
-            random_marketplace := marketplaces[floor(random()*3 + 1)];
+        -- Randomly choose how many marketplaces (1-2)
+        num_marketplaces := floor(random()*2)+1;
 
-            -- Insert listing
-            INSERT INTO public.user_card_listings (
+        -- Create listings for random marketplaces
+        FOR i IN 1..num_marketplaces LOOP
+            -- Select a random marketplace
+            selected_marketplace_id := marketplace_ids[floor(random()*array_length(marketplace_ids, 1))+1];
+
+            -- Insert listing (using ON CONFLICT to avoid duplicates)
+            INSERT INTO public.user_stock_listings (
                 stock_id,
-                marketplace,
-                marketplace_listing_id,
-                listed_quantity,
-                listed_price,
-                currency,
+                marketplace_id,
                 created_at,
                 updated_at
             )
             VALUES (
                 stock_rec.id,
-                random_marketplace::marketplace_type,
-                md5(random()::text || clock_timestamp()::text), -- random listing ID
-                floor(random()*5)+1,                              -- quantity 1-5
-                round((random()*200)::numeric,2),                 -- price 0-200
-                'USD',
+                selected_marketplace_id,
                 NOW(),
                 NOW()
             )
-            ON CONFLICT (stock_id, marketplace) DO NOTHING; -- evita duplicados
+            ON CONFLICT (stock_id, marketplace_id) DO NOTHING;
         END LOOP;
     END LOOP;
 END $$;

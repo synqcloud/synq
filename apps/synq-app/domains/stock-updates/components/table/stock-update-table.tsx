@@ -1,5 +1,5 @@
 import { BaseTable, Column } from "@/shared/table/base-table";
-import { StockRow } from "./stock-update-row";
+import { StockUpdateRow } from "./stock-update-row";
 import { StockUpdateWithCard } from "@synq/supabase/services";
 
 // Columns must match the TableCells in StockRow
@@ -19,7 +19,9 @@ export function StockTable({ updates }: { updates: StockUpdateWithCard[] }) {
     <BaseTable<StockUpdateWithCard>
       data={updates}
       columns={stockColumns}
-      renderRowAction={(update) => <StockRow key={update.id} update={update} />}
+      renderRowAction={(update) => (
+        <StockUpdateRow key={update.id} update={update} />
+      )}
     />
   );
 }

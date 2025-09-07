@@ -1,6 +1,6 @@
--- Migration: 20250811_inventory_schema.sql
+-- Migration: 20250819_inventory_schema.sql
 -- Description: Inventory schema for card shops
--- Tables: user_card_stock,
+-- Tables: user_card_stock, marketplaces, user_stock_listings
 
 -- =============================================
 -- User Stock
@@ -35,96 +35,173 @@ CREATE TABLE IF NOT EXISTS public.user_card_stock (
     UNIQUE(user_id, core_card_id, condition, grading)
 );
 
-
-CREATE TYPE marketplace_type AS ENUM ('CardTrader', 'TCGplayer', 'eBay');
-
 -- =============================================
--- User Card Listings ( MARKETPLACES )
+-- Table: marketplaces
 -- =============================================
-CREATE TABLE IF NOT EXISTS public.user_card_listings (
+CREATE TABLE IF NOT EXISTS public.marketplaces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) UNIQUE NOT NULL,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =============================================
+-- Table: user_stock_listings
+-- =============================================
+CREATE TABLE IF NOT EXISTS public.user_stock_listings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     stock_id UUID NOT NULL REFERENCES public.user_card_stock(id) ON DELETE CASCADE,
-    marketplace marketplace_type NOT NULL, -- ENUM ahora
-    marketplace_listing_id VARCHAR(200),
-    listing_url TEXT,
-    listed_quantity INTEGER NOT NULL CHECK (listed_quantity >= 0),
+    marketplace_id UUID NOT NULL REFERENCES public.marketplaces(id),
+
+    external_id VARCHAR(200),
+
     listed_price DECIMAL(10,2),
-    currency VARCHAR(10) DEFAULT 'USD',
-    last_synced_at TIMESTAMPTZ DEFAULT NOW(),
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(stock_id, marketplace)
+
+    UNIQUE(stock_id, marketplace_id)
 );
+
+-- =============================================
+-- Function: get_card_stock
+-- =============================================
+CREATE OR REPLACE FUNCTION public.get_card_stock(p_core_card_id UUID)
+RETURNS TABLE(
+    stock_id UUID,
+    quantity INTEGER,
+    condition VARCHAR,
+    grading VARCHAR,
+    cogs DECIMAL,
+    sku VARCHAR,
+    location VARCHAR,
+    language VARCHAR,
+    updated_at TIMESTAMPTZ,
+    marketplaces TEXT[]
+)
+LANGUAGE sql
+AS $$
+    SELECT
+        ucs.id AS stock_id,
+        ucs.quantity,
+        ucs.condition,
+        ucs.grading,
+        ucs.cogs,
+        ucs.sku,
+        ucs.location,
+        ucs.language,
+        ucs.updated_at,
+        COALESCE(
+            ARRAY_AGG(DISTINCT m.name) FILTER (WHERE m.name IS NOT NULL),
+            '{}'
+        ) AS marketplaces
+    FROM public.user_card_stock ucs
+    LEFT JOIN public.user_stock_listings usl
+        ON usl.stock_id = ucs.id
+    LEFT JOIN public.marketplaces m
+        ON m.id = usl.marketplace_id
+    WHERE ucs.core_card_id = p_core_card_id
+      AND ucs.is_active = true
+      AND ucs.user_id = auth.uid()
+    GROUP BY ucs.id, ucs.quantity, ucs.condition, ucs.grading, ucs.cogs, ucs.sku, ucs.location, ucs.language, ucs.updated_at
+    ORDER BY ucs.created_at DESC;
+$$;
+
 
 -- =============================================
 -- Indexes for Performance
 -- =============================================
--- Indexes for quick joins for stock
-CREATE INDEX IF NOT EXISTS idx_user_card_listings_stock_id
-ON public.user_card_listings(stock_id);
 
--- Indexes to filter by marketplaces
-CREATE INDEX IF NOT EXISTS idx_user_card_listings_marketplace
-ON public.user_card_listings(marketplace);
+-- Indexes for user_card_stock
+CREATE INDEX IF NOT EXISTS idx_user_card_stock_user_id
+ON public.user_card_stock(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_card_stock_core_card_id
+ON public.user_card_stock(core_card_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_card_stock_active
+ON public.user_card_stock(is_active) WHERE is_active = true;
+
+-- Indexes for user_stock_listings
+CREATE INDEX IF NOT EXISTS idx_user_stock_listings_stock_id
+ON public.user_stock_listings(stock_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_stock_listings_marketplace_id
+ON public.user_stock_listings(marketplace_id);
+
+-- Indexes for marketplaces
+CREATE INDEX IF NOT EXISTS idx_marketplaces_name
+ON public.marketplaces(name);
 
 -- =============================================
 -- Row Level Security (RLS)
 -- =============================================
 
-
--- =============================================
--- Row Level Security (RLS) for user_card_listings
--- =============================================
-
--- Core tables (public read access)
+-- Enable RLS for user_card_stock
 ALTER TABLE public.user_card_stock ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies: User library access
+-- RLS Policies: User stock access
 DROP POLICY IF EXISTS "Users can view their own stock" ON public.user_card_stock;
 CREATE POLICY "Users can view their own stock" ON public.user_card_stock FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can create stock" ON public.user_card_stock;
 CREATE POLICY "Users can create stock" ON public.user_card_stock FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own stock" ON public.user_card_stock;
+CREATE POLICY "Users can update their own stock" ON public.user_card_stock FOR UPDATE USING (auth.uid() = user_id);
+
 DROP POLICY IF EXISTS "Users can delete their own stock" ON public.user_card_stock;
 CREATE POLICY "Users can delete their own stock" ON public.user_card_stock FOR DELETE USING (auth.uid() = user_id);
 
-ALTER TABLE public.user_card_listings ENABLE ROW LEVEL SECURITY;
+-- Enable RLS for user_stock_listings
+ALTER TABLE public.user_stock_listings ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their own listings
-DROP POLICY IF EXISTS "Users can view their own listings" ON public.user_card_listings;
+DROP POLICY IF EXISTS "Users can view their own listings" ON public.user_stock_listings;
 CREATE POLICY "Users can view their own listings"
-ON public.user_card_listings
+ON public.user_stock_listings
 FOR SELECT
 USING (
     stock_id IN (SELECT id FROM public.user_card_stock WHERE user_id = auth.uid())
 );
 
 -- Users can create listings only for their own stock
-DROP POLICY IF EXISTS "Users can create listings" ON public.user_card_listings;
+DROP POLICY IF EXISTS "Users can create listings" ON public.user_stock_listings;
 CREATE POLICY "Users can create listings"
-ON public.user_card_listings
+ON public.user_stock_listings
 FOR INSERT
 WITH CHECK (
     stock_id IN (SELECT id FROM public.user_card_stock WHERE user_id = auth.uid())
 );
 
 -- Users can update their own listings
-DROP POLICY IF EXISTS "Users can update their own listings" ON public.user_card_listings;
+DROP POLICY IF EXISTS "Users can update their own listings" ON public.user_stock_listings;
 CREATE POLICY "Users can update their own listings"
-ON public.user_card_listings
+ON public.user_stock_listings
 FOR UPDATE
 USING (
     stock_id IN (SELECT id FROM public.user_card_stock WHERE user_id = auth.uid())
 );
 
 -- Users can delete their own listings
-DROP POLICY IF EXISTS "Users can delete their own listings" ON public.user_card_listings;
+DROP POLICY IF EXISTS "Users can delete their own listings" ON public.user_stock_listings;
 CREATE POLICY "Users can delete their own listings"
-ON public.user_card_listings
+ON public.user_stock_listings
 FOR DELETE
 USING (
     stock_id IN (SELECT id FROM public.user_card_stock WHERE user_id = auth.uid())
 );
+
+-- Enable RLS for marketplaces (public read access)
+ALTER TABLE public.marketplaces ENABLE ROW LEVEL SECURITY;
+
+-- Allow all authenticated users to read marketplaces
+DROP POLICY IF EXISTS "Public read access to marketplaces" ON public.marketplaces;
+CREATE POLICY "Public read access to marketplaces"
+ON public.marketplaces
+FOR SELECT
+USING (auth.role() = 'authenticated');
 
 COMMIT;

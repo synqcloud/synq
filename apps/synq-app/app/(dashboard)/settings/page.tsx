@@ -17,16 +17,6 @@ type MotionDivProps = HTMLMotionProps<"div"> &
 // Create a typed motion.div component
 const MotionDiv = motion.div as React.ComponentType<MotionDivProps>;
 
-// Animation variants - more subtle
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: "easeOut" },
-  },
-};
-
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {

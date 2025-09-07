@@ -3,7 +3,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 
 // Components
-import StockRow from "./stock-row";
+import StockTableRow from "./stock-table-row";
 
 // Services
 import { InventoryService, UserStock } from "@synq/supabase/services";
@@ -56,13 +56,19 @@ export default function StockTable({ cardId }: { cardId: string }) {
   }
 
   return (
-    <div className="bg-background">
+    <div className="bg-background w-full">
       {/* Desktop Headers for Stock Details */}
       <div
-        className="hidden md:block px-4 py-2 bg-muted text-sm font-medium text-muted-foreground border-b"
+        className="hidden md:block px-4 py-2 bg-muted text-sm font-medium text-muted-foreground border-b w-full"
         style={{ paddingLeft: `${64 + 3 * 24}px` }}
       >
-        <div className="grid grid-cols-9 gap-4">
+        <div
+          className="grid gap-2 text-sm w-full"
+          style={{
+            gridTemplateColumns:
+              "minmax(40px, 1fr) minmax(80px, 1.5fr) minmax(60px, 1fr) minmax(60px, 1fr) minmax(80px, 1.5fr) minmax(80px, 1.5fr) minmax(60px, 1fr) minmax(120px, 2fr) minmax(70px, 1fr) minmax(80px, 1fr)",
+          }}
+        >
           <span>Qty</span>
           <span>Condition</span>
           <span>Grading</span>
@@ -70,16 +76,17 @@ export default function StockTable({ cardId }: { cardId: string }) {
             Cost (COGS)
           </span>
           <span>SKU</span>
-          <span>Language</span>
           <span>Location</span>
-          <span>Updated</span>
+          <span>Language</span>
+          <span>Marketplaces</span>
+
           <span>Actions</span>
         </div>
       </div>
 
       {/* Stock Details */}
       {stockItems.map((stock: UserStock) => (
-        <StockRow key={stock.id} stock={stock} cardId={cardId} />
+        <StockTableRow key={stock.stock_id} stock={stock} cardId={cardId} />
       ))}
     </div>
   );
