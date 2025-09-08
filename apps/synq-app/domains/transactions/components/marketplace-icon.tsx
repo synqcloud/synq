@@ -33,6 +33,8 @@ export function MarketplaceIcon({
       return "/whatnot.svg";
     } else if (lowerMarketplace.includes("ebay")) {
       return "/ebay.svg";
+    } else if (lowerMarketplace.includes("shopify")) {
+      return "/shopify.svg";
     } else if (lowerMarketplace.includes("cardtrader")) {
       return "/cardtrader.svg";
     }

@@ -8,6 +8,7 @@ export {
   type CoreSet,
   type CoreCard,
   type UserStock,
+  type UserStockWithListings,
 } from "./inventory-service";
 export {
   TransactionService,

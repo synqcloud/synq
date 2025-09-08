@@ -1,12 +1,13 @@
 // Core
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-
 // Components
 import StockTableRow from "./stock-table-row";
-
 // Services
-import { InventoryService, UserStock } from "@synq/supabase/services";
+import {
+  InventoryService,
+  UserStockWithListings,
+} from "@synq/supabase/services";
 
 export default function StockTable({ cardId }: { cardId: string }) {
   const { data: stockItems, isLoading } = useQuery({
@@ -85,7 +86,7 @@ export default function StockTable({ cardId }: { cardId: string }) {
       </div>
 
       {/* Stock Details */}
-      {stockItems.map((stock: UserStock) => (
+      {stockItems.map((stock: UserStockWithListings) => (
         <StockTableRow key={stock.stock_id} stock={stock} cardId={cardId} />
       ))}
     </div>

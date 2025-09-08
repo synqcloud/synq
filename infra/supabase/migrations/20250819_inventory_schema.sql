@@ -79,7 +79,8 @@ RETURNS TABLE(
     location VARCHAR,
     language VARCHAR,
     updated_at TIMESTAMPTZ,
-    marketplaces TEXT[]
+    marketplaces TEXT[],
+    marketplace_prices JSONB
 )
 LANGUAGE sql
 AS $$
@@ -96,7 +97,14 @@ AS $$
         COALESCE(
             ARRAY_AGG(DISTINCT m.name) FILTER (WHERE m.name IS NOT NULL),
             '{}'
-        ) AS marketplaces
+        ) AS marketplaces,
+        COALESCE(
+            JSONB_OBJECT_AGG(
+                m.name,
+                usl.listed_price
+            ) FILTER (WHERE m.name IS NOT NULL),
+            '{}'::jsonb
+        ) AS marketplace_prices
     FROM public.user_card_stock ucs
     LEFT JOIN public.user_stock_listings usl
         ON usl.stock_id = ucs.id

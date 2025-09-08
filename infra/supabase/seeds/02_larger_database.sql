@@ -128,7 +128,7 @@ lorcana_card_data AS (
         SELECT DISTINCT ON (core_set_id, character_name, variant_name)
             '550e8400-e29b-41d4-a716-446655440001'::uuid AS core_library_id,
             s.id AS core_set_id,
-            (c.character_name || ' - ' || v.variant_name || ' (' || s.name || ')') AS name,
+            (c.character_name || ' - ' || v.variant_name) AS name,
             r.rarity,
             ('https://example.com/lorcana/' || LOWER(REPLACE(REPLACE(c.character_name || '-' || v.variant_name, ' ', '-'), '''', '')) || '.jpg') AS image_url,
             c.character_name,
@@ -213,24 +213,30 @@ pokemon_sets AS (
 -- Generate Pokémon card combinations
 pokemon_card_data AS (
     SELECT
-        ('550e8400-e29b-41d4-a716-4466554' || LPAD((50400 + ROW_NUMBER() OVER(ORDER BY core_set_id, name))::text, 5, '0'))::uuid AS id,
+        ('550e8400-e29b-41d4-a716-4466554' || LPAD((50400 + ROW_NUMBER() OVER(ORDER BY core_set_id, base_name, hash_val))::text, 5, '0'))::uuid AS id,
         core_library_id,
         core_set_id,
         name,
         rarity,
         image_url
     FROM (
-        SELECT DISTINCT ON (core_set_id, pokemon_name, variant)
+        SELECT
             '550e8400-e29b-41d4-a716-446655440002'::uuid AS core_library_id,
             s.id AS core_set_id,
             CASE
-                WHEN v.variant = '' THEN p.pokemon_name || ' (' || s.name || ')'
-                ELSE p.pokemon_name || ' ' || v.variant || ' (' || s.name || ')'
-            END AS name,
+                WHEN v.variant = '' THEN p.pokemon_name
+                ELSE p.pokemon_name || ' ' || v.variant
+            END AS base_name,
+            (CASE
+                WHEN v.variant = '' THEN p.pokemon_name
+                ELSE p.pokemon_name || ' ' || v.variant
+            END ||
+             CASE WHEN COUNT(*) OVER (PARTITION BY s.id, CASE WHEN v.variant = '' THEN p.pokemon_name ELSE p.pokemon_name || ' ' || v.variant END) > 1
+                  THEN ' (' || ROW_NUMBER() OVER (PARTITION BY s.id, CASE WHEN v.variant = '' THEN p.pokemon_name ELSE p.pokemon_name || ' ' || v.variant END ORDER BY r.rarity) || ')'
+                  ELSE ''
+             END) AS name,
             r.rarity,
             ('https://example.com/pokemon/' || LOWER(REPLACE(REPLACE(p.pokemon_name || CASE WHEN v.variant = '' THEN '' ELSE '-' || v.variant END, ' ', '-'), '''', '')) || '.jpg') AS image_url,
-            p.pokemon_name,
-            v.variant,
             (ABS(HASHTEXT(p.pokemon_name || v.variant || s.name || r.rarity)) % 100) as hash_val
         FROM pokemon_names p
         CROSS JOIN pokemon_variants v
@@ -239,8 +245,7 @@ pokemon_card_data AS (
         WHERE (ABS(HASHTEXT(p.pokemon_name || v.variant || s.name || r.rarity)) % 100) < (r.weight * 2)
           AND NOT (v.variant IN ('ex', 'GX', 'V', 'VMAX', 'VSTAR') AND s.name IN ('Base Set', 'Jungle', 'Fossil', 'Team Rocket'))
           AND NOT (v.variant IN ('Team Plasma', 'Team Aqua''s', 'Team Magma''s') AND s.name NOT LIKE '%Team%')
-        ORDER BY core_set_id, pokemon_name, variant, hash_val
-    ) deduplicated
+    ) subquery
 )
 INSERT INTO public.core_cards (id, core_library_id, core_set_id, name, rarity, image_url)
 SELECT id, core_library_id, core_set_id, name, rarity, image_url

@@ -1,18 +1,21 @@
 // Core
 import React, { useState } from "react";
 // Components
-import { UserStock } from "@synq/supabase/services";
-import { MarketplaceIcon } from "@/features/transactions/components";
-import { HStack, Button } from "@synq/ui/component";
 import {
   TooltipProvider,
   Tooltip,
   TooltipTrigger,
   TooltipContent,
+  Button,
+  HStack,
+  VStack,
 } from "@synq/ui/component";
 import { Plus } from "lucide-react";
-import { AddMarketplaceDialog } from "./add-marketplace-dialog";
+import { AddMarketplaceDialog } from "./marketplace/add-marketplace-dialog";
 import { StockTableActions } from "./stock-table-actions";
+import { MarketplaceListingPopover } from "./marketplace/marketplace-listing-popover";
+// Services
+import { UserStockWithListings } from "@synq/supabase/services";
 
 // Optimized condition styling
 const conditionColors: Record<string, string> = {
@@ -25,7 +28,7 @@ export default function StockTableRow({
   stock,
   cardId,
 }: {
-  stock: UserStock;
+  stock: UserStockWithListings;
   cardId: string;
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -44,6 +47,10 @@ export default function StockTableRow({
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
   };
+
+  // Get marketplace prices from stock data
+  const marketplacePrices = stock.marketplace_prices || {};
+
   return (
     <div className="bg-background w-full">
       {/* Desktop Stock Detail Row */}
@@ -72,14 +79,15 @@ export default function StockTableRow({
             <span className="text-foreground">{stock.sku || "-"}</span>
             <span className="text-foreground">{stock.location || "-"}</span>
             <span className="text-foreground">{stock.language || "-"}</span>
-            <TooltipProvider>
+            <TooltipProvider delayDuration={0}>
               <HStack gap={2} align="center" wrap="wrap">
                 {marketplaces.map((mp: string) => (
-                  <MarketplaceIcon
+                  <MarketplaceListingPopover
                     key={mp}
+                    stockId={stock.stock_id}
                     marketplace={mp}
-                    className="w-6 h-6"
-                    showTooltip={true}
+                    currentPrice={marketplacePrices[mp]}
+                    cardId={cardId}
                   />
                 ))}
                 <Tooltip>
@@ -106,9 +114,12 @@ export default function StockTableRow({
 
       {/* Mobile Stock Detail Card */}
       <div className="md:hidden">
-        <div className="px-4 py-3 border-b border-border bg-muted/50">
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex items-center gap-2">
+        <VStack
+          gap={2}
+          className="px-4 py-3 border-b border-border bg-muted/50"
+        >
+          <HStack justify="between" align="start" className="mb-2">
+            <HStack gap={2} align="center">
               <span className="font-medium text-lg">
                 {stock.quantity || "-"}
               </span>
@@ -132,53 +143,24 @@ export default function StockTableRow({
                   {stock.sku}
                 </span>
               )}
-            </div>
-          </div>
-          <div className="flex justify-between text-xs text-foreground mb-1">
+            </HStack>
+          </HStack>
+
+          <HStack justify="between" className="text-xs text-foreground mb-1">
             <span>{stock.location || "-"}</span>
             <span>{stock.language || "-"}</span>
-          </div>
-          <TooltipProvider>
-            <HStack gap={2} align="center" wrap="wrap" className="mb-2">
-              {marketplaces.map((mp: string) => (
-                <MarketplaceIcon
-                  key={mp}
-                  marketplace={mp}
-                  className="w-6 h-6"
-                  showTooltip={true}
-                />
-              ))}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="w-6 h-6 border-dashed hover:border-primary/50 hover:bg-primary/5"
-                    onClick={handleOpenDialog}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  Add marketplace
-                </TooltipContent>
-              </Tooltip>
-            </HStack>
-          </TooltipProvider>
-          <div className="flex justify-end">
-            <StockTableActions cardId={cardId} size="sm" />
-          </div>
-        </div>
+          </HStack>
+        </VStack>
       </div>
 
       {/* Add Marketplace Dialog */}
       <AddMarketplaceDialog
         open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        onOpenChangeAction={setIsDialogOpen}
         stockId={stock.stock_id}
         currentMarketplaces={marketplaces}
-        onMarketplaceAdded={handleMarketplaceAdded}
-        onMarketplaceRemoved={handleMarketplaceRemoved}
+        onMarketplaceAddedAction={handleMarketplaceAdded}
+        onMarketplaceRemovedAction={handleMarketplaceRemoved}
       />
     </div>
   );

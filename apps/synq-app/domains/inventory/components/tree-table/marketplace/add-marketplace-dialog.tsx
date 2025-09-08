@@ -12,29 +12,29 @@ import {
   Badge,
   HStack,
   VStack,
+  Input,
 } from "@synq/ui/component";
 import { MarketplaceIcon } from "@/features/transactions/components";
 import { InventoryService } from "@synq/supabase/services";
 import { Search, Check, Plus, X } from "lucide-react";
-import { Input } from "@synq/ui/component";
 import { cn } from "@synq/ui/utils";
 
 interface AddMarketplaceDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChangeAction: (open: boolean) => void;
   stockId: string;
   currentMarketplaces: string[];
-  onMarketplaceAdded: (marketplace: string) => void;
-  onMarketplaceRemoved: (marketplace: string) => void;
+  onMarketplaceAddedAction: (marketplace: string) => void;
+  onMarketplaceRemovedAction: (marketplace: string) => void;
 }
 
 export function AddMarketplaceDialog({
   open,
-  onOpenChange,
+  onOpenChangeAction,
   stockId,
   currentMarketplaces = [],
-  onMarketplaceAdded,
-  onMarketplaceRemoved,
+  onMarketplaceAddedAction,
+  onMarketplaceRemovedAction,
 }: AddMarketplaceDialogProps) {
   const [availableMarketplaces, setAvailableMarketplaces] = useState<string[]>(
     [],
@@ -48,7 +48,6 @@ export function AddMarketplaceDialog({
     [],
   );
 
-  // Load available marketplaces
   useEffect(() => {
     if (open) {
       loadMarketplaces();
@@ -68,7 +67,6 @@ export function AddMarketplaceDialog({
     }
   };
 
-  // Filter marketplaces based on search and current selections
   const filteredMarketplaces = availableMarketplaces.filter((marketplace) => {
     const matchesSearch = marketplace
       .toLowerCase()
@@ -97,30 +95,28 @@ export function AddMarketplaceDialog({
     try {
       setIsLoading(true);
 
-      // Add new marketplaces
       for (const marketplace of selectedMarketplaces) {
         await InventoryService.addMarketplaceToStock(
           "client",
           stockId,
           marketplace,
         );
-        onMarketplaceAdded(marketplace);
+        onMarketplaceAddedAction(marketplace);
       }
 
-      // Remove selected marketplaces
       for (const marketplace of marketplacesToRemove) {
         await InventoryService.removeMarketplaceFromStock(
           "client",
           stockId,
           marketplace,
         );
-        onMarketplaceRemoved(marketplace);
+        onMarketplaceRemovedAction(marketplace);
       }
 
       setSelectedMarketplaces([]);
       setMarketplacesToRemove([]);
       setSearchQuery("");
-      onOpenChange(false);
+      onOpenChangeAction(false);
     } catch (error) {
       console.error("Failed to update marketplaces:", error);
     } finally {
@@ -132,20 +128,20 @@ export function AddMarketplaceDialog({
     setSelectedMarketplaces([]);
     setMarketplacesToRemove([]);
     setSearchQuery("");
-    onOpenChange(false);
+    onOpenChangeAction(false);
   };
 
   const hasChanges =
     selectedMarketplaces.length > 0 || marketplacesToRemove.length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChangeAction}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <HStack gap={2} align="center">
             <Plus className="w-5 h-5 text-primary" />
-            Add Marketplaces
-          </DialogTitle>
+            <DialogTitle>Add Marketplaces</DialogTitle>
+          </HStack>
           <DialogDescription>
             Select marketplaces where you want to list this stock item.
           </DialogDescription>
@@ -165,8 +161,8 @@ export function AddMarketplaceDialog({
 
           {/* Selected Marketplaces */}
           {selectedMarketplaces.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium text-foreground mb-2">
+            <VStack gap={2}>
+              <h4 className="text-sm font-medium text-foreground">
                 Selected ({selectedMarketplaces.length})
               </h4>
               <HStack gap={2} wrap="wrap">
@@ -193,12 +189,12 @@ export function AddMarketplaceDialog({
                   </Badge>
                 ))}
               </HStack>
-            </div>
+            </VStack>
           )}
 
           {/* Available Marketplaces */}
-          <div>
-            <h4 className="text-sm font-medium text-foreground mb-2">
+          <VStack gap={2}>
+            <h4 className="text-sm font-medium text-foreground">
               Available Marketplaces
             </h4>
             <div className="max-h-48 overflow-y-auto border border-border rounded-md">
@@ -247,12 +243,12 @@ export function AddMarketplaceDialog({
                 </VStack>
               )}
             </div>
-          </div>
+          </VStack>
 
           {/* Current Marketplaces */}
           {currentMarketplaces.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">
+            <VStack gap={2}>
+              <h4 className="text-sm font-medium text-muted-foreground">
                 Current Marketplaces ({currentMarketplaces.length})
               </h4>
               <HStack gap={2} wrap="wrap">
@@ -297,7 +293,7 @@ export function AddMarketplaceDialog({
                 })}
               </HStack>
               {marketplacesToRemove.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground">
                   <span className="text-destructive">
                     {marketplacesToRemove.length}
                   </span>{" "}
@@ -305,7 +301,7 @@ export function AddMarketplaceDialog({
                   marked for removal. Click again to undo.
                 </p>
               )}
-            </div>
+            </VStack>
           )}
         </VStack>
 

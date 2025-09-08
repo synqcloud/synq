@@ -5,7 +5,8 @@ INSERT INTO public.marketplaces (name, created_at, updated_at)
 VALUES
     ('TCGplayer', NOW(), NOW()),
     ('CardMarket', NOW(), NOW()),
-    ('CardTrader', NOW(), NOW())
+    ('CardTrader', NOW(), NOW()),
+    ('Shopify', NOW(), NOW())
 ON CONFLICT (name) DO NOTHING;
 
 -- =============================================

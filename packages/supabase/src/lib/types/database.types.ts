@@ -298,21 +298,27 @@ export type Database = {
       user_stock_listings: {
         Row: {
           created_at: string | null
+          external_id: string | null
           id: string
+          listed_price: number | null
           marketplace_id: string
           stock_id: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          external_id?: string | null
           id?: string
+          listed_price?: number | null
           marketplace_id: string
           stock_id: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          external_id?: string | null
           id?: string
+          listed_price?: number | null
           marketplace_id?: string
           stock_id?: string
           updated_at?: string | null
@@ -514,7 +520,13 @@ export type Database = {
           quantity: number
           condition: string
           grading: string
+          cogs: number
+          sku: string
+          location: string
+          language: string
+          updated_at: string
           marketplaces: string[]
+          marketplace_prices: Json
         }[]
       }
       get_user_marketplaces: {

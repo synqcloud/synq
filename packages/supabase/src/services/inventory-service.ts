@@ -13,7 +13,8 @@ export type PublicCard = CoreCard & UserStock;
 
 // Enhanced UserStock type with marketplace listings
 export type UserStockWithListings = UserStock & {
-  user_stock_listings?: UserStockListings[];
+  marketplaces?: string[];
+  marketplace_prices?: Record<string, number | null>;
 };
 
 export class InventoryService extends ServiceBase {
@@ -363,6 +364,72 @@ export class InventoryService extends ServiceBase {
       {
         service: "InventoryService",
         method: "removeMarketplaceFromStock",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Update listing price for a marketplace
+   */
+  static async updateListingPrice(
+    context: "client" | "server" = "client",
+    stockId: string,
+    marketplace: string,
+    price: number | null,
+  ): Promise<void> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        // Gt the marketplace ID by name
+        const { data: marketplaceData, error: marketplaceError } = await client
+          .from("marketplaces")
+          .select("id")
+          .eq("name", marketplace)
+          .single();
+
+        if (marketplaceError) throw marketplaceError;
+
+        // Check if listing exists
+        const { data: existingListing, error: checkError } = await client
+          .from("user_stock_listings")
+          .select("id")
+          .eq("stock_id", stockId)
+          .eq("marketplace_id", marketplaceData.id)
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        if (existingListing) {
+          // Update existing listing
+          const { error: updateError } = await client
+            .from("user_stock_listings")
+            .update({
+              listed_price: price,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingListing.id);
+
+          if (updateError) throw updateError;
+        } else if (price !== null) {
+          // Create new listing if price is being set
+          const { error: insertError } = await client
+            .from("user_stock_listings")
+            .insert({
+              stock_id: stockId,
+              marketplace_id: marketplaceData.id,
+              listed_price: price,
+            });
+
+          if (insertError) throw insertError;
+        }
+      },
+      {
+        service: "InventoryService",
+        method: "updateListingPrice",
         userId: userId || undefined,
       },
     );
