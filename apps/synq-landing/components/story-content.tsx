@@ -83,7 +83,7 @@ export function StoryContent() {
         </Section>
 
         {/* Open Source Section */}
-        <Section className="space-y-4">
+        {/*<Section className="space-y-4">
           <h2 className="text-lg font-semibold tracking-[-0.01em] text-foreground mt-8">
             Open Source
           </h2>
@@ -103,7 +103,7 @@ export function StoryContent() {
               </Link>
             </p>
           </div>
-        </Section>
+        </Section>*/}
 
         {/* Soft visual separator before form headline */}
         <div className="flex justify-center items-center my-6">

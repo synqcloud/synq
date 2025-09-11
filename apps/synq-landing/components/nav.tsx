@@ -32,14 +32,14 @@ export function Nav() {
             Contact Us
           </a>
           <ThemeToggle />
-          <a
+          {/*<a
             href="https://github.com/synqcloud/synq"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <Github className="w-4 h-4" />
-          </a>
+          </a>*/}
         </div>
       </div>
     </nav>
