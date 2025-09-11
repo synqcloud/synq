@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.user_transaction_items (
     stock_id UUID NOT NULL REFERENCES public.user_card_stock(id) ON DELETE CASCADE,
 
     -- Number of cards/items affected
-    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    quantity INTEGER NOT NULL CHECK (quantity >= 0),
 
     -- Price per unit (sale or purchase)
     unit_price NUMERIC(10, 2) NOT NULL,
@@ -100,7 +100,6 @@ SELECT
     cl.name AS game_name,
     ucs.condition,
     ucs.cogs,
-    ucs.grading,
     ucs.language,
     ucs.sku,
     ucs.location

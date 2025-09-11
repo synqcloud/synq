@@ -103,11 +103,6 @@ export function TransactionItemsDisplay({
                     {item.condition}
                   </span>
                 )}
-                {item.grading && (
-                  <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">
-                    {item.grading}
-                  </span>
-                )}
                 {item.language && (
                   <span className="text-muted-foreground">{item.language}</span>
                 )}

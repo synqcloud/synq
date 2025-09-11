@@ -180,19 +180,112 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          marketplace_id: string
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          stock_audit_id: string
+          stock_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          marketplace_id: string
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          stock_audit_id: string
+          stock_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          marketplace_id?: string
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          stock_audit_id?: string
+          stock_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_marketplace_id_fkey"
+            columns: ["marketplace_id"]
+            isOneToOne: false
+            referencedRelation: "marketplaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_stock_audit_id_fkey"
+            columns: ["stock_audit_id"]
+            isOneToOne: false
+            referencedRelation: "stock_audit_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "user_card_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_audit_log: {
+        Row: {
+          change_type: string
+          created_at: string | null
+          id: string
+          performed_by: string | null
+          quantity_after: number
+          quantity_before: number
+          stock_id: string
+          user_id: string
+        }
+        Insert: {
+          change_type: string
+          created_at?: string | null
+          id?: string
+          performed_by?: string | null
+          quantity_after: number
+          quantity_before: number
+          stock_id: string
+          user_id: string
+        }
+        Update: {
+          change_type?: string
+          created_at?: string | null
+          id?: string
+          performed_by?: string | null
+          quantity_after?: number
+          quantity_before?: number
+          stock_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_audit_log_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "user_card_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_card_stock: {
         Row: {
           cogs: number | null
-          condition: string
+          condition: string | null
           core_card_id: string
           created_at: string | null
-          estimated_value: number | null
-          grading: string | null
           id: string
           is_active: boolean | null
-          language: string | null
+          language: string
           location: string | null
-          notes: string | null
           quantity: number
           sku: string | null
           updated_at: string | null
@@ -200,16 +293,13 @@ export type Database = {
         }
         Insert: {
           cogs?: number | null
-          condition?: string
+          condition?: string | null
           core_card_id: string
           created_at?: string | null
-          estimated_value?: number | null
-          grading?: string | null
           id?: string
           is_active?: boolean | null
-          language?: string | null
+          language?: string
           location?: string | null
-          notes?: string | null
           quantity?: number
           sku?: string | null
           updated_at?: string | null
@@ -217,16 +307,13 @@ export type Database = {
         }
         Update: {
           cogs?: number | null
-          condition?: string
+          condition?: string | null
           core_card_id?: string
           created_at?: string | null
-          estimated_value?: number | null
-          grading?: string | null
           id?: string
           is_active?: boolean | null
-          language?: string | null
+          language?: string
           location?: string | null
-          notes?: string | null
           quantity?: number
           sku?: string | null
           updated_at?: string | null
@@ -474,7 +561,6 @@ export type Database = {
           condition: string | null
           core_card_id: string | null
           game_name: string | null
-          grading: string | null
           item_id: string | null
           language: string | null
           location: string | null
@@ -519,7 +605,6 @@ export type Database = {
           stock_id: string
           quantity: number
           condition: string
-          grading: string
           cogs: number
           sku: string
           location: string
@@ -569,8 +654,32 @@ export type Database = {
           total_quantity: number
         }[]
       }
+      perform_stock_transaction: {
+        Args: {
+          p_stock_id: string
+          p_change_type: string
+          p_quantity_change?: number
+          p_quantity_new?: number
+          p_performed_by?: string
+          p_unit_price?: number
+          p_marketplace?: string
+          p_tax_amount?: number
+          p_shipping_amount?: number
+          p_net_amount?: number
+        }
+        Returns: {
+          quantity_before: number
+          quantity_after: number
+          discrepancy: boolean
+          transaction_id: string
+        }[]
+      }
     }
     Enums: {
+      notification_type:
+        | "discrepancy_stock"
+        | "price_update_suggestion"
+        | "general_alert"
       transaction_status: "PENDING" | "IN_PROGRESS" | "COMPLETED"
       transaction_type: "sale" | "purchase" | "grading_submit" | "refund"
     }

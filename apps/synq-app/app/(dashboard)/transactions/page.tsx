@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 // Components
 import { TransactionTable } from "@/features/transactions/components/table/transaction-table";
-import { Button, HStack, Spinner } from "@synq/ui/component";
+import {  Spinner } from "@synq/ui/component";
 // Services
 import { TransactionService } from "@synq/supabase/services";
 
@@ -42,16 +42,10 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="p-4">
-      <HStack align="center" justify="between" className="p-2">
-        <div /> {/* Empty div to maintain layout */}
-        <Button size="sm" variant="outline">
-          Add record
-        </Button>
-      </HStack>
-      <div className="h-full overflow-y-scroll md:p-4">
+    <>
+      <div className="h-full overflow-y-scroll p-4">
         <TransactionTable transactions={transactions} />
       </div>
-    </div>
+    </>
   );
 }

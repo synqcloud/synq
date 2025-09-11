@@ -21,6 +21,7 @@ BEGIN
     SELECT id INTO test_user_uuid
     FROM auth.users
     WHERE email = 'test@synq.com';
+
     IF test_user_uuid IS NULL THEN
         RAISE EXCEPTION 'Test user not found. Run user seed first.';
     END IF;
@@ -28,6 +29,7 @@ BEGIN
     -- Count available core cards
     SELECT COUNT(*) INTO core_card_count
     FROM public.core_cards;
+
     IF core_card_count = 0 THEN
         RAISE EXCEPTION 'No core cards found. Seed core cards first.';
     END IF;
@@ -38,9 +40,7 @@ BEGIN
         core_card_id,
         quantity,
         cogs,
-        estimated_value,
         condition,
-        grading,
         created_at,
         updated_at
     )
@@ -48,10 +48,8 @@ BEGIN
         test_user_uuid,
         id,
         floor(random()*5)+1,                -- quantity 1-5
-        round((random()*100)::numeric,2),   -- cogs
-        round((random()*200)::numeric,2),   -- estimated value
-        (ARRAY['Near Mint','Mint','Good','Poor'])[floor(random()*4+1)],
-        (ARRAY['Raw','PSA 10','PSA 9'])[floor(random()*3+1)],
+        round((random()*100)::numeric,2),   -- cogs $0-$100
+        (ARRAY['Near Mint','Lightly Played','Moderately Played','Heavily Played','Damaged'])[floor(random()*5)+1], -- random condition
         NOW(),
         NOW()
     FROM public.core_cards
@@ -65,7 +63,6 @@ END $$;
 DO $$
 DECLARE
     stock_rec RECORD;
-    marketplace_rec RECORD;
     marketplace_ids UUID[];
     selected_marketplace_id UUID;
     num_marketplaces INT;
@@ -90,12 +87,14 @@ BEGIN
             INSERT INTO public.user_stock_listings (
                 stock_id,
                 marketplace_id,
+                listed_price,
                 created_at,
                 updated_at
             )
             VALUES (
                 stock_rec.id,
                 selected_marketplace_id,
+                round((random()*200 + 10)::numeric, 2), -- listed_price between $10-$210
                 NOW(),
                 NOW()
             )

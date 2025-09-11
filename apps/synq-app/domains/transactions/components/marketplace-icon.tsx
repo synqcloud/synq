@@ -65,10 +65,13 @@ export function MarketplaceIcon({
     if (!showLabel) {
       return (
         <div className={cn("flex items-center gap-1", className)}>
-          <div className="w-6 h-6 bg-card border border-border rounded-md flex items-center justify-center shadow-sm">
+          <div className="w-6 h-6 bg-card border border-border rounded-md flex items-center justify-center shadow-sm relative">
             <span className="text-[10px] font-bold text-muted-foreground/70">
               {marketplace.charAt(0).toUpperCase()}
             </span>
+            {!isIntegration && (
+              <div className="absolute -inset-0.5 bg-muted-foreground/10 rounded-md blur-sm -z-10" />
+            )}
           </div>
           {isIntegration && (
             <div className="relative">
@@ -102,10 +105,21 @@ export function MarketplaceIcon({
     const content = renderFallbackIcon();
     return showTooltip ? (
       <Tooltip>
-        <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent side="top" className="text-xs">
-          {marketplace}
-          {isIntegration && " (Connected)"}
+        <TooltipTrigger asChild>
+          <div className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1 rounded-lg transition-all duration-200">
+            {content}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs font-medium">
+          <div className="flex items-center gap-1.5">
+            {marketplace}
+            {isIntegration && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-primary">Connected</span>
+              </>
+            )}
+          </div>
         </TooltipContent>
       </Tooltip>
     ) : (
@@ -137,31 +151,39 @@ export function MarketplaceIcon({
             height={24}
             className="object-contain p-0.5"
           />
-          {isIntegration && (
+          {isIntegration ? (
             <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/20 to-transparent rounded-md blur-sm -z-10" />
+          ) : (
+            <div className="absolute -inset-0.5 bg-muted-foreground/8 rounded-md blur-sm -z-10" />
           )}
         </div>
       ) : lucideIcon === "store" ? (
         <div
           className={cn(
-            "w-6 h-6 rounded-md flex items-center justify-center border shadow-sm bg-card",
+            "w-6 h-6 rounded-md flex items-center justify-center border shadow-sm bg-card relative",
             isIntegration
               ? "border-primary/50 text-primary"
               : "border-border text-muted-foreground",
           )}
         >
           <Store className="w-3.5 h-3.5" />
+          {!isIntegration && (
+            <div className="absolute -inset-0.5 bg-muted-foreground/8 rounded-md blur-sm -z-10" />
+          )}
         </div>
       ) : lucideIcon === "user" ? (
         <div
           className={cn(
-            "w-6 h-6 rounded-md flex items-center justify-center border shadow-sm bg-card",
+            "w-6 h-6 rounded-md flex items-center justify-center border shadow-sm bg-card relative",
             isIntegration
               ? "border-primary/50 text-primary"
               : "border-border text-muted-foreground",
           )}
         >
           <User className="w-3.5 h-3.5" />
+          {!isIntegration && (
+            <div className="absolute -inset-0.5 bg-muted-foreground/8 rounded-md blur-sm -z-10" />
+          )}
         </div>
       ) : null}
       {showLabel && (

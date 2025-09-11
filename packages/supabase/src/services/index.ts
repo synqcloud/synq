@@ -26,3 +26,8 @@ export {
   type MonthlyData,
   type TopStockData,
 } from "./dashboard-service";
+export {
+  NotificationsService,
+  type EnrichedNotification,
+  type NotificationRow,
+} from "./notifications-service";

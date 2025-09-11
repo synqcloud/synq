@@ -1,5 +1,5 @@
--- Migration: 20250819_inventory_schema.sql
--- Description: Inventory schema for card shops
+-- Migration: 20250819_inventory_schema_no_grading.sql
+-- Description: Inventory schema for card shops (without grading column)
 -- Tables: user_card_stock, marketplaces, user_stock_listings
 
 -- =============================================
@@ -9,31 +9,25 @@ CREATE TABLE IF NOT EXISTS public.user_card_stock (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     core_card_id UUID NOT NULL REFERENCES public.core_cards(id) ON DELETE CASCADE,
-
     -- Stock details
     quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity >= 0),
-    condition VARCHAR(50) NOT NULL DEFAULT 'Near Mint',
-    grading VARCHAR(50) DEFAULT 'Raw',
-
+    condition VARCHAR(50), -- No default, nullable
     -- Financial tracking
     cogs DECIMAL(10,2), -- Cost of Goods Sold
-    estimated_value DECIMAL(10,2),
-
     -- Organization
     sku VARCHAR(100),
     location VARCHAR(200),
-    language VARCHAR(50),
-    notes TEXT,
-
+    language VARCHAR(50) NOT NULL DEFAULT 'en',
     -- Soft delete for when user removes library access but wants to keep transaction history
     is_active BOOLEAN DEFAULT true,
-
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-    -- Prevent duplicate entries for same user/card/condition/grading combination
-    UNIQUE(user_id, core_card_id, condition, grading)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Uniqueness constraint for condition + language
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_stock_unique_condition
+ON public.user_card_stock(user_id, core_card_id, condition, language)
+WHERE condition IS NOT NULL;
 
 -- =============================================
 -- Table: marketplaces
@@ -73,7 +67,6 @@ RETURNS TABLE(
     stock_id UUID,
     quantity INTEGER,
     condition VARCHAR,
-    grading VARCHAR,
     cogs DECIMAL,
     sku VARCHAR,
     location VARCHAR,
@@ -88,7 +81,6 @@ AS $$
         ucs.id AS stock_id,
         ucs.quantity,
         ucs.condition,
-        ucs.grading,
         ucs.cogs,
         ucs.sku,
         ucs.location,
@@ -113,10 +105,9 @@ AS $$
     WHERE ucs.core_card_id = p_core_card_id
       AND ucs.is_active = true
       AND ucs.user_id = auth.uid()
-    GROUP BY ucs.id, ucs.quantity, ucs.condition, ucs.grading, ucs.cogs, ucs.sku, ucs.location, ucs.language, ucs.updated_at
+    GROUP BY ucs.id, ucs.quantity, ucs.condition, ucs.cogs, ucs.sku, ucs.location, ucs.language, ucs.updated_at
     ORDER BY ucs.created_at DESC;
 $$;
-
 
 -- =============================================
 -- Indexes for Performance
@@ -211,5 +202,3 @@ CREATE POLICY "Public read access to marketplaces"
 ON public.marketplaces
 FOR SELECT
 USING (auth.role() = 'authenticated');
-
-COMMIT;

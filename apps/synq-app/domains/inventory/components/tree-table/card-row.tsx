@@ -1,10 +1,8 @@
 // Core
 import { useState } from "react";
-
 // Components
 import StockTable from "./stock-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
-
 // Services
 import { CoreCard } from "@synq/supabase/services";
 
@@ -43,8 +41,9 @@ export default function CardRow({
           )}
         </span>
       </div>
+
       {/* Expanded Stock Table */}
-      {expanded && <StockTable cardId={card.id} />}
+      {expanded && <StockTable cardId={card.id} cardName={card.name} />}
     </div>
   );
 }

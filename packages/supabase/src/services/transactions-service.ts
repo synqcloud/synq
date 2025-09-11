@@ -23,7 +23,6 @@ export type ProductTypePartial = Pick<
   | "game_name"
   | "cogs"
   | "condition"
-  | "grading"
   | "language"
   | "sku"
   | "location"
@@ -43,7 +42,6 @@ interface TransactionFilters {
 }
 
 export class TransactionService extends ServiceBase {
-
   /**
    * Fetch user's unique marketplaces using direct query (alternative to RPC)
    */
@@ -90,15 +88,14 @@ export class TransactionService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
         // Call RPC function to get transactions with total_quantity already calculated
-        const { data, error } = await client
-          .rpc("get_user_transactions", {
-            p_user_id: userId,
-            p_start_date: filters?.startDate?.toISOString() ?? null,
-            p_end_date: filters?.endDate?.toISOString() ?? null,
-            p_statuses: filters?.statuses ?? null,
-            p_types: filters?.types ?? null,
-          })
-          .limit(10);
+        const { data, error } = await client.rpc("get_user_transactions", {
+          p_user_id: userId,
+          p_start_date: filters?.startDate?.toISOString() ?? null,
+          p_end_date: filters?.endDate?.toISOString() ?? null,
+          p_statuses: filters?.statuses ?? null,
+          p_types: filters?.types ?? null,
+        });
+
         if (error) throw error;
         return data ?? [];
       },
@@ -124,7 +121,7 @@ export class TransactionService extends ServiceBase {
         const { data, error } = await client
           .from("user_transaction_items_with_cards")
           .select(
-            "item_id, quantity, core_card_id, card_name, unit_price, set_name, game_name, condition, grading, language, cogs, sku, location",
+            "item_id, quantity, core_card_id, card_name, unit_price, set_name, game_name, condition, language, cogs, sku, location",
           )
           .eq("transaction_id", transactionId);
         if (error) throw error;

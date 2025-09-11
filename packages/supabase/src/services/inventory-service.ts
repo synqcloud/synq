@@ -77,7 +77,6 @@ export class InventoryService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
 
-        // First get all libraries the user has access to
         const { data: libraries, error: libError } = await client
           .from("core_libraries")
           .select("id, name")
@@ -85,7 +84,6 @@ export class InventoryService extends ServiceBase {
 
         if (libError) throw libError;
 
-        // Then get stock data for these libraries
         const { data: stockData, error: stockError } = await client
           .from("user_card_stock")
           .select(
@@ -103,7 +101,6 @@ export class InventoryService extends ServiceBase {
 
         if (stockError) throw stockError;
 
-        // Aggregate stock by library
         const libraryStockMap = new Map<string, number>();
 
         stockData?.forEach((stock: any) => {
@@ -112,7 +109,6 @@ export class InventoryService extends ServiceBase {
           libraryStockMap.set(libraryId, currentStock + (stock.quantity || 0));
         });
 
-        // Return all libraries with their stock (0 if no stock)
         return (libraries || []).map((library) => ({
           id: library.id,
           name: library.name,
@@ -140,7 +136,6 @@ export class InventoryService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
 
-        // First get all sets in the library
         const { data: sets, error: setsError } = await client
           .from("core_sets")
           .select("id, name")
@@ -148,7 +143,6 @@ export class InventoryService extends ServiceBase {
 
         if (setsError) throw setsError;
 
-        // Then get stock data for these sets
         const { data: stockData, error: stockError } = await client
           .from("user_card_stock")
           .select(
@@ -167,7 +161,6 @@ export class InventoryService extends ServiceBase {
 
         if (stockError) throw stockError;
 
-        // Aggregate stock by set
         const setStockMap = new Map<string, number>();
 
         stockData?.forEach((stock: any) => {
@@ -176,7 +169,6 @@ export class InventoryService extends ServiceBase {
           setStockMap.set(setId, currentStock + (stock.quantity || 0));
         });
 
-        // Return all sets with their stock (0 if no stock)
         return (sets || []).map((set) => ({
           id: set.id,
           name: set.name,
@@ -204,7 +196,6 @@ export class InventoryService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
 
-        // Get all cards in set with their stock
         const { data, error } = await client
           .from("core_cards")
           .select(
@@ -430,6 +421,217 @@ export class InventoryService extends ServiceBase {
       {
         service: "InventoryService",
         method: "updateListingPrice",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Add stock entry for a card
+   */
+  static async addStockEntry(
+    context: "client" | "server" = "client",
+    cardId: string,
+    stockData: {
+      quantity: number;
+      condition?: string;
+      cost?: number;
+      sku?: string;
+      location?: string;
+      language?: string;
+    },
+  ): Promise<string> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data, error } = await client
+          .from("user_card_stock")
+          .insert({
+            user_id: userId,
+            core_card_id: cardId,
+            quantity: stockData.quantity,
+            condition: stockData.condition || null,
+            cogs: stockData.cost || null,
+            sku: stockData.sku || null,
+            location: stockData.location || null,
+            language: stockData.language || null,
+          })
+          .select("id")
+          .single();
+
+        if (error) throw error;
+        return data.id;
+      },
+      {
+        service: "InventoryService",
+        method: "addStockEntry",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Get available conditions (hardcoded)
+   */
+  static async getAvailableConditions(
+    context: "client" | "server" = "client",
+  ): Promise<string[]> {
+    // Flatten all conditions into a single array
+    const tcgplayer = [
+      "Near Mint",
+      "Lightly Played",
+      "Moderately Played",
+      "Heavily Played",
+      "Damaged",
+    ];
+    const cardmarket = [
+      "Mint",
+      "Near Mint",
+      "Excellent",
+      "Good",
+      "Light Played",
+      "Played",
+      "Poor",
+    ];
+
+    // Merge and remove duplicates
+    const allConditions = Array.from(new Set([...tcgplayer, ...cardmarket]));
+
+    return allConditions;
+  }
+
+  /**
+   * Get available languages (hardcoded)
+   */
+  static async getAvailableLanguages(
+    context: "client" | "server" = "client",
+  ): Promise<string[]> {
+    return [
+      "en", // English
+      "fr", // French
+      "de", // German
+      "it", // Italian
+      "pt", // Portuguese
+      "es", // Spanish
+      "ru", // Russian
+      "ja", // Japanese
+      "ko", // Korean
+      "zh-CN", // Chinese (Simplified)
+      "zh-TW", // Chinese (Traditional)
+    ];
+  }
+
+  /**
+   * Update an existing stock entry
+   */
+  static async updateStockEntry(
+    context: "client" | "server" = "client",
+    stockId: string,
+    stockData: {
+      quantity: number;
+      condition?: string;
+      cost?: number;
+      sku?: string;
+      location?: string;
+      language?: string;
+    },
+  ): Promise<{ success: boolean; error?: string }> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { error } = await client
+          .from("user_card_stock")
+          .update({
+            quantity: stockData.quantity,
+            condition: stockData.condition || null,
+            cogs: stockData.cost || null,
+            sku: stockData.sku || null,
+            location: stockData.location || null,
+            language: stockData.language || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", stockId);
+
+        if (error) {
+          if (
+            error?.code === "23505" ||
+            error?.message?.includes(
+              "duplicate key value violates unique constraint",
+            )
+          ) {
+            return { success: false, error: "duplicate" };
+          }
+          return { success: false, error: error.message || "unknown error" };
+        }
+
+        return { success: true };
+      },
+      {
+        service: "InventoryService",
+        method: "updateStockEntry",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  static async updateStockViaEdge(
+    context: "client" | "server" = "client",
+    stockId: string,
+    data: {
+      change_type: "manual_edit" | "delete" | "inventory_adjustment";
+      quantity_change?: number;
+      quantity_new?: number;
+      condition?: string | null;
+      cost?: number | null;
+      sku?: string | null;
+      location?: string | null;
+      language?: string | null;
+    },
+  ) {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const response = await fetch("/api/inventory/stock-update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stock_id: stockId,
+            performed_by: userId,
+            ...data,
+          }),
+        });
+
+        let result: any = {};
+        try {
+          result = await response.json();
+        } catch {
+          // fallback
+        }
+
+        if (!response.ok || !result.success) {
+          const normalizedError =
+            result?.error ||
+            (response.status === 409
+              ? "duplicate"
+              : response.status === 400
+                ? "invalid_input"
+                : "server_error");
+
+          return { success: false, error: normalizedError };
+        }
+
+        return { success: true, data: result };
+      },
+      {
+        service: "InventoryService",
+        method: "updateStockViaEdge",
         userId: userId || undefined,
       },
     );
