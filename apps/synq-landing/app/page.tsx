@@ -5,7 +5,6 @@ import { StoryContent } from "../components/story-content";
 import { Showcase } from "../components/showcase";
 import { ContactSection } from "../components/contact-section";
 import { HeroSection } from "../components/hero-section";
-import { PricingSection } from "../components/pricing-section";
 import { Footer } from "../components/footer";
 
 export default function HomePage() {

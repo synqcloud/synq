@@ -1,2 +1,2 @@
-Synq Landing Page
+Synq Landing Page.
 https://trysynq.com
