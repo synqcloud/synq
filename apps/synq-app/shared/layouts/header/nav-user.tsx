@@ -1,15 +1,12 @@
 "use client";
 
-// CORE
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useQuery } from "@tanstack/react-query";
 
-// API
 import { UserService } from "@synq/supabase/services";
 
-// UI COMPONENTS
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +17,7 @@ import {
   DropdownMenuTrigger,
   Avatar,
   AvatarImage,
+  AvatarFallback,
   Button,
 } from "@synq/ui/component";
 
@@ -33,88 +31,68 @@ import {
   Monitor,
 } from "lucide-react";
 
-// UTILS
 import { toast } from "sonner";
 
 interface NavUserProps {
   isCollapsed?: boolean;
 }
 
+// Helper to create initials like "JD"
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .map((n) => n[0] || "")
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export function NavUser({ isCollapsed = false }: NavUserProps) {
-  const [user, setUser] = useState<{
-    name: string;
-    email: string;
-    avatarUrl: string;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-
-  // Load user when component mounts
-  useEffect(() => {
-    loadUser();
-  }, []); // Add dependency array to prevent infinite calls
-
-  const loadUser = async () => {
-    try {
-      setIsLoading(true);
-      const currentUser = await UserService.getCurrentUser("client");
-      setUser({
-        name: currentUser.user_metadata?.full_name || currentUser.email || "",
-        email: currentUser.email || "",
-        avatarUrl: currentUser.user_metadata?.avatar_url || "",
-      });
-    } catch (error) {
-      console.error("Failed to load user:", error);
-      // Don't redirect immediately, let the middleware handle authentication
-      // Only redirect if we're certain the user is not authenticated
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const u = await UserService.getCurrentUser("client");
+      return {
+        name: u.user_metadata?.full_name || u.email || "",
+        email: u.email || "",
+        avatarUrl: u.user_metadata?.avatar_url || "",
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handleSignOut = async () => {
     try {
       await UserService.signOut("client");
       toast.success("Signed out successfully");
       router.push("/login");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to sign out";
-      toast.error(message);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to sign out";
+      toast.error(msg);
     }
   };
 
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
-  };
+  const handleThemeChange = (t: string) => setTheme(t);
 
-  // Show loading state while user loads
-  if (isLoading || !user) {
-    return (
-      <div className={`p-4 ${isCollapsed ? "px-2" : ""}`}>
-        <div
-          className={`flex items-center gap-3 p-3 rounded-lg border border-sidebar-border bg-sidebar-accent/50 opacity-50 ${isCollapsed ? "justify-center p-2" : ""}`}
-        >
-          <Avatar className="h-10 w-10 rounded-full flex-shrink-0">
-            <AvatarImage
-              src="/user/avatar_placeholder.png"
-              alt="Loading..."
-              className="object-cover h-full w-full"
-            />
-          </Avatar>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <div className="h-4 bg-sidebar-accent rounded animate-pulse mb-1"></div>
-              <div className="h-3 bg-sidebar-accent rounded animate-pulse w-2/3"></div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+  // shared avatar element
+  const avatar = (
+    <Avatar
+      className={`h-10 w-10 ${isCollapsed ? "rounded-xl" : "rounded-full"} flex-shrink-0`}
+    >
+      <AvatarImage
+        src={user?.avatarUrl || undefined}
+        alt={user?.name || "User avatar"}
+        className="object-cover h-full w-full"
+      />
+      <AvatarFallback>
+        {isLoading ? "?" : getInitials(user?.name || user?.email || "")}
+      </AvatarFallback>
+    </Avatar>
+  );
 
-  // Collapsed state
+  // collapsed
   if (isCollapsed) {
     return (
       <div className="flex items-center justify-center p-0 w-full">
@@ -122,16 +100,10 @@ export function NavUser({ isCollapsed = false }: NavUserProps) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="w-10 h-10 p-0 flex items-center justify-center rounded-xl bg-transparent border-0 shadow-none hover:bg-sidebar-accent/20 focus:outline-none focus:ring-2 focus:ring-sidebar-ring"
+              className="w-10 h-10 p-0 flex items-center justify-center rounded-xl hover:bg-sidebar-accent/20 focus:outline-none focus:ring-2 focus:ring-sidebar-ring"
               aria-label="Open user menu"
             >
-              <Avatar className="h-10 w-10 rounded-xl flex-shrink-0">
-                <AvatarImage
-                  src={user.avatarUrl || "/user/avatar_placeholder.png"}
-                  alt={user.name || "User avatar"}
-                  className="object-cover h-full w-full"
-                />
-              </Avatar>
+              {avatar}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -140,95 +112,80 @@ export function NavUser({ isCollapsed = false }: NavUserProps) {
             align="start"
             sideOffset={16}
           >
-            <DropdownMenuLabel className="p-0">
-              <div className="flex items-center gap-3 px-3 py-2">
-                <Avatar className="h-10 w-10 rounded-full">
-                  <AvatarImage
-                    src={user.avatarUrl || "/user/avatar_placeholder.png"}
-                    alt={user.name || "User avatar"}
-                    className="object-cover h-full w-full"
-                  />
-                </Avatar>
-                <div className="text-sm min-w-0">
-                  <p className="font-light tracking-[-0.01em] text-foreground truncate">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/settings"
-                  className="flex items-center gap-3 cursor-pointer"
+            {isLoading ? (
+              <div className="p-3 text-sm text-muted-foreground">Loading…</div>
+            ) : (
+              <>
+                <DropdownMenuLabel className="p-0">
+                  <div className="flex items-center gap-3 px-3 py-2">
+                    {avatar}
+                    <div className="text-sm min-w-0">
+                      <p className="font-light tracking-[-0.01em] truncate">
+                        {user?.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex items-center gap-3">
+                      <Settings className="h-4 w-4" />
+                      <span>Account Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="https://trysynq.com/help"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Contact Support</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => handleThemeChange("light")}
+                    className={theme === "light" ? "bg-accent" : ""}
+                  >
+                    <Sun className="h-4 w-4 mr-2" /> Light
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleThemeChange("dark")}
+                    className={theme === "dark" ? "bg-accent" : ""}
+                  >
+                    <Moon className="h-4 w-4 mr-2" /> Dark
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleThemeChange("system")}
+                    className={theme === "system" ? "bg-accent" : ""}
+                  >
+                    <Monitor className="h-4 w-4 mr-2" /> System
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="text-destructive focus:text-destructive"
                 >
-                  <Settings className="h-4 w-4" />
-                  <span>Account Settings</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  href="https://trysynq.com/help"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 cursor-pointer"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span>Contact Support</span>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => handleThemeChange("light")}
-                className={`cursor-pointer ${theme === "light" ? "bg-accent" : ""}`}
-              >
-                <div className="flex items-center gap-3">
-                  <Sun className="h-4 w-4" />
-                  <span>Light</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleThemeChange("dark")}
-                className={`cursor-pointer ${theme === "dark" ? "bg-accent" : ""}`}
-              >
-                <div className="flex items-center gap-3">
-                  <Moon className="h-4 w-4" />
-                  <span>Dark</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleThemeChange("system")}
-                className={`cursor-pointer ${theme === "system" ? "bg-accent" : ""}`}
-              >
-                <div className="flex items-center gap-3">
-                  <Monitor className="h-4 w-4" />
-                  <span>System</span>
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleSignOut}
-              className="cursor-pointer text-destructive focus:text-destructive"
-            >
-              <div className="flex items-center gap-3">
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
-              </div>
-            </DropdownMenuItem>
+                  <LogOut className="h-4 w-4 mr-2" /> Sign Out
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     );
   }
 
-  // Non-collapsed state
+  // expanded
   return (
     <div className={`p-4 ${isCollapsed ? "px-2" : ""}`}>
       <DropdownMenu>
@@ -242,25 +199,28 @@ export function NavUser({ isCollapsed = false }: NavUserProps) {
             <div
               className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : "w-full"}`}
             >
-              <Avatar className="h-10 w-10 rounded-full flex-shrink-0">
-                <AvatarImage
-                  src={user.avatarUrl || "/user/avatar_placeholder.png"}
-                  alt={user.name || "User avatar"}
-                  className="object-cover h-full w-full"
-                />
-              </Avatar>
+              {avatar}
               {!isCollapsed && (
-                <>
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-light tracking-[-0.01em] text-sidebar-foreground truncate">
-                      {user.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {user.email}
-                    </p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                </>
+                <div className="flex-1 text-left min-w-0">
+                  {isLoading ? (
+                    <>
+                      <div className="h-4 bg-sidebar-accent/50 rounded animate-pulse mb-1" />
+                      <div className="h-3 bg-sidebar-accent/50 rounded animate-pulse w-2/3" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-light tracking-[-0.01em] truncate">
+                        {user?.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user?.email}
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+              {!isCollapsed && !isLoading && (
+                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               )}
             </div>
           </Button>
@@ -268,98 +228,76 @@ export function NavUser({ isCollapsed = false }: NavUserProps) {
 
         <DropdownMenuContent
           className="min-w-56 bg-background border border-border shadow-lg"
-          side={isCollapsed ? "right" : "right"}
-          align={isCollapsed ? "start" : "end"}
-          sideOffset={isCollapsed ? 16 : 8}
+          side="right"
+          align="end"
+          sideOffset={8}
         >
-          <DropdownMenuLabel className="p-0">
-            <div className="flex items-center gap-3 px-3 py-2">
-              <Avatar className="h-10 w-10 rounded-full">
-                <AvatarImage
-                  src={user.avatarUrl || "/user/avatar_placeholder.png"}
-                  alt={user.name || "User avatar"}
-                />
-              </Avatar>
-              <div className="text-sm min-w-0">
-                <p className="font-medium text-foreground truncate">
-                  {user.name}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user.email}
-                </p>
-              </div>
-            </div>
-          </DropdownMenuLabel>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuGroup>
-            <DropdownMenuItem asChild>
-              <Link
-                href="/settings"
-                className="flex items-center gap-3 cursor-pointer"
+          {isLoading ? (
+            <div className="p-3 text-sm text-muted-foreground">Loading…</div>
+          ) : (
+            <>
+              {/* same menu items as collapsed */}
+              <DropdownMenuLabel className="p-0">
+                <div className="flex items-center gap-3 px-3 py-2">
+                  {avatar}
+                  <div className="text-sm min-w-0">
+                    <p className="font-medium truncate">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="flex items-center gap-3">
+                    <Settings className="h-4 w-4" />
+                    <span>Account Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="https://trysynq.com/help"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Contact Support</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  onClick={() => handleThemeChange("light")}
+                  className={theme === "light" ? "bg-accent" : ""}
+                >
+                  <Sun className="h-4 w-4 mr-2" /> Light
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleThemeChange("dark")}
+                  className={theme === "dark" ? "bg-accent" : ""}
+                >
+                  <Moon className="h-4 w-4 mr-2" /> Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleThemeChange("system")}
+                  className={theme === "system" ? "bg-accent" : ""}
+                >
+                  <Monitor className="h-4 w-4 mr-2" /> System
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-destructive focus:text-destructive"
               >
-                <Settings className="h-4 w-4" />
-                <span>Account Settings</span>
-              </Link>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem asChild>
-              <Link
-                href="https://trysynq.com/help"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 cursor-pointer"
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span>Contact Support</span>
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              onClick={() => handleThemeChange("light")}
-              className={`cursor-pointer ${theme === "light" ? "bg-accent" : ""}`}
-            >
-              <div className="flex items-center gap-3">
-                <Sun className="h-4 w-4" />
-                <span>Light</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleThemeChange("dark")}
-              className={`cursor-pointer ${theme === "dark" ? "bg-accent" : ""}`}
-            >
-              <div className="flex items-center gap-3">
-                <Moon className="h-4 w-4" />
-                <span>Dark</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleThemeChange("system")}
-              className={`cursor-pointer ${theme === "system" ? "bg-accent" : ""}`}
-            >
-              <div className="flex items-center gap-3">
-                <Monitor className="h-4 w-4" />
-                <span>System</span>
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem
-            onClick={handleSignOut}
-            className="cursor-pointer text-destructive focus:text-destructive"
-          >
-            <div className="flex items-center gap-3">
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
-            </div>
-          </DropdownMenuItem>
+                <LogOut className="h-4 w-4 mr-2" /> Sign Out
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

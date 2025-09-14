@@ -30,6 +30,7 @@ import { useFileUpload } from "@/hooks/use-file-upload";
 import { AvatarUpload } from "@/shared/avatar-upload";
 import { Spinner } from "@synq/ui/component";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 const accountFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters.").max(30),
@@ -45,7 +46,7 @@ type AccountFormProps = {
 export function AccountForm({ initialData }: AccountFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const queryClient = useQueryClient();
   const {
     file: avatarFile,
     preview: avatarPreview,
@@ -70,23 +71,18 @@ export function AccountForm({ initialData }: AccountFormProps) {
       try {
         setIsSubmitting(true);
 
-        // Update profile name
         await UserService.updateProfile({ fullName: data.name }, "client");
 
-        // Upload avatar if provided
         if (avatarFile) {
           await UserService.uploadAvatar(avatarFile, "client");
         }
 
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+
         toast.success("Profile updated successfully");
         resetFile();
 
-        // Dispatch a custom event to notify components that user metadata has been updated
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("userMetadataUpdated"));
-        }
-
-        router.refresh();
+        router.refresh(); // optional if you still want a route refresh
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : "Failed to update profile",
@@ -95,7 +91,7 @@ export function AccountForm({ initialData }: AccountFormProps) {
         setIsSubmitting(false);
       }
     },
-    [avatarFile, resetFile, router],
+    [avatarFile, resetFile, router, queryClient],
   );
 
   const handleAvatarChange = useCallback(
