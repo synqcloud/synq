@@ -72,6 +72,47 @@ CREATE TABLE IF NOT EXISTS public.user_library_access (
 );
 
 -- =============================================
+-- Functions for better performance
+-- =============================================
+
+-- Updated search_cards function to only search in libraries the user has access to
+CREATE OR REPLACE FUNCTION public.search_cards(
+    search_query TEXT
+)
+RETURNS TABLE (
+    id UUID,
+    name TEXT,
+    core_set_name TEXT,
+    core_library_name TEXT,
+    stock INTEGER
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        cc.id,
+        cc.name::TEXT,
+        cs.name::TEXT AS core_set_name,
+        cl.name::TEXT AS core_library_name,
+        COALESCE(SUM(ucs.quantity)::INTEGER, 0) AS stock
+    FROM public.core_cards cc
+    JOIN public.core_sets cs ON cc.core_set_id = cs.id
+    JOIN public.core_libraries cl ON cc.core_library_id = cl.id
+    -- Join with user_library_access to filter only accessible libraries
+    JOIN public.user_library_access ula ON ula.core_library_id = cl.id
+        AND ula.user_id = auth.uid()
+    LEFT JOIN public.user_card_stock ucs
+        ON ucs.core_card_id = cc.id
+        AND ucs.user_id = auth.uid()
+        AND ucs.is_active = TRUE
+    WHERE cc.name ILIKE '%' || search_query || '%'
+        AND cl.status = 'active'  -- Only search in active libraries
+    GROUP BY cc.id, cc.name, cs.name, cl.name
+    ORDER BY cc.name ASC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- =============================================
 -- Indexes for Performance
 -- =============================================
 

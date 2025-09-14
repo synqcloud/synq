@@ -122,11 +122,14 @@ export function TransactionTableRow({
         <TableCell>
           <p
             className="text-sm font-medium"
+            // style={{
+            //   color:
+            //     (order.tax_amount ?? 0) < 0
+            //       ? "hsl(var(--chart-4))"
+            //       : "hsl(var(--chart-3))",
+            // }}
             style={{
-              color:
-                (order.tax_amount ?? 0) < 0
-                  ? "hsl(var(--chart-4))"
-                  : "hsl(var(--chart-3))",
+              color: "hsl(var(--chart-4))",
             }}
           >
             {formatCurrency(order.tax_amount ?? 0)}

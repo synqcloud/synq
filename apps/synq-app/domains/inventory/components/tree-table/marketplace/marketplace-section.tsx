@@ -16,7 +16,6 @@ type MarketplaceSectionProps = {
   onOpenDialog: () => void;
   stock?: UserStockWithListings;
   cardId?: string;
-  isEditing?: boolean;
 };
 
 export function MarketplaceSection({

@@ -2,7 +2,7 @@
   "name": "synq",
   "private": true,
   "scripts": {
-    "build": "turbo build",
+    "build": "dotenv -e .env.local turbo build",
     "dev": "dotenv -e .env.local turbo dev",
     "dev:app": "dotenv -e .env.local -- turbo run dev --filter=synq-app...",
     "dev:landing": "dotenv -e .env.local -- turbo run dev --filter=synq-landing...",

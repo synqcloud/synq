@@ -1,3 +1,4 @@
+// FIXME: This component needs refactoring
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -68,7 +69,7 @@ export function AddStockDialog({
     defaultValues: {
       quantity: 1,
       condition: "",
-      cost: undefined,
+      cost: 0,
       sku: "",
       location: "",
       language: "",
@@ -152,10 +153,14 @@ export function AddStockDialog({
       {
         ...values,
         quantity: Number(values.quantity),
-        cost: values.cost ? Number(values.cost) : undefined,
+        // Only include cost if it's greater than 0, otherwise send undefined
+        cost: values.cost && values.cost > 0 ? Number(values.cost) : undefined,
       };
     addStockMutation.mutate(stockData);
   };
+
+  // Get form state for debugging
+  const { isValid } = form.formState;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChangeAction}>
@@ -179,7 +184,15 @@ export function AddStockDialog({
                   <FormItem>
                     <FormLabel className="text-caption">Quantity *</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1} {...field} className="h-9" />
+                      <Input
+                        type="number"
+                        min={1}
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value) || 1)
+                        }
+                        className="h-9"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -259,6 +272,9 @@ export function AddStockDialog({
                         min={0}
                         step={0.01}
                         {...field}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value) || 0)
+                        }
                         className="h-9"
                         placeholder="0.00"
                       />
@@ -322,7 +338,7 @@ export function AddStockDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={addStockMutation.isPending || !form.formState.isValid}
+                disabled={addStockMutation.isPending || !isValid}
                 className="flex-1 gap-2"
               >
                 {addStockMutation.isPending ? (

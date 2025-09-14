@@ -110,9 +110,12 @@ serve(async (req: Request) => {
       updated_at: new Date().toISOString(),
     };
 
-    // Handle condition (required field)
+    // Handle required fields
     if (condition !== undefined) {
       updateData.condition = condition;
+    }
+    if (language !== undefined) {
+      updateData.language = language;
     }
 
     // Handle other optional fields
@@ -124,9 +127,6 @@ serve(async (req: Request) => {
     }
     if (location !== undefined) {
       updateData.location = location;
-    }
-    if (language !== undefined) {
-      updateData.language = language;
     }
 
     console.log("Updating stock with data:", updateData);

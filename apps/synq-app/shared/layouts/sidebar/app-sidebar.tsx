@@ -3,7 +3,7 @@
 // CORE
 import * as React from "react";
 import Link from "next/link";
-import { useSelectedLayoutSegment } from "next/navigation";
+import { useRouter, useSelectedLayoutSegment } from "next/navigation";
 
 // UI COMPONENTS
 import { cn } from "@synq/ui/utils";
@@ -37,7 +37,7 @@ import {
   ScrollText,
   Siren,
   ClockFading,
-  Bell,
+  Plus,
 } from "lucide-react";
 
 // SHARED COMPONENTS
@@ -89,7 +89,7 @@ const NavItem = ({
   const segment = useSelectedLayoutSegment();
   const { isMobile, setOpenMobile } = useSidebar();
   const isActive = segment === item.url.slice(1);
-
+  const router = useRouter();
   const button = (
     <SidebarMenuButton
       onClick={() => isMobile && setOpenMobile(false)}
@@ -106,9 +106,23 @@ const NavItem = ({
     >
       <item.icon className="w-4 h-4 flex-shrink-0" />
       {!isCollapsed && (
-        <span className="flex-1 min-w-0 text-sm font-light tracking-[-0.01em]">
-          {item.title}
-        </span>
+        <>
+          <span className="flex-1 min-w-0 text-sm font-light tracking-[-0.01em]">
+            {item.title}
+          </span>
+          {item.title === "Transactions" && (
+            <div
+              className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 inline-flex items-center justify-center cursor-pointer hover:bg-gray-100 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push("/transactions/new");
+              }}
+            >
+              <Plus />
+            </div>
+          )}
+        </>
       )}
       {item.title === "View Page" && !isCollapsed && (
         <ExternalLink className="h-4 w-4 text-sidebar-foreground opacity-60" />

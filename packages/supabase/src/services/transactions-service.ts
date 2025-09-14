@@ -41,7 +41,268 @@ interface TransactionFilters {
   endDate?: Date;
 }
 
+// Types for creating transactions
+export interface CreateTransactionData {
+  transaction_type: TransactionType;
+  transaction_status: TransactionStatus;
+  source?: string;
+  performed_by?: string;
+  subtotal_amount: number;
+  tax_amount?: number;
+  shipping_amount?: number;
+  net_amount: number;
+  is_integration?: boolean;
+}
+
+export interface CreateTransactionItemData {
+  stock_id: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface CreateTransactionRequest {
+  transaction: CreateTransactionData;
+  items: CreateTransactionItemData[];
+}
+
 export class TransactionService extends ServiceBase {
+  /**
+   * Create a sale transaction (via edge function)
+   */
+  static async createSaleTransactionUsingEdge(
+    context: "server" | "client" = "server",
+    data: {
+      source: string;
+      items: CreateTransactionItemData[];
+      tax_amount?: number;
+      shipping_amount?: number;
+      performed_by?: string;
+    },
+  ): Promise<{ transaction: UserTransaction; items: UserTransactionItem[] }> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const response = await fetch("/api/transactions/create-transaction", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            change_type: "sale",
+            marketplace: data.source,
+            performed_by: data.performed_by || userId,
+            tax_amount: data.tax_amount ?? 0,
+            shipping_amount: data.shipping_amount ?? 0,
+            net_amount:
+              data.items.reduce(
+                (sum, item) => sum + item.quantity * item.unit_price,
+                0,
+              ) +
+              (data.tax_amount ?? 0) +
+              (data.shipping_amount ?? 0),
+            items: data.items,
+          }),
+        });
+
+        let result: any = {};
+        try {
+          result = await response.json();
+        } catch {
+          // fallback
+        }
+
+        if (!response.ok || !result.success) {
+          const normalizedError =
+            result?.error ||
+            (response.status === 409
+              ? "duplicate"
+              : response.status === 400
+                ? "invalid_input"
+                : "server_error");
+          throw new Error(normalizedError);
+        }
+
+        return {
+          transaction: result.transaction as UserTransaction,
+          items: (result.items ?? []) as UserTransactionItem[],
+        };
+      },
+      {
+        service: "TransactionService",
+        method: "createSaleTransactionUsingEdge",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  static async createTransaction(
+    context: "server" | "client" = "server",
+    data: CreateTransactionRequest,
+  ): Promise<{ transaction: UserTransaction; items: UserTransactionItem[] }> {
+    const userId = await this.getCurrentUserId(context);
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        // Start a transaction to ensure atomicity
+        const { data: transactionData, error: transactionError } = await client
+          .from("user_transaction")
+          .insert({
+            user_id: userId,
+            transaction_status: data.transaction.transaction_status,
+            transaction_type: data.transaction.transaction_type,
+            performed_by: data.transaction.performed_by || userId,
+            source: data.transaction.source || null,
+            subtotal_amount: data.transaction.subtotal_amount,
+            tax_amount: data.transaction.tax_amount || 0,
+            shipping_amount: data.transaction.shipping_amount || 0,
+            net_amount: data.transaction.net_amount,
+            is_integration: data.transaction.is_integration || false,
+          })
+          .select()
+          .single();
+
+        if (transactionError) throw transactionError;
+
+        // Insert transaction items
+        const itemsToInsert = data.items.map((item) => ({
+          transaction_id: transactionData.id,
+          stock_id: item.stock_id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        }));
+
+        const { data: itemsData, error: itemsError } = await client
+          .from("user_transaction_items")
+          .insert(itemsToInsert)
+          .select();
+
+        if (itemsError) throw itemsError;
+
+        return {
+          transaction: transactionData,
+          items: itemsData || [],
+        };
+      },
+      {
+        service: "TransactionService",
+        method: "createTransaction",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Create a sale transaction (convenience method)
+   */
+  static async createSaleTransaction(
+    context: "server" | "client" = "server",
+    data: {
+      source: string;
+      items: CreateTransactionItemData[];
+      tax_amount?: number;
+      shipping_amount?: number;
+      performed_by?: string;
+    },
+  ): Promise<{ transaction: UserTransaction; items: UserTransactionItem[] }> {
+    // Calculate subtotal from items
+    const subtotal_amount = data.items.reduce(
+      (sum, item) => sum + item.quantity * item.unit_price,
+      0,
+    );
+
+    const tax_amount = data.tax_amount || 0;
+    const shipping_amount = data.shipping_amount || 0;
+    const net_amount = subtotal_amount + tax_amount + shipping_amount;
+
+    return this.createTransaction(context, {
+      transaction: {
+        transaction_type: "sale",
+        transaction_status: "COMPLETED",
+        source: data.source,
+        performed_by: data.performed_by,
+        subtotal_amount,
+        tax_amount,
+        shipping_amount,
+        net_amount,
+        is_integration: false,
+      },
+      items: data.items,
+    });
+  }
+
+  /**
+   * Create a purchase transaction (convenience method)
+   */
+  static async createPurchaseTransaction(
+    context: "server" | "client" = "server",
+    data: {
+      source: string;
+      items: CreateTransactionItemData[];
+      tax_amount?: number;
+      shipping_amount?: number;
+      performed_by?: string;
+    },
+  ): Promise<{ transaction: UserTransaction; items: UserTransactionItem[] }> {
+    // Calculate subtotal from items (negative for purchases)
+    const subtotal_amount = -Math.abs(
+      data.items.reduce(
+        (sum, item) => sum + item.quantity * item.unit_price,
+        0,
+      ),
+    );
+
+    const tax_amount = -Math.abs(data.tax_amount || 0);
+    const shipping_amount = -Math.abs(data.shipping_amount || 0);
+    const net_amount = subtotal_amount + tax_amount + shipping_amount;
+
+    return this.createTransaction(context, {
+      transaction: {
+        transaction_type: "purchase",
+        transaction_status: "COMPLETED",
+        source: data.source,
+        performed_by: data.performed_by,
+        subtotal_amount,
+        tax_amount,
+        shipping_amount,
+        net_amount,
+        is_integration: false,
+      },
+      items: data.items,
+    });
+  }
+
+  /**
+   * Update transaction status
+   */
+  static async updateTransactionStatus(
+    context: "server" | "client" = "server",
+    transactionId: string,
+    status: TransactionStatus,
+  ): Promise<UserTransaction> {
+    const userId = await this.getCurrentUserId(context);
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data, error } = await client
+          .from("user_transaction")
+          .update({ transaction_status: status })
+          .eq("id", transactionId)
+          .eq("user_id", userId)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      },
+      {
+        service: "TransactionService",
+        method: "updateTransactionStatus",
+        userId: userId || undefined,
+      },
+    );
+  }
+
   /**
    * Fetch user's unique marketplaces using direct query (alternative to RPC)
    */
@@ -76,6 +337,7 @@ export class TransactionService extends ServiceBase {
       },
     );
   }
+
   /**
    * Fetch user transactions with filters
    */

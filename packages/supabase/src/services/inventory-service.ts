@@ -224,6 +224,49 @@ export class InventoryService extends ServiceBase {
     );
   }
 
+  static async searchCardsByName(
+    context: "client" | "server",
+    searchQuery: string,
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+      core_set_name: string | null;
+      core_library_name: string | null;
+      stock: number;
+    }>
+  > {
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data, error } = await client.rpc("search_cards", {
+          search_query: searchQuery,
+        });
+
+        console.log("RPC search_cards result:", data);
+
+        if (error) throw error;
+
+        // Normalize null to empty array
+        const cards = data ?? [];
+
+        // Ensure all fields match the RPC type exactly
+        return cards.map((card: any) => ({
+          id: String(card.id),
+          name: String(card.name),
+          core_set_name: card.core_set_name ?? null,
+          core_library_name: card.core_library_name ?? null,
+          stock: Number(card.stock ?? 0),
+        }));
+      },
+      {
+        service: "InventoryService",
+        method: "searchCardsByName",
+      },
+    );
+  }
+
   /**
    * Get stock entries for a specific card with marketplace listings
    */
@@ -461,8 +504,22 @@ export class InventoryService extends ServiceBase {
           })
           .select("id")
           .single();
-
+        // TODO: Return success false so the UI can handle it
         if (error) throw error;
+        // in case there is no error
+        const { error: insertError } = await client
+          .from("stock_audit_log")
+          .insert({
+            stock_id: data.id,
+            user_id: userId,
+            quantity_before: 0,
+            quantity_after: stockData.quantity,
+            change_type: "create",
+            performed_by: userId,
+          });
+
+        if (insertError) throw insertError;
+
         return data.id;
       },
       {

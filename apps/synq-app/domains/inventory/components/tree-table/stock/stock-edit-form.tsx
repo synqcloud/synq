@@ -1,3 +1,4 @@
+// FIXME: This component needs refactoring
 import React from "react";
 import {
   Input,
@@ -103,7 +104,6 @@ export function StockEditForm({
         <MarketplaceSection
           marketplaces={marketplaces}
           onOpenDialog={onOpenDialog}
-          isEditing={true}
         />
         {/* Actions */}
         <HStack gap={1}>

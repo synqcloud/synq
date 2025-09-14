@@ -674,6 +674,17 @@ export type Database = {
           transaction_id: string
         }[]
       }
+      search_cards: {
+        Args: {
+          search_query: string
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          stock: number
+        }[]
+      }
     }
     Enums: {
       notification_type:
