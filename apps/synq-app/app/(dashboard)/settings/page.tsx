@@ -32,10 +32,6 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "Settings";
-  }, []);
-
-  useEffect(() => {
     const fetchUserData = async () => {
       try {
         // Use the new UserService to get current user

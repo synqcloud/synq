@@ -124,7 +124,6 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    document.title = "Portfolio Overview";
     fetchDashboard(getMonthsFromPeriod(periodValue));
   }, [periodValue]);
 

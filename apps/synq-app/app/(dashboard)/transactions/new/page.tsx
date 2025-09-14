@@ -1,7 +1,7 @@
 // FIXME: This page needs full refactoring
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { ChevronLeft, X, Search } from "lucide-react";
@@ -553,9 +553,6 @@ export default function NewTransactionPage() {
             <ChevronLeft className="h-4 w-4" />
             Back
           </Button>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold">Create New Transaction</h1>
-          </div>
         </div>
       </div>
 
