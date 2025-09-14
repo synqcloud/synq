@@ -56,7 +56,8 @@ export default function NotificationsPage() {
       NotificationsService.markNotificationAsRead("client", id),
     onSuccess: (_, notificationId) => {
       safeToast("success", "Notification marked as completed.");
-      // Optimistically update the cache
+
+      // Optimistic removal
       safeUpdateCache(() => {
         queryClient.setQueryData(
           ["notifications"],
@@ -64,6 +65,10 @@ export default function NotificationsPage() {
             old.filter((n) => n.id !== notificationId),
         );
       });
+
+      //  Ensure both queries refresh
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
     },
     onError: (error) => {
       console.error(error);
@@ -76,12 +81,15 @@ export default function NotificationsPage() {
     mutationFn: () => NotificationsService.markAllNotificationsAsRead("client"),
     onSuccess: () => {
       safeToast("success", "All notifications marked as completed.");
-      // Clear all notifications from cache
+
       safeUpdateCache(() => {
+        // Optimistically clear current list
         queryClient.setQueryData(["notifications"], []);
-        // Invalidate notification count query to update header badge
-        queryClient.invalidateQueries({ queryKey: ["notification-count"] });
       });
+
+      // Force both queries to re-run
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
     },
     onError: (error) => {
       console.error(error);

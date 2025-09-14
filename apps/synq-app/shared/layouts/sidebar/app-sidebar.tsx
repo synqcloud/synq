@@ -55,7 +55,12 @@ interface NavItem {
 // NAV ITEMS
 const navItems: NavItem[] = [
   { title: "Home", url: "/home", icon: Home },
-  { title: "Stock Updates", url: "/stock-updates", icon: ClockFading },
+  {
+    title: "Stock Updates",
+    url: "/stock-updates",
+    icon: ClockFading,
+    disabled: true,
+  },
 ];
 
 // FEATURE ITEMS

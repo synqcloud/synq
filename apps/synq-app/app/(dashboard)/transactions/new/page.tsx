@@ -524,6 +524,10 @@ export default function NewTransactionPage() {
           exact: false,
         }),
         queryClient.invalidateQueries({
+          queryKey: ["notification-count"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
           queryKey: ["userTransactions"],
           exact: false,
         }),
