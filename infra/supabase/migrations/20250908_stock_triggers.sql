@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.stock_audit_log (
 CREATE TYPE public.notification_type AS ENUM (
     'discrepancy_stock',       -- Cantidad negativa o inconsistencias
     'price_update_suggestion', -- Cambio de precio sugerido desde TCGMarket, TCGPlayer, etc.
+    'price_alert',             -- Alerta de precio para usuarios
     'general_alert'            -- Otros avisos generales
 );
 
@@ -28,16 +29,38 @@ CREATE TABLE IF NOT EXISTS public.notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     user_id UUID NOT NULL,                          -- who receives the notification
-    stock_id UUID NOT NULL REFERENCES public.user_card_stock(id) ON DELETE CASCADE,
-    stock_audit_id UUID NOT NULL REFERENCES public.stock_audit_log(id) ON DELETE CASCADE,
-    marketplace_id UUID NOT NULL REFERENCES public.marketplaces(id) ON DELETE CASCADE, -- the affected marketplace
+
+    -- Stock-related notifications (optional)
+    stock_id UUID REFERENCES public.user_card_stock(id) ON DELETE CASCADE,
+    stock_audit_id UUID REFERENCES public.stock_audit_log(id) ON DELETE CASCADE,
+    marketplace_id UUID REFERENCES public.marketplaces(id) ON DELETE CASCADE, -- the affected marketplace
+
+    -- Price alert notifications (optional)
+    core_card_id UUID REFERENCES public.core_cards(id) ON DELETE CASCADE,
 
     notification_type public.notification_type NOT NULL,  -- type of notification
+    message TEXT,                                          -- notification message
+    metadata JSONB,                                        -- additional data (price changes, etc.)
 
     is_read BOOLEAN DEFAULT FALSE,                  -- read/unread status
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+
+    -- Constraint: at least one reference must be provided
+    CONSTRAINT check_notification_reference CHECK (
+        stock_id IS NOT NULL OR core_card_id IS NOT NULL
+    )
 );
 
+-- =============================================
+-- Indexes for better performance
+-- =============================================
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
+ON public.notifications(user_id, is_read)
+WHERE is_read = FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_notifications_price_alerts
+ON public.notifications(core_card_id, notification_type)
+WHERE notification_type = 'price_alert';
 
 -- =============================================
 -- Note: Removed PostgreSQL trigger and function

@@ -139,7 +139,8 @@ export class InventoryService extends ServiceBase {
         const { data: sets, error: setsError } = await client
           .from("core_sets")
           .select("id, name")
-          .eq("core_library_id", libraryId);
+          .eq("core_library_id", libraryId)
+          .limit(50);
 
         if (setsError) throw setsError;
 
@@ -189,7 +190,9 @@ export class InventoryService extends ServiceBase {
   static async fetchCardsBySet(
     context: "client" | "server" = "client",
     setId: string,
-  ): Promise<Array<{ id: string; name: string; stock: number }>> {
+  ): Promise<
+    Array<Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & { stock: number }>
+  > {
     const userId = await this.getCurrentUserId(context);
 
     return this.execute(
@@ -202,6 +205,7 @@ export class InventoryService extends ServiceBase {
             `
             id,
             name,
+            tcgplayer_id,
             user_card_stock!left(quantity)
           `,
           )
@@ -213,6 +217,7 @@ export class InventoryService extends ServiceBase {
         return (data || []).map((card) => ({
           id: card.id,
           name: card.name,
+          tcgplayer_id: card.tcgplayer_id,
           stock: this.calculateStock(card.user_card_stock as any),
         }));
       },

@@ -16,8 +16,14 @@ CREATE TABLE IF NOT EXISTS public.core_libraries (
     image_url TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'inactive'
     CHECK (status IN ('active', 'inactive')),
+    -- TODO: ADD if supports prices
+
+    external_source TEXT,               -- provider (p.ej. 'scryfall')
+    external_id TEXT,
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(external_source, external_id)
 );
 
 -- =============================================
@@ -34,9 +40,8 @@ CREATE TABLE IF NOT EXISTS public.core_sets (
     image_url TEXT,
 
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 
-    UNIQUE(core_library_id, slug)  -- set slug must be unique within each TCG library only (Two libraries can have the same set slug)
 );
 
 -- =============================================
@@ -50,6 +55,12 @@ CREATE TABLE IF NOT EXISTS public.core_cards (
     name VARCHAR(300) NOT NULL,
     rarity VARCHAR(100),
     image_url TEXT,
+
+    external_source TEXT,               -- provider (p.ej. 'scryfall')
+    external_id TEXT,
+    tcgplayer_id TEXT,
+    price_key TEXT,                     -- e.g. 'usd', 'usd_foil', 'eur_foil'
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
 

@@ -34,35 +34,73 @@ export type Database = {
   }
   public: {
     Tables: {
+      core_card_prices: {
+        Row: {
+          cardmarket_price: number | null
+          core_card_id: string
+          tcgplayer_price: number | null
+        }
+        Insert: {
+          cardmarket_price?: number | null
+          core_card_id: string
+          tcgplayer_price?: number | null
+        }
+        Update: {
+          cardmarket_price?: number | null
+          core_card_id?: string
+          tcgplayer_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "core_card_prices_core_card_id_fkey"
+            columns: ["core_card_id"]
+            isOneToOne: true
+            referencedRelation: "core_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       core_cards: {
         Row: {
           core_library_id: string
           core_set_id: string
           created_at: string | null
+          external_id: string | null
+          external_source: string | null
           id: string
           image_url: string | null
           name: string
+          price_key: string | null
           rarity: string | null
+          tcgplayer_id: string | null
           updated_at: string | null
         }
         Insert: {
           core_library_id: string
           core_set_id: string
           created_at?: string | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           image_url?: string | null
           name: string
+          price_key?: string | null
           rarity?: string | null
+          tcgplayer_id?: string | null
           updated_at?: string | null
         }
         Update: {
           core_library_id?: string
           core_set_id?: string
           created_at?: string | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           image_url?: string | null
           name?: string
+          price_key?: string | null
           rarity?: string | null
+          tcgplayer_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -86,6 +124,8 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          external_id: string | null
+          external_source: string | null
           id: string
           image_url: string | null
           name: string
@@ -96,6 +136,8 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           image_url?: string | null
           name: string
@@ -106,6 +148,8 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           image_url?: string | null
           name?: string
@@ -182,36 +226,52 @@ export type Database = {
       }
       notifications: {
         Row: {
+          core_card_id: string | null
           created_at: string | null
           id: string
           is_read: boolean | null
-          marketplace_id: string
+          marketplace_id: string | null
+          message: string | null
+          metadata: Json | null
           notification_type: Database["public"]["Enums"]["notification_type"]
-          stock_audit_id: string
-          stock_id: string
+          stock_audit_id: string | null
+          stock_id: string | null
           user_id: string
         }
         Insert: {
+          core_card_id?: string | null
           created_at?: string | null
           id?: string
           is_read?: boolean | null
-          marketplace_id: string
+          marketplace_id?: string | null
+          message?: string | null
+          metadata?: Json | null
           notification_type: Database["public"]["Enums"]["notification_type"]
-          stock_audit_id: string
-          stock_id: string
+          stock_audit_id?: string | null
+          stock_id?: string | null
           user_id: string
         }
         Update: {
+          core_card_id?: string | null
           created_at?: string | null
           id?: string
           is_read?: boolean | null
-          marketplace_id?: string
+          marketplace_id?: string | null
+          message?: string | null
+          metadata?: Json | null
           notification_type?: Database["public"]["Enums"]["notification_type"]
-          stock_audit_id?: string
-          stock_id?: string
+          stock_audit_id?: string | null
+          stock_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_core_card_id_fkey"
+            columns: ["core_card_id"]
+            isOneToOne: false
+            referencedRelation: "core_cards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_marketplace_id_fkey"
             columns: ["marketplace_id"]
@@ -272,6 +332,29 @@ export type Database = {
             columns: ["stock_id"]
             isOneToOne: false
             referencedRelation: "user_card_stock"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_card_price_alerts: {
+        Row: {
+          core_card_id: string
+          user_id: string
+        }
+        Insert: {
+          core_card_id: string
+          user_id: string
+        }
+        Update: {
+          core_card_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_card_price_alerts_core_card_id_fkey"
+            columns: ["core_card_id"]
+            isOneToOne: false
+            referencedRelation: "core_cards"
             referencedColumns: ["id"]
           },
         ]
@@ -677,11 +760,12 @@ export type Database = {
       search_cards: {
         Args: {
           search_query: string
-          p_user_id: string
         }
         Returns: {
           id: string
           name: string
+          core_set_name: string
+          core_library_name: string
           stock: number
         }[]
       }
@@ -690,6 +774,7 @@ export type Database = {
       notification_type:
         | "discrepancy_stock"
         | "price_update_suggestion"
+        | "price_alert"
         | "general_alert"
       transaction_status: "PENDING" | "IN_PROGRESS" | "COMPLETED"
       transaction_type: "sale" | "purchase" | "grading_submit" | "refund"

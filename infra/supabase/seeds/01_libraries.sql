@@ -23,14 +23,6 @@ INSERT INTO public.core_libraries (id, name, slug, description, image_url, statu
     'active'
 ),
 (
-    '550e8400-e29b-41d4-a716-446655440003',
-    'Magic: The Gathering',
-    'magic-tg',
-    'Magic: The Gathering card collection and inventory tracking',
-    'https://mnd-assets.mynewsdesk.com/image/upload/c_fill,dpr_auto,f_auto,g_sm,q_auto:good,w_746/v85jyye7uyoqc851m514kf',
-    'inactive'
-),
-(
     '550e8400-e29b-41d4-a716-446655440004',
     'Yu-Gi-Oh!',
     'yu-gi-oh',
@@ -102,27 +94,6 @@ INSERT INTO public.core_sets (id, core_library_id, name, slug, description, rele
     'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Pok%C3%A9mon_Trading_Card_Game_logo.svg/2560px-Pok%C3%A9mon_Trading_Card_Game_logo.svg.png'
 );
 
--- Magic: The Gathering Sets
-INSERT INTO public.core_sets (id, core_library_id, name, slug, description, release_date, image_url) VALUES
-(
-    '550e8400-e29b-41d4-a716-446655440031',
-    '550e8400-e29b-41d4-a716-446655440003',
-    'Dominaria',
-    'dominaria',
-    'Return to the plane where it all began',
-    '2022-09-09',
-    'https://mnd-assets.mynewsdesk.com/image/upload/c_fill,dpr_auto,f_auto,g_sm,q_auto:good,w_746/v85jyye7uyoqc851m514kf'
-),
-(
-    '550e8400-e29b-41d4-a716-446655440032',
-    '550e8400-e29b-41d4-a716-446655440003',
-    'Murders at Karlov Manor',
-    'murders-at-karlov-manor',
-    'The latest set featuring detective themes',
-    '2024-02-09',
-    'https://mnd-assets.mynewsdesk.com/image/upload/c_fill,dpr_auto,f_auto,g_sm,q_auto:good,w_746/v85jyye7uyoqc851m514kf'
-);
-
 -- =============================================
 -- Core TCG Cards
 -- =============================================
@@ -179,25 +150,6 @@ INSERT INTO public.core_cards (id, core_library_id, core_set_id, name, rarity, i
     'Pikachu',
     'Common',
     'https://example.com/pikachu.jpg'
-);
-
--- Magic: The Gathering Cards
-INSERT INTO public.core_cards (id, core_library_id, core_set_id, name, rarity, image_url) VALUES
-(
-    '550e8400-e29b-41d4-a716-446655440301',
-    '550e8400-e29b-41d4-a716-446655440003',
-    '550e8400-e29b-41d4-a716-446655440031',
-    'Teferi, Hero of Dominaria',
-    'Mythic Rare',
-    'https://example.com/teferi-hero-of-dominaria.jpg'
-),
-(
-    '550e8400-e29b-41d4-a716-446655440302',
-    '550e8400-e29b-41d4-a716-446655440003',
-    '550e8400-e29b-41d4-a716-446655440031',
-    'Karn, Scion of Urza',
-    'Mythic Rare',
-    'https://example.com/karn-scion-of-urza.jpg'
 );
 
 
