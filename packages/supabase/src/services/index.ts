@@ -17,11 +17,6 @@ export {
   type TransactionStatus,
 } from "./transactions-service";
 export {
-  StockService,
-  type UserStockUpdate,
-  type StockUpdateWithCard,
-} from "./stock-service";
-export {
   DashboardService,
   type MonthlyData,
   type TopStockData,
@@ -32,3 +27,7 @@ export {
   type NotificationRow,
 } from "./notifications-service";
 export { PriceService } from "./prices-service";
+export {
+  StockAuditLogService,
+  type StockAuditLogItem,
+} from "./stock-audit-service";

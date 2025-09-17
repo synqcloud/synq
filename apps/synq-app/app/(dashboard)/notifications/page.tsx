@@ -1,3 +1,4 @@
+// TODO: This file needs refactoring
 "use client";
 import React, { useRef, useEffect, useCallback } from "react";
 import {
@@ -99,7 +100,7 @@ export default function NotificationsPage() {
 
   const openAudit = useCallback((auditId: string) => {
     if (isMountedRef.current) {
-      window.open(`/stock-audit/${auditId}`, "_blank");
+      window.open(`/stock-updates?id=${auditId}`, "_blank");
     }
   }, []);
 
@@ -317,7 +318,7 @@ export default function NotificationsPage() {
                     variant="secondary"
                     onClick={() => markAsReadMutation.mutate(notification.id)}
                     disabled={markAsReadMutation.isPending}
-                    className="gap-2"
+                    className="gap-2 font-light"
                   >
                     {markAsReadMutation.isPending &&
                     markAsReadMutation.variables === notification.id ? (

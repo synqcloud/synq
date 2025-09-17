@@ -510,44 +510,6 @@ export type Database = {
           },
         ]
       }
-      user_stock_updates: {
-        Row: {
-          created_at: string
-          id: string
-          note: string | null
-          quantity_change: number
-          stock_id: string
-          update_type: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          note?: string | null
-          quantity_change: number
-          stock_id: string
-          update_type: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          note?: string | null
-          quantity_change?: number
-          stock_id?: string
-          update_type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_stock_updates_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "user_card_stock"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_transaction: {
         Row: {
           created_at: string

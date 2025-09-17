@@ -1,83 +1,101 @@
+// TODO: This file needs refactoring
 "use client";
-// Core
-import { useEffect, useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-// Components
-import { StockUpdatesFilters } from "@/features/stock-updates/components/table/stock-updates-table-filters";
-import { StockTable } from "@/features/stock-updates/components/table/stock-update-table";
-import { Spinner } from "@synq/ui/component";
-// Services
-import { StockService } from "@synq/supabase/services";
+import { useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  StockAuditLogService,
+  StockAuditLogItem,
+} from "@synq/supabase/services";
+import { StockUpdateRow } from "@/features/stock-updates/components/stock-updates-row";
+import { Button, Badge } from "@synq/ui/component";
 
 export default function StockUpdatesPage() {
-  const [dateRange, setDateRange] = useState<{
-    start: Date | null;
-    end: Date | null;
-  }>({
-    start: null,
-    end: null,
-  });
+  const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const auditId = searchParams.get("id");
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
-  const filters = useMemo(
-    () => ({
-      startDate: dateRange.start || undefined,
-      endDate: dateRange.end || undefined,
-    }),
-    [dateRange],
-  );
+  const { data: updates = [], isLoading } = useQuery({
+    queryKey: ["stock-audit-logs"],
+    queryFn: () => StockAuditLogService.getUserAuditLogs("client"),
+    staleTime: 0,
+    gcTime: 0,
+  });
 
   useEffect(() => {
-    document.title = "Stock Updates";
-  }, []);
+    return () => {
+      queryClient.removeQueries({ queryKey: ["stock-audit-logs"] });
+    };
+  }, [queryClient]);
 
-  const {
-    data: stockUpdates = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["userStockUpdatesWithCard", filters],
-    queryFn: () =>
-      StockService.fetchUserStockUpdatesWithCard("client", filters),
-    staleTime: 60_000,
-  });
+  const filteredUpdates = useMemo(() => {
+    let list = updates as StockAuditLogItem[];
+    if (typeFilter) list = list.filter((u) => u.change_type === typeFilter);
+    if (auditId) list = list.filter((u) => u.id === auditId);
+    return list;
+  }, [updates, typeFilter, auditId]);
 
-  if (isLoading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Spinner />
-      </div>
+  const clearAuditId = () => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete("id");
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}?${params.toString()}`,
     );
-  }
-
-  if (error) {
-    return (
-      <div className="h-full flex items-center justify-center text-red-500">
-        Failed to load stock updates.
-      </div>
-    );
-  }
+  };
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Filters Row */}
-      <div className="flex items-center justify-between p-2 border-b">
-        <StockUpdatesFilters
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-        />
+    <div className="h-full flex flex-col bg-background p-6 space-y-4">
+      {/* Filter buttons */}
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant={typeFilter === null ? "default" : "outline"}
+          onClick={() => setTypeFilter(null)}
+        >
+          All
+        </Button>
+        <Button
+          size="sm"
+          variant={typeFilter === "create" ? "default" : "outline"}
+          onClick={() => setTypeFilter("create")}
+        >
+          Create
+        </Button>
+        <Button
+          size="sm"
+          variant={typeFilter === "sale" ? "default" : "outline"}
+          onClick={() => setTypeFilter("sale")}
+        >
+          Sale
+        </Button>
       </div>
 
-      {/* Stock Updates Content */}
-      <div className="flex-1 p-4 overflow-auto min-h-0">
-        {stockUpdates.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground">
-            No stock updates yet.
-          </div>
-        ) : (
-          <div className="overflow-x-auto w-full">
-            <StockTable updates={stockUpdates} />
-          </div>
-        )}
+      {/* Active audit filter badge */}
+      {auditId && (
+        <div className="flex items-center gap-2">
+          <Badge
+            variant="secondary"
+            className="cursor-pointer flex items-center gap-1"
+            onClick={clearAuditId}
+          >
+            Audit: {auditId.slice(0, 8)}… ✕
+          </Badge>
+        </div>
+      )}
+
+      {/* Content */}
+      {isLoading && <p className="text-muted-foreground">Loading…</p>}
+      {!isLoading && filteredUpdates.length === 0 && (
+        <p className="text-muted-foreground">No stock updates found.</p>
+      )}
+
+      <div className="overflow-y-auto space-y-1">
+        {filteredUpdates.map((update) => (
+          <StockUpdateRow key={update.id} update={update} />
+        ))}
       </div>
     </div>
   );
