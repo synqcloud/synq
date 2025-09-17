@@ -30,7 +30,7 @@ export class UserService extends ServiceBase {
             const { error } = await client.auth.signInWithOtp({
               email,
               options: {
-                emailRedirectTo: `http://localhost:3000/auth/callback`,
+                emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
               },
             });
 
