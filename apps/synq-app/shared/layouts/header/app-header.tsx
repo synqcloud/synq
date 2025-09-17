@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SidebarTrigger, Button } from "@synq/ui/component";
+import { SidebarTrigger, Button, HStack } from "@synq/ui/component";
+import { Plus } from "lucide-react";
 import NotificationBell from "@/features/notifications/components/notification-bell";
 
 const AppHeader: React.FC = () => {
@@ -36,19 +37,19 @@ const AppHeader: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-1 items-center justify-end space-x-2">
-        {/* Notification Bell */}
-        <NotificationBell />
-
+      <HStack align="center" justify="end" gap={4}>
         {/* Button to go to new transaction page */}
         <Button
           variant="outline"
           size="xs"
           onClick={() => router.push("/transactions/new")}
         >
+          <Plus />
           Add Transaction
         </Button>
-      </div>
+        {/* Notification Bell */}
+        <NotificationBell />
+      </HStack>
     </header>
   );
 };
