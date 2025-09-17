@@ -193,48 +193,144 @@ async function fetchScryfallPrice(
     `Fetching Scryfall price - Card ID: ${cardId}, Price Key: ${priceKey}`,
   );
 
-  const response = await fetch(`https://api.scryfall.com/cards/${cardId}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch card data: ${response.status}`);
+  try {
+    console.log(`Making request to: https://api.scryfall.com/cards/${cardId}`);
+
+    const response = await fetch(`https://api.scryfall.com/cards/${cardId}`, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "CardPriceTracker/1.0",
+        Accept: "application/json",
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    console.log(`Scryfall API response status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Scryfall API error: ${response.status} - ${errorText}`);
+      throw new Error(
+        `Failed to fetch card data: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const cardData = await response.json();
+    console.log("Scryfall API response received");
+    console.log(
+      "Available prices:",
+      cardData.prices ? Object.keys(cardData.prices) : "No prices found",
+    );
+    console.log("Full prices object:", cardData.prices);
+
+    // Validate that prices exist
+    if (!cardData.prices) {
+      console.warn("No prices object found in Scryfall response");
+      return {
+        tcgplayer_price: null,
+        cardmarket_price: null,
+      };
+    }
+
+    // Extract the specific price using the price_key
+    const price = cardData.prices[priceKey];
+    console.log(`Price for key '${priceKey}':`, price);
+
+    // Parse the price (Scryfall returns prices as strings or null)
+    let parsedPrice: number | null = null;
+    if (price !== null && price !== undefined) {
+      if (typeof price === "string") {
+        parsedPrice = parseFloat(price);
+        if (isNaN(parsedPrice)) {
+          console.warn(`Invalid price value for key '${priceKey}': ${price}`);
+          parsedPrice = null;
+        }
+      } else if (typeof price === "number") {
+        parsedPrice = price;
+      } else {
+        console.warn(
+          `Unexpected price type for key '${priceKey}':`,
+          typeof price,
+          price,
+        );
+        parsedPrice = null;
+      }
+    }
+
+    console.log("Parsed price:", parsedPrice);
+
+    // Initialize result object
+    const result: CardPriceData = {
+      tcgplayer_price: null,
+      cardmarket_price: null,
+    };
+
+    // Map the price to the correct field based on the price_key
+    // Scryfall price keys: usd, usd_foil, usd_etched, eur, eur_foil, eur_etched, tix
+    if (priceKey.startsWith("usd")) {
+      // USD prices (usd, usd_foil, usd_etched) go to tcgplayer_price
+      result.tcgplayer_price = parsedPrice;
+      console.log(
+        `Mapped USD price (${priceKey}) to tcgplayer_price: ${parsedPrice}`,
+      );
+    } else if (priceKey.startsWith("eur")) {
+      // EUR prices (eur, eur_foil, eur_etched) go to cardmarket_price
+      result.cardmarket_price = parsedPrice;
+      console.log(
+        `Mapped EUR price (${priceKey}) to cardmarket_price: ${parsedPrice}`,
+      );
+    } else if (priceKey === "tix") {
+      // MTGO tickets - typically USD-based, map to tcgplayer_price
+      result.tcgplayer_price = parsedPrice;
+      console.log(
+        `Mapped MTGO tickets (${priceKey}) to tcgplayer_price: ${parsedPrice}`,
+      );
+    } else {
+      // Handle any other price keys by checking common patterns
+      const lowerKey = priceKey.toLowerCase();
+      if (lowerKey.includes("usd") || lowerKey.includes("dollar")) {
+        result.tcgplayer_price = parsedPrice;
+        console.log(
+          `Mapped USD-like price (${priceKey}) to tcgplayer_price: ${parsedPrice}`,
+        );
+      } else if (lowerKey.includes("eur") || lowerKey.includes("euro")) {
+        result.cardmarket_price = parsedPrice;
+        console.log(
+          `Mapped EUR-like price (${priceKey}) to cardmarket_price: ${parsedPrice}`,
+        );
+      } else {
+        // Fallback for unknown price keys - default to tcgplayer_price
+        console.warn(
+          `Unknown price key: ${priceKey}, mapping to tcgplayer_price`,
+        );
+        result.tcgplayer_price = parsedPrice;
+      }
+    }
+
+    console.log("Final result:", result);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error.name === "AbortError") {
+      console.error("Request to Scryfall API timed out");
+      throw new Error("Request to Scryfall API timed out after 15 seconds");
+    }
+
+    if (error.message?.includes("name resolution failed")) {
+      console.error("DNS resolution failed for Scryfall API");
+      throw new Error(
+        "Network connectivity issue: Unable to resolve api.scryfall.com",
+      );
+    }
+
+    console.error("Error fetching Scryfall price:", error);
+    throw error;
   }
-
-  const cardData = await response.json();
-  console.log("Scryfall API response prices:", cardData.prices);
-
-  // Extract the specific price using the price_key
-  const price = cardData.prices?.[priceKey];
-  console.log(`Price for key '${priceKey}':`, price);
-
-  // Parse the price (Scryfall returns prices as strings)
-  const parsedPrice = price ? parseFloat(price) : null;
-  console.log("Parsed price:", parsedPrice);
-
-  // Map the price to the correct field based on the price_key
-  const result: CardPriceData = {
-    tcgplayer_price: null,
-    cardmarket_price: null,
-  };
-
-  // Determine which price field to populate based on price_key
-  // Scryfall price keys: usd, usd_foil, usd_etched, eur, eur_foil, eur_etched, tix
-  if (priceKey.startsWith("usd")) {
-    // USD prices (usd, usd_foil, usd_etched) go to tcgplayer_price
-    result.tcgplayer_price = parsedPrice;
-  } else if (priceKey.startsWith("eur")) {
-    // EUR prices (eur, eur_foil, eur_etched) go to cardmarket_price
-    result.cardmarket_price = parsedPrice;
-  } else if (priceKey === "tix") {
-    // MTGO tickets - could map to either, but typically USD-based
-    result.tcgplayer_price = parsedPrice;
-  } else {
-    // Fallback for any unknown price keys
-    console.warn(`Unknown price key: ${priceKey}, mapping to tcgplayer_price`);
-    result.tcgplayer_price = parsedPrice;
-  }
-
-  console.log("Final result:", result);
-  return result;
 }
 
 async function fetchTCGPlayerPrice(productId: string): Promise<CardPriceData> {

@@ -1,5 +1,5 @@
 -- Migration: 20250825_transactions_schema.sql
--- Description: Transactions schema for card shops
+-- Description: Transactions schema for card shops (Sale transactions only)
 -- Tables: user_transaction, user_transaction_items
 
 DO $$
@@ -14,10 +14,7 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type') THEN
         CREATE TYPE transaction_type AS ENUM (
-            'sale',
-            'purchase',
-            'grading_submit',
-            'refund'
+            'sale'
         );
     END IF;
 END$$;

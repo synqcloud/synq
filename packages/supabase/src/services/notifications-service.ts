@@ -5,17 +5,20 @@ export type NotificationRow =
   Database["public"]["Tables"]["notifications"]["Row"];
 
 export type EnrichedNotification = NotificationRow & {
-  stock: {
+  stock?: {
     id: string;
     core_card: {
       name: string;
     };
   };
-  audit: {
+  audit?: {
     id: string;
   };
-  marketplace: {
+  marketplace?: {
     id: string;
+    name: string;
+  };
+  core_card?: {
     name: string;
   };
 };
@@ -62,7 +65,7 @@ export class NotificationsService extends ServiceBase {
       async () => {
         const client = await this.getClient(context);
 
-        // Single query with proper joins to get card name from core_cards table
+        // Updated query to match new schema structure
         const { data: notifications, error } = await client
           .from("notifications")
           .select(
@@ -72,7 +75,10 @@ export class NotificationsService extends ServiceBase {
             stock_id,
             stock_audit_id,
             marketplace_id,
+            core_card_id,
             notification_type,
+            message,
+            metadata,
             is_read,
             created_at,
             stock:user_card_stock!stock_id(
@@ -86,6 +92,9 @@ export class NotificationsService extends ServiceBase {
             ),
             marketplace:marketplaces!marketplace_id(
               id,
+              name
+            ),
+            core_card:core_cards!core_card_id(
               name
             )
           `,
@@ -102,13 +111,15 @@ export class NotificationsService extends ServiceBase {
         if (!notifications || notifications.length === 0) return [];
 
         // Transform to match expected interface
-        // Transform to match expected interface
         const enriched: EnrichedNotification[] = notifications.map((n) => {
           const stock = Array.isArray(n.stock) ? n.stock[0] : n.stock;
           const audit = Array.isArray(n.audit) ? n.audit[0] : n.audit;
           const marketplace = Array.isArray(n.marketplace)
             ? n.marketplace[0]
             : n.marketplace;
+          const core_card = Array.isArray(n.core_card)
+            ? n.core_card[0]
+            : n.core_card;
 
           return {
             ...n,
@@ -119,9 +130,12 @@ export class NotificationsService extends ServiceBase {
                     ? stock.core_card[0]
                     : stock.core_card,
                 } as { id: string; core_card: { name: string } })
-              : (undefined as any),
-            audit: audit as { id: string },
-            marketplace: marketplace as { id: string; name: string },
+              : undefined,
+            audit: audit as { id: string } | undefined,
+            marketplace: marketplace as
+              | { id: string; name: string }
+              | undefined,
+            core_card: core_card as { name: string } | undefined,
           };
         });
 

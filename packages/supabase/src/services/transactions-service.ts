@@ -34,7 +34,6 @@ export type TransactionWithQuantity = UserTransaction & {
 
 interface TransactionFilters {
   statuses?: TransactionStatus[];
-  types?: TransactionType[];
   sources?: string[];
   integrationOnly?: boolean;
   startDate?: Date;
@@ -43,7 +42,6 @@ interface TransactionFilters {
 
 // Types for creating transactions
 export interface CreateTransactionData {
-  transaction_type: TransactionType;
   transaction_status: TransactionStatus;
   source?: string;
   performed_by?: string;
@@ -149,7 +147,7 @@ export class TransactionService extends ServiceBase {
           .insert({
             user_id: userId,
             transaction_status: data.transaction.transaction_status,
-            transaction_type: data.transaction.transaction_type,
+            transaction_type: "sale", // Always sale
             performed_by: data.transaction.performed_by || userId,
             source: data.transaction.source || null,
             subtotal_amount: data.transaction.subtotal_amount,
@@ -216,48 +214,6 @@ export class TransactionService extends ServiceBase {
 
     return this.createTransaction(context, {
       transaction: {
-        transaction_type: "sale",
-        transaction_status: "COMPLETED",
-        source: data.source,
-        performed_by: data.performed_by,
-        subtotal_amount,
-        tax_amount,
-        shipping_amount,
-        net_amount,
-        is_integration: false,
-      },
-      items: data.items,
-    });
-  }
-
-  /**
-   * Create a purchase transaction (convenience method)
-   */
-  static async createPurchaseTransaction(
-    context: "server" | "client" = "server",
-    data: {
-      source: string;
-      items: CreateTransactionItemData[];
-      tax_amount?: number;
-      shipping_amount?: number;
-      performed_by?: string;
-    },
-  ): Promise<{ transaction: UserTransaction; items: UserTransactionItem[] }> {
-    // Calculate subtotal from items (negative for purchases)
-    const subtotal_amount = -Math.abs(
-      data.items.reduce(
-        (sum, item) => sum + item.quantity * item.unit_price,
-        0,
-      ),
-    );
-
-    const tax_amount = -Math.abs(data.tax_amount || 0);
-    const shipping_amount = -Math.abs(data.shipping_amount || 0);
-    const net_amount = subtotal_amount + tax_amount + shipping_amount;
-
-    return this.createTransaction(context, {
-      transaction: {
-        transaction_type: "purchase",
         transaction_status: "COMPLETED",
         source: data.source,
         performed_by: data.performed_by,
@@ -355,7 +311,7 @@ export class TransactionService extends ServiceBase {
           p_start_date: filters?.startDate?.toISOString() ?? null,
           p_end_date: filters?.endDate?.toISOString() ?? null,
           p_statuses: filters?.statuses ?? null,
-          p_types: filters?.types ?? null,
+          p_types: null, // No longer needed since all transactions are sales
         });
 
         if (error) throw error;

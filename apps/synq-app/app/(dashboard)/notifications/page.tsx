@@ -109,6 +109,103 @@ export default function NotificationsPage() {
     }
   }, [refetch]);
 
+  // Helper function to get card name from notification
+  const getCardName = (notification: EnrichedNotification): string => {
+    // First try stock-related card
+    if (notification.stock?.core_card?.name) {
+      return notification.stock.core_card.name;
+    }
+    // Then try direct core_card reference (for price alerts)
+    if (notification.core_card?.name) {
+      return notification.core_card.name;
+    }
+    return "unknown card";
+  };
+
+  // Helper function to render notification content based on type
+  const renderNotificationContent = (notification: EnrichedNotification) => {
+    const cardName = getCardName(notification);
+
+    switch (notification.notification_type) {
+      case "discrepancy_stock":
+        return (
+          <div className="text-sm text-card-foreground leading-relaxed">
+            <span>There is a possible stock discrepancy on </span>
+            <span className="font-medium text-foreground">{cardName}</span>
+            {notification.stock_audit_id && (
+              <>
+                <span> after this change </span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="inline-flex items-center gap-1 h-auto p-0 text-primary hover:text-primary/80 font-medium"
+                  onClick={() => openAudit(notification.stock_audit_id!)}
+                >
+                  view audit
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
+              </>
+            )}
+            {notification.marketplace && (
+              <>
+                <span> - Please update the stock in </span>
+                <MarketplaceIcon
+                  marketplace={notification.marketplace.name}
+                  showLabel
+                  isIntegration={false}
+                  className="inline-flex items-center align-middle"
+                />
+              </>
+            )}
+          </div>
+        );
+
+      case "price_update_suggestion":
+        return (
+          <div className="text-sm text-card-foreground leading-relaxed">
+            <span>Price update suggestion for </span>
+            <span className="font-medium text-foreground">{cardName}</span>
+            {notification.message && <span> - {notification.message}</span>}
+          </div>
+        );
+
+      case "price_alert":
+        return (
+          <div className="text-sm text-card-foreground leading-relaxed">
+            <span>Price alert for </span>
+            <span className="font-medium text-foreground">{cardName}</span>
+            {notification.message && <span> - {notification.message}</span>}
+          </div>
+        );
+
+      case "general_alert":
+        return (
+          <div className="text-sm text-card-foreground leading-relaxed">
+            {notification.message || "General alert"}
+            {cardName !== "unknown card" && (
+              <>
+                <span> regarding </span>
+                <span className="font-medium text-foreground">{cardName}</span>
+              </>
+            )}
+          </div>
+        );
+
+      default:
+        return (
+          <div className="text-sm text-card-foreground leading-relaxed">
+            {notification.message || "New notification"}
+            {cardName !== "unknown card" && (
+              <>
+                <span> for </span>
+                <span className="font-medium text-foreground">{cardName}</span>
+              </>
+            )}
+          </div>
+        );
+    }
+  };
+
   // Handle error state
   if (error) {
     return (
@@ -198,33 +295,7 @@ export default function NotificationsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0 space-y-2">
                   {/* Notification content */}
-                  <div className="text-sm text-card-foreground leading-relaxed">
-                    <span>There is a possible discrepancy on </span>
-                    <span className="font-medium text-foreground">
-                      {notification.stock?.core_card?.name || "unknown stock"}
-                    </span>
-                    <span> after this change </span>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="inline-flex items-center gap-1 h-auto p-0 text-primary hover:text-primary/80 font-medium"
-                      onClick={() => openAudit(notification.audit.id)}
-                    >
-                      view audit
-                      <ExternalLink className="w-3 h-3" />
-                    </Button>
-                    {notification.marketplace && (
-                      <>
-                        <span> - Please update the stock in </span>
-                        <MarketplaceIcon
-                          marketplace={notification.marketplace.name}
-                          showLabel
-                          isIntegration={false}
-                          className="inline-flex items-center align-middle"
-                        />
-                      </>
-                    )}
-                  </div>
+                  {renderNotificationContent(notification)}
 
                   {/* Timestamp */}
                   <div className="text-xs text-muted-foreground">

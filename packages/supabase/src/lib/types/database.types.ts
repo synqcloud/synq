@@ -777,7 +777,7 @@ export type Database = {
         | "price_alert"
         | "general_alert"
       transaction_status: "PENDING" | "IN_PROGRESS" | "COMPLETED"
-      transaction_type: "sale" | "purchase" | "grading_submit" | "refund"
+      transaction_type: "sale"
     }
     CompositeTypes: {
       [_ in never]: never

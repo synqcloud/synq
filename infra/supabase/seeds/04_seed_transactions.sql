@@ -1,4 +1,4 @@
--- Seed: large user transactions (~5,000) with multiple marketplaces
+-- Seed: large user transactions (~5,000) with multiple marketplaces (Sale transactions only)
 DO $$
 DECLARE
     test_user_uuid UUID;
@@ -37,7 +37,7 @@ BEGIN
     -- Possible transaction sources
     -- CardTrader will be the only integration source
 
-    -- Phase 1: Transactions (~5,000 with mixed statuses and types)
+    -- Phase 1: Transactions (~5,000 with mixed statuses, sale type only)
     FOR i IN 1..5000 LOOP
         -- Random transaction status distribution: 10% pending, 30% in_progress, 60% completed
         trans_status := (ARRAY['PENDING','IN_PROGRESS','COMPLETED']::transaction_status[])[
@@ -48,15 +48,8 @@ BEGIN
             END
         ];
 
-        -- Random transaction type distribution: 60% sale, 20% purchase, 15% grading_submit, 5% refund
-        trans_type := (ARRAY['sale','purchase','grading_submit','refund']::transaction_type[])[
-            CASE
-                WHEN random() < 0.6 THEN 1
-                WHEN random() < 0.8 THEN 2
-                WHEN random() < 0.95 THEN 3
-                ELSE 4
-            END
-        ];
+        -- Only sale transactions
+        trans_type := 'sale';
 
         transaction_source := (ARRAY['in-store','eBay','Whatnot','CardMarket','TCGplayer','CardTrader'])[floor(random()*6+1)];
 
@@ -114,24 +107,11 @@ BEGIN
         FROM public.user_transaction_items
         WHERE transaction_id = transaction_uuid;
 
-        -- Calculate tax (8.5% for sales, 0% for purchases/grading/refunds)
-        tax := CASE
-            WHEN trans_type = 'sale' THEN round((subtotal * 0.085)::numeric, 2)
-            ELSE 0
-        END;
+        -- Calculate tax (8.5% for sales)
+        tax := round((subtotal * 0.085)::numeric, 2);
 
-        -- Calculate shipping (random $5-15 for sales, $0 for others, except refunds get negative)
-        shipping := CASE
-            WHEN trans_type = 'sale' THEN round((random() * 10 + 5)::numeric, 2)
-            WHEN trans_type = 'refund' THEN -round((random() * 10 + 5)::numeric, 2)
-            ELSE 0
-        END;
-
-        -- For refunds, make amounts negative
-        IF trans_type = 'refund' THEN
-            subtotal := -subtotal;
-            tax := -tax;
-        END IF;
+        -- Calculate shipping (random $5-15 for sales)
+        shipping := round((random() * 10 + 5)::numeric, 2);
 
         -- Update transaction with calculated amounts
         UPDATE public.user_transaction
@@ -144,5 +124,5 @@ BEGIN
 
     END LOOP;
 
-    RAISE NOTICE 'Successfully created 5,000 transactions with items for user: %', test_user_uuid;
+    RAISE NOTICE 'Successfully created 5,000 sale transactions with items for user: %', test_user_uuid;
 END $$;
