@@ -10,6 +10,7 @@ import {
 import { Plus } from "lucide-react";
 import { MarketplaceListingPopover } from "../marketplace/marketplace-listing-popover";
 import { UserStockWithListings } from "@synq/supabase/services";
+import { MarketplaceIcon } from "@/features/transactions/components";
 
 type MarketplaceSectionProps = {
   marketplaces: string[];
@@ -30,13 +31,7 @@ export function MarketplaceSection({
     <TooltipProvider delayDuration={0}>
       <HStack gap={2} align="center" wrap="wrap">
         {marketplaces.map((mp: string) => (
-          <MarketplaceListingPopover
-            key={mp}
-            stockId={stock?.stock_id || ""}
-            marketplace={mp}
-            currentPrice={marketplacePrices[mp]}
-            cardId={cardId || ""}
-          />
+          <MarketplaceIcon key={mp} marketplace={mp} showTooltip={false} />
         ))}
         <Tooltip>
           <TooltipTrigger asChild>

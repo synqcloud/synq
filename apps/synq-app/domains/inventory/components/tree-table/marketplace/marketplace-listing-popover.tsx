@@ -101,7 +101,7 @@ export function MarketplaceListingPopover({
           </HStack>
 
           {/* Price input */}
-          <VStack gap={2}>
+          {/*<VStack gap={2}>
             <Label htmlFor="price" className="text-xs text-muted-foreground">
               Listing Price
             </Label>
@@ -120,10 +120,10 @@ export function MarketplaceListingPopover({
                 disabled={updatePriceMutation.isPending}
               />
             </div>
-          </VStack>
+          </VStack>*/}
 
           {/* Action buttons */}
-          <HStack gap={2} align="center">
+          {/*<HStack gap={2} align="center">
             <Button
               size="sm"
               onClick={handleSave}
@@ -153,7 +153,7 @@ export function MarketplaceListingPopover({
             >
               Cancel
             </Button>
-          </HStack>
+          </HStack>*/}
         </VStack>
       </PopoverContent>
     </Popover>

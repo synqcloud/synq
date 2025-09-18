@@ -175,7 +175,6 @@ export function AddMarketplaceDialog({
                     <MarketplaceIcon
                       marketplace={marketplace}
                       showTooltip={false}
-                      className="w-4 h-4"
                     />
                     <span className="text-xs">{marketplace}</span>
                     <Button
