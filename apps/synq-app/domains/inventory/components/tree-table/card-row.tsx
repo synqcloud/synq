@@ -10,10 +10,10 @@ import Link from "next/link";
 
 export default function CardRow({
   card,
-  hasAlert, // ← Add this prop
+  hasAlert,
 }: {
   card: Pick<CoreCard, "id" | "name"> & { stock: number };
-  hasAlert: boolean; // ← Add this prop
+  hasAlert: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const outOfStock = card.stock === 0;
@@ -45,14 +45,14 @@ export default function CardRow({
         </span>
         <div className="flex items-center gap-2">
           <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
-          <Link
+          {/*<Link
             href={`/inventory/item/${card.id}`}
             target="_blank"
             className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent/70 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <Search className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-          </Link>
+          </Link>*/}
         </div>
       </div>
       {/* Expanded Stock Table */}

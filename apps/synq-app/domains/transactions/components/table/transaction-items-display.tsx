@@ -65,7 +65,7 @@ export function TransactionItemsDisplay({
                 <h4 className="font-medium text-sm text-foreground truncate">
                   {item.card_name}
                 </h4>
-                <Button
+                {/*<Button
                   variant="ghost"
                   size="sm"
                   className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
@@ -79,7 +79,7 @@ export function TransactionItemsDisplay({
                   title="View in inventory"
                 >
                   <ExternalLink className="h-3 w-3" />
-                </Button>
+                </Button>*/}
               </HStack>
 
               <HStack
