@@ -1,13 +1,15 @@
 // Core
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-
 // Components
 import CardRow from "./card-row";
 import { ChevronDown, ChevronRight } from "lucide-react";
-
 // Services
-import { CoreSet, InventoryService } from "@synq/supabase/services";
+import {
+  CoreSet,
+  InventoryService,
+  PriceService,
+} from "@synq/supabase/services";
 
 export default function SetRow({
   set,
@@ -20,6 +22,15 @@ export default function SetRow({
     queryKey: ["cards", set.id],
     queryFn: () => InventoryService.fetchCardsBySet("client", set.id),
     enabled: expanded,
+  });
+
+  // Batch load price alerts for all cards in this set
+  const cardIds = cards?.map((card) => card.id) || [];
+  const { data: alertCardIds = new Set() } = useQuery({
+    queryKey: ["price-alerts", "batch", set.id],
+    queryFn: () => PriceService.getUserPriceAlerts(cardIds, "client"),
+    enabled: expanded && cardIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   return (
@@ -40,7 +51,14 @@ export default function SetRow({
         </span>
       </div>
       {/* Expanded Content */}
-      {expanded && cards?.map((card) => <CardRow key={card.id} card={card} />)}
+      {expanded &&
+        cards?.map((card) => (
+          <CardRow
+            key={card.id}
+            card={card}
+            hasAlert={alertCardIds.has(card.id)}
+          />
+        ))}
     </div>
   );
 }

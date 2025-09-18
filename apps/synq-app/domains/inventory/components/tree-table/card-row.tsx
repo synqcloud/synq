@@ -10,8 +10,10 @@ import Link from "next/link";
 
 export default function CardRow({
   card,
+  hasAlert, // ← Add this prop
 }: {
   card: Pick<CoreCard, "id" | "name"> & { stock: number };
+  hasAlert: boolean; // ← Add this prop
 }) {
   const [expanded, setExpanded] = useState(false);
   const outOfStock = card.stock === 0;
@@ -42,7 +44,7 @@ export default function CardRow({
           )}
         </span>
         <div className="flex items-center gap-2">
-          <PriceAlertButton cardId={card.id} />
+          <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
           <Link
             href={`/inventory/item/${card.id}`}
             target="_blank"

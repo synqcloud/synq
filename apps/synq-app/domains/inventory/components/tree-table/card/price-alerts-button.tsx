@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Siren } from "lucide-react";
 import { Button } from "@synq/ui/component";
 import {
@@ -11,22 +11,16 @@ import { PriceService } from "@synq/supabase/services";
 
 interface PriceAlertButtonProps {
   cardId: string;
+  hasAlert: boolean;
   className?: string;
 }
 
 export default function PriceAlertButton({
   cardId,
+  hasAlert,
   className,
 }: PriceAlertButtonProps) {
   const queryClient = useQueryClient();
-
-  // Query to check if user has price alert for this card
-  const { data: hasAlert = false } = useQuery({
-    queryKey: ["price-alert", cardId],
-    queryFn: () => PriceService.hasUserPriceAlert(cardId, "client"),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 1,
-  });
 
   // Mutation to toggle price alert
   const toggleAlertMutation = useMutation({
@@ -38,13 +32,16 @@ export default function PriceAlertButton({
       }
     },
     onSuccess: () => {
-      // Optimistically update the query data
-      queryClient.setQueryData(["price-alert", cardId], !hasAlert);
+      queryClient.invalidateQueries({
+        queryKey: ["price-alerts", "batch"],
+      });
     },
     onError: (error) => {
       console.error("Failed to toggle price alert:", error);
-      // Revert optimistic update on error
-      queryClient.invalidateQueries({ queryKey: ["price-alert", cardId] });
+
+      queryClient.invalidateQueries({
+        queryKey: ["price-alerts", "batch"],
+      });
     },
   });
 
@@ -80,17 +77,17 @@ export default function PriceAlertButton({
               <div>
                 <p className="font-medium">Price alert is active</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  You'll be notified daily when this card's price changes
-                  (increases or decreases). Click to remove alert.
+                  You&apos;ll be notified daily when this card&apos;s price
+                  changes (increases or decreases). Click to remove alert.
                 </p>
               </div>
             ) : (
               <div>
                 <p className="font-medium">Set price alert</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Get daily notifications when this card's price changes. We'll
-                  check prices every 24 hours and alert you of any increases or
-                  decreases.
+                  Get daily notifications when this card&apos;ss price changes.
+                  We&apos;sll check prices every 24 hours and alert you of any
+                  increases or decreases.
                 </p>
               </div>
             )}

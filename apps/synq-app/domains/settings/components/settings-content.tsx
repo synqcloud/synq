@@ -1,7 +1,7 @@
 "use client";
 
 // ICONS
-import { User, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
+import { User, AlertTriangle } from "lucide-react";
 
 // UI COMPONENTS
 import {
