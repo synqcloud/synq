@@ -396,6 +396,7 @@ export class InventoryService extends ServiceBase {
 
         // Add explicit error handling for empty results
         const { data, error, count } = await client.rpc("get_card_stock", {
+          p_user_id: userId,
           p_core_card_id: cardId,
         });
 

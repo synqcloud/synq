@@ -1,4 +1,4 @@
--- Migration: 20250811_inventory_schema.sql
+-- Migration: 20250811_core_library_schema.sql
 -- Description: Core Library schema for card shops
 -- Tables: core_libraries, core_sets, core_cards, user_library_access
 
@@ -96,7 +96,11 @@ RETURNS TABLE (
     core_set_name TEXT,
     core_library_name TEXT,
     stock INTEGER
-) AS $$
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     RETURN QUERY
     SELECT
@@ -120,7 +124,7 @@ BEGIN
     GROUP BY cc.id, cc.name, cs.name, cl.name
     ORDER BY cc.name ASC;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 
 -- =============================================
@@ -178,12 +182,15 @@ CREATE POLICY "Users can manage their own library access" ON public.user_library
 -- =============================================
 
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$;
 
 DROP TRIGGER IF EXISTS update_core_libraries_updated_at ON public.core_libraries;
 CREATE TRIGGER update_core_libraries_updated_at BEFORE UPDATE ON public.core_libraries FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

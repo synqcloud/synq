@@ -8,7 +8,7 @@ import {
   HStack,
 } from "@synq/ui/component";
 import { Plus } from "lucide-react";
-import { MarketplaceListingPopover } from "../marketplace/marketplace-listing-popover";
+// import { MarketplaceListingPopover } from "../marketplace/marketplace-listing-popover";
 import { UserStockWithListings } from "@synq/supabase/services";
 import { MarketplaceIcon } from "@/features/transactions/components";
 

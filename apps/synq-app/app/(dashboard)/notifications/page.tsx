@@ -161,34 +161,12 @@ export default function NotificationsPage() {
           </div>
         );
 
-      case "price_update_suggestion":
-        return (
-          <div className="text-sm text-card-foreground leading-relaxed">
-            <span>Price update suggestion for </span>
-            <span className="font-medium text-foreground">{cardName}</span>
-            {notification.message && <span> - {notification.message}</span>}
-          </div>
-        );
-
       case "price_alert":
         return (
           <div className="text-sm text-card-foreground leading-relaxed">
             <span>Price alert for </span>
             <span className="font-medium text-foreground">{cardName}</span>
             {notification.message && <span> - {notification.message}</span>}
-          </div>
-        );
-
-      case "general_alert":
-        return (
-          <div className="text-sm text-card-foreground leading-relaxed">
-            {notification.message || "General alert"}
-            {cardName !== "unknown card" && (
-              <>
-                <span> regarding </span>
-                <span className="font-medium text-foreground">{cardName}</span>
-              </>
-            )}
           </div>
         );
 

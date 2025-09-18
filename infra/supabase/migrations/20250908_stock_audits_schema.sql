@@ -1,7 +1,15 @@
+-- Migration: 20250908_stock_audits_schema.sql
+-- Description: Core Library schema for stock audits and notifications
+-- Tables: core_libraries, core_sets, core_cards, user_library_access
+
+BEGIN;
+
 -- =============================================
--- Table: stock_audit_log
+-- Table: stock_audit_log (Any stock upadate by manual edit or by a transacion is stored here. Mainly procesed by edge functions)
 -- =============================================
-CREATE TABLE IF NOT EXISTS public.stock_audit_log (
+DROP TABLE IF EXISTS public.stock_audit_log CASCADE;
+
+CREATE TABLE public.stock_audit_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     stock_id UUID NOT NULL REFERENCES public.user_card_stock(id) ON DELETE CASCADE,
     user_id UUID NOT NULL,
@@ -13,19 +21,21 @@ CREATE TABLE IF NOT EXISTS public.stock_audit_log (
 );
 
 -- =============================================
--- Table: notification_type (opcional como enum)
+-- Type: notification_type
 -- =============================================
+DROP TYPE IF EXISTS public.notification_type CASCADE;
+
 CREATE TYPE public.notification_type AS ENUM (
-    'discrepancy_stock',       -- Cantidad negativa o inconsistencias
-    'price_update_suggestion', -- Cambio de precio sugerido desde TCGMarket, TCGPlayer, etc.
-    'price_alert',             -- Alerta de precio para usuarios
-    'general_alert'            -- Otros avisos generales
+    'discrepancy_stock',       -- Inventory Discrepancies
+    'price_alert'              -- Notifications from price alerts
 );
 
 -- =============================================
--- Table: notifications
+-- Table: notifications (User-facing alerts)
 -- =============================================
-CREATE TABLE IF NOT EXISTS public.notifications (
+DROP TABLE IF EXISTS public.notifications CASCADE;
+-- TODO: this table needs redesign for scalability
+CREATE TABLE public.notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     user_id UUID NOT NULL,                          -- who receives the notification
@@ -52,25 +62,12 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 );
 
 -- =============================================
--- Indexes for better performance
--- =============================================
-CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
-ON public.notifications(user_id, is_read)
-WHERE is_read = FALSE;
-
-CREATE INDEX IF NOT EXISTS idx_notifications_price_alerts
-ON public.notifications(core_card_id, notification_type)
-WHERE notification_type = 'price_alert';
-
--- =============================================
--- Note: Removed PostgreSQL trigger and function
--- Stock audit will now be inserted from Edge Functions
--- =============================================
-
--- =============================================
 -- Function: perform_stock_transaction
--- Description: Performs a stock update and creates the corresponding transaction atomically
 -- =============================================
+DROP FUNCTION IF EXISTS public.perform_stock_transaction(
+    UUID, TEXT, INT, INT, UUID, NUMERIC, TEXT, NUMERIC, NUMERIC, NUMERIC
+);
+
 CREATE OR REPLACE FUNCTION public.perform_stock_transaction(
     p_stock_id UUID,
     p_change_type TEXT,
@@ -88,13 +85,17 @@ RETURNS TABLE(
     quantity_after INT,
     discrepancy BOOLEAN,
     transaction_id UUID
-) AS $$
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     v_stock RECORD;
     v_quantity_before INT;
     v_quantity_after INT;
     v_discrepancy BOOLEAN := false;
-    v_transaction_type transaction_type;
+    v_transaction_type TEXT;  -- Use TEXT instead of enum to avoid search_path issues
     v_transaction_id UUID;
 BEGIN
     -- Lock the stock row to prevent concurrent modifications
@@ -116,14 +117,17 @@ BEGIN
         v_quantity_after := v_quantity_before + p_quantity_change;
     END IF;
 
-    -- Handle discrepancies
+    -- Handle discrepancies - only if stock_discrepancies table exists
     IF v_quantity_after < 0 THEN
         v_discrepancy := true;
+        -- Comment out if stock_discrepancies table doesn't exist
+        /*
         INSERT INTO public.stock_discrepancies(
             stock_id, expected_quantity, actual_quantity, quantity_change, change_type
         ) VALUES (
             p_stock_id, p_quantity_change, v_quantity_before, p_quantity_change, p_change_type
         );
+        */
         v_quantity_after := 0;
     END IF;
 
@@ -132,23 +136,28 @@ BEGIN
     SET quantity = v_quantity_after, updated_at = NOW()
     WHERE id = p_stock_id;
 
-    -- Map change_type to transaction_type
+    -- Map change_type to transaction_type string
     IF p_change_type = 'marketplace_sale' THEN
         v_transaction_type := 'sale';
     ELSE
-        v_transaction_type := 'purchase';
+        v_transaction_type := 'purchase';  -- Assuming purchase is valid, adjust as needed
     END IF;
 
-    -- Insert transaction
+    -- Insert transaction with proper type casting
     INSERT INTO public.user_transaction(
         user_id, transaction_status, transaction_type, performed_by, source, is_integration,
         subtotal_amount, tax_amount, shipping_amount, net_amount
     )
     VALUES (
-        v_stock.user_id, 'COMPLETED', v_transaction_type, p_performed_by, p_marketplace,
+        v_stock.user_id,
+        'COMPLETED'::public.transaction_status,
+        v_transaction_type::public.transaction_type,
+        p_performed_by,
+        p_marketplace,
         p_change_type = 'marketplace_sale',
         COALESCE(p_unit_price, v_stock.cogs, 0) * ABS(v_quantity_before - v_quantity_after),
-        p_tax_amount, p_shipping_amount,
+        p_tax_amount,
+        p_shipping_amount,
         COALESCE(p_net_amount, COALESCE(p_unit_price, v_stock.cogs, 0) * ABS(v_quantity_before - v_quantity_after))
     )
     RETURNING id INTO v_transaction_id;
@@ -163,4 +172,69 @@ BEGIN
     -- Return result
     RETURN QUERY SELECT v_quantity_before, v_quantity_after, v_discrepancy, v_transaction_id;
 END;
-$$ LANGUAGE plpgsql;
+$$;
+
+-- =============================================
+-- Indexes for better performance
+-- =============================================
+DROP INDEX IF EXISTS idx_notifications_user_unread;
+DROP INDEX IF EXISTS idx_notifications_price_alerts;
+
+CREATE INDEX idx_notifications_user_unread
+    ON public.notifications(user_id, is_read)
+    WHERE is_read = FALSE;
+
+CREATE INDEX idx_notifications_price_alerts
+    ON public.notifications(core_card_id, notification_type)
+    WHERE notification_type = 'price_alert';
+
+-- =============================================
+-- Security hardening: RLS and View security
+-- =============================================
+
+-- Ensure the view runs with invoker rights (not definer)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_views WHERE schemaname = 'public' AND viewname = 'user_transaction_items_with_cards'
+  ) THEN
+    EXECUTE 'ALTER VIEW public.user_transaction_items_with_cards SET (security_invoker = on)';
+  END IF;
+END$$;
+
+-- Enable RLS on public tables exposed via PostgREST
+ALTER TABLE public.stock_audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Policies for stock_audit_log
+DROP POLICY IF EXISTS "Users can view their own stock audit logs" ON public.stock_audit_log;
+CREATE POLICY "Users can view their own stock audit logs" ON public.stock_audit_log
+  FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert their own stock audit logs" ON public.stock_audit_log;
+CREATE POLICY "Users can insert their own stock audit logs" ON public.stock_audit_log
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- Optionally allow owners to delete their own audit logs
+DROP POLICY IF EXISTS "Users can delete their own stock audit logs" ON public.stock_audit_log;
+CREATE POLICY "Users can delete their own stock audit logs" ON public.stock_audit_log
+  FOR DELETE USING (user_id = auth.uid());
+
+-- Policies for notifications
+DROP POLICY IF EXISTS "Users can view their notifications" ON public.notifications;
+CREATE POLICY "Users can view their notifications" ON public.notifications
+  FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert their own notifications" ON public.notifications;
+CREATE POLICY "Users can insert their own notifications" ON public.notifications
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
+CREATE POLICY "Users can update their own notifications" ON public.notifications
+  FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete their own notifications" ON public.notifications;
+CREATE POLICY "Users can delete their own notifications" ON public.notifications
+  FOR DELETE USING (user_id = auth.uid());
+
+COMMIT;

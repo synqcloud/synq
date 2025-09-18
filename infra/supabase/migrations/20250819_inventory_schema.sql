@@ -1,4 +1,4 @@
--- Migration: 20250819_inventory_schema_no_grading.sql
+-- Migration: 20250819_inventory_schema.sql
 -- Description: Inventory schema for card shops (without grading column)
 -- Tables: user_card_stock, marketplaces, user_stock_listings
 
@@ -62,52 +62,72 @@ CREATE TABLE IF NOT EXISTS public.user_stock_listings (
 -- =============================================
 -- Function: get_card_stock
 -- =============================================
-CREATE OR REPLACE FUNCTION public.get_card_stock(p_core_card_id UUID)
+-- Ensure compatibility when function exists on target (cannot change return type with CREATE OR REPLACE)
+DO $$
+BEGIN
+  IF to_regprocedure('public.get_card_stock(uuid, uuid)') IS NOT NULL THEN
+    EXECUTE 'DROP FUNCTION public.get_card_stock(uuid, uuid)';
+  END IF;
+END$$;
+
+CREATE OR REPLACE FUNCTION public.get_card_stock(
+    p_user_id UUID,
+    p_core_card_id UUID DEFAULT NULL
+)
 RETURNS TABLE(
     stock_id UUID,
+    core_card_id UUID,
+    card_name TEXT,
+    set_name TEXT,
+    library_name TEXT,
     quantity INTEGER,
-    condition VARCHAR,
-    cogs DECIMAL,
-    sku VARCHAR,
-    location VARCHAR,
-    language VARCHAR,
-    updated_at TIMESTAMPTZ,
-    marketplaces TEXT[],
-    marketplace_prices JSONB
+    condition TEXT,
+    language TEXT,
+    cogs NUMERIC,
+    location TEXT,
+    marketplaces TEXT[]
 )
-LANGUAGE sql
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = 'public'
 AS $$
+BEGIN
+    RETURN QUERY
     SELECT
         ucs.id AS stock_id,
+        ucs.core_card_id,
+        cc.name::TEXT AS card_name,
+        cs.name::TEXT AS set_name,
+        cl.name::TEXT AS library_name,
         ucs.quantity,
-        ucs.condition,
-        ucs.cogs,
-        ucs.sku,
-        ucs.location,
-        ucs.language,
-        ucs.updated_at,
-        COALESCE(
-            ARRAY_AGG(DISTINCT m.name) FILTER (WHERE m.name IS NOT NULL),
-            '{}'
-        ) AS marketplaces,
-        COALESCE(
-            JSONB_OBJECT_AGG(
-                m.name,
-                usl.listed_price
-            ) FILTER (WHERE m.name IS NOT NULL),
-            '{}'::jsonb
-        ) AS marketplace_prices
+        ucs.condition::TEXT AS condition,
+        ucs.language::TEXT AS language,
+        -- Handle cogs array if it exists; take first element or sum, depending on your logic
+        -- Option 1: If cogs is a single number stored as string
+        ucs.cogs::NUMERIC AS cogs
+        -- Option 2: If cogs is a VARCHAR[] and you want sum as NUMERIC
+        -- (SELECT SUM(x::NUMERIC) FROM unnest(ucs.cogs) AS x) AS cogs
+        ,
+        ucs.location::TEXT AS location,
+        (
+          SELECT COALESCE(array_agg(DISTINCT m.name::text), '{}'::text[])
+          FROM public.user_stock_listings usl
+          JOIN public.marketplaces m ON m.id = usl.marketplace_id
+          WHERE usl.stock_id = ucs.id
+        ) AS marketplaces
     FROM public.user_card_stock ucs
-    LEFT JOIN public.user_stock_listings usl
-        ON usl.stock_id = ucs.id
-    LEFT JOIN public.marketplaces m
-        ON m.id = usl.marketplace_id
-    WHERE ucs.core_card_id = p_core_card_id
-      AND ucs.is_active = true
-      AND ucs.user_id = auth.uid()
-    GROUP BY ucs.id, ucs.quantity, ucs.condition, ucs.cogs, ucs.sku, ucs.location, ucs.language, ucs.updated_at
-    ORDER BY ucs.created_at DESC;
+    JOIN public.core_cards cc ON ucs.core_card_id = cc.id
+    JOIN public.core_sets cs ON cc.core_set_id = cs.id
+    JOIN public.core_libraries cl ON cc.core_library_id = cl.id
+    WHERE ucs.user_id = p_user_id
+      AND ucs.is_active = TRUE
+      AND (p_core_card_id IS NULL OR ucs.core_card_id = p_core_card_id)
+    ORDER BY cc.name, ucs.condition, ucs.language;
+END;
 $$;
+
+
 
 -- =============================================
 -- Indexes for Performance

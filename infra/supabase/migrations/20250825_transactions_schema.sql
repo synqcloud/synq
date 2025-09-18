@@ -115,14 +115,14 @@ CREATE OR REPLACE FUNCTION public.get_user_transactions(
     p_user_id UUID,
     p_start_date TIMESTAMPTZ DEFAULT NULL,
     p_end_date TIMESTAMPTZ DEFAULT NULL,
-    p_statuses transaction_status[] DEFAULT NULL,
-    p_types transaction_type[] DEFAULT NULL
+    p_statuses public.transaction_status[] DEFAULT NULL,
+    p_types public.transaction_type[] DEFAULT NULL
 )
 RETURNS TABLE (
     id UUID,
     user_id UUID,
-    transaction_status transaction_status,
-    transaction_type transaction_type,
+    transaction_status public.transaction_status,
+    transaction_type public.transaction_type,
     performed_by UUID,
     source TEXT,
     subtotal_amount NUMERIC(10,2),
@@ -132,7 +132,12 @@ RETURNS TABLE (
     is_integration BOOLEAN,
     created_at TIMESTAMPTZ,
     total_quantity INTEGER
-) AS $$
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     RETURN QUERY
     SELECT
@@ -172,7 +177,7 @@ BEGIN
         t.created_at
     ORDER BY t.created_at DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$;
 
 -- =============================================
 -- Function: get_user_marketplaces
@@ -181,7 +186,12 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION public.get_user_marketplaces(
     p_user_id UUID
 )
-RETURNS TEXT[] AS $$
+RETURNS TEXT[]
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     RETURN ARRAY(
         SELECT DISTINCT source
@@ -191,7 +201,7 @@ BEGIN
         ORDER BY source
     );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$;
 
 
 

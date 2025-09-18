@@ -11,7 +11,12 @@ CREATE OR REPLACE FUNCTION public.get_user_sales_dashboard(
 RETURNS TABLE (
     monthly JSON,
     top_stock JSON
-) AS $$
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     start_date DATE := date_trunc('month', current_date) - INTERVAL '1 month' * (p_months - 1);
 BEGIN
@@ -37,7 +42,6 @@ BEGIN
             ORDER BY date_trunc('month', t.created_at)
         ) t
     );
-
     -- Top performing stock (all-time by total sold)
     -- Note: Assuming sales transactions have positive net_amount
     top_stock := (
@@ -74,9 +78,8 @@ BEGIN
             LIMIT 10
         ) c
     );
-
     RETURN NEXT;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$;
 
 COMMIT;

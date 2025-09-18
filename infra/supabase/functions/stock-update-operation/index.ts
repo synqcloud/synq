@@ -94,14 +94,17 @@ serve(async (req: Request) => {
       quantityEffective = quantityBefore + quantity_change;
 
     let discrepancy = false;
-    if (quantityEffective < 0) {
+    // Track if quantity actually changed
+    const quantityChanged = quantityEffective !== quantityBefore;
+    if (quantityEffective < 0 && quantityChanged) {
       discrepancy = true;
       quantityEffective = 0;
     }
 
     const { marketplaces, discrepancy: marketplaceDiscrepancy } =
       await checkStockMarketplaces(stock_id);
-    if (marketplaceDiscrepancy) discrepancy = true;
+    // Only consider marketplace discrepancy if the quantity changed
+    if (quantityChanged && marketplaceDiscrepancy) discrepancy = true;
 
     // Build update object
     const updateData: any = {
@@ -197,8 +200,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // Insert discrepancy notifications for each marketplace if needed
-    if (discrepancy && marketplaces.length > 0) {
+    // Insert discrepancy notifications for each marketplace only if quantity changed
+    if (quantityChanged && discrepancy && marketplaces.length > 0) {
       // Fetch marketplace names
       const { data: marketplaceData } = await supabase
         .from("marketplaces")
