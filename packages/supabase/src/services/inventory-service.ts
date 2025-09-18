@@ -280,16 +280,22 @@ export class InventoryService extends ServiceBase {
     cardId: string,
   ): Promise<UserStockWithListings[]> {
     const userId = await this.getCurrentUserId(context);
-
     return this.execute(
       async () => {
         const client = await this.getClient(context);
 
-        const { data, error } = await client.rpc("get_card_stock", {
+        // Add explicit error handling for empty results
+        const { data, error, count } = await client.rpc("get_card_stock", {
           p_core_card_id: cardId,
         });
 
-        if (error) throw error;
+        if (error) {
+          // Handle the specific PGRST116 error
+          if (error.code === "PGRST116") {
+            return []; // Return empty array for no results
+          }
+throw error;
+}
 
         return data || [];
       },
