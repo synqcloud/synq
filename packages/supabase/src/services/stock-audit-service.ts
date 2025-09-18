@@ -98,13 +98,13 @@ export class StockAuditLogService extends ServiceBase {
     const base = `${cardName} (${libraryName} • ${setName})`;
     switch (type) {
       case "create":
-        return `Created: Added ${base} with ${after} copy/copies (was ${before}) on ${createdAt}`;
+        return `Created: Added ${base} with ${after} copy/copies (was ${before})`;
       case "sale":
-        return `Sale: ${base} quantity ${before} → ${after} on ${createdAt}`;
+        return `Sale: ${base} quantity ${before} → ${after}`;
       case "manual_edit":
-        return `Manual edit: ${base} changed from ${before} to ${after} on ${createdAt}`;
+        return `Manual edit: ${base} changed from ${before} to ${after}`;
       default:
-        return `Update: ${base} quantity ${before} → ${after} (${type}) on ${createdAt}`;
+        return `Update: ${base} quantity ${before} → ${after} (${type})`;
     }
   }
 }
