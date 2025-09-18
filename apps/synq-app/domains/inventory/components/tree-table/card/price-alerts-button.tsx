@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@synq/ui/component";
 import { PriceService } from "@synq/supabase/services";
+import { toast } from "sonner";
 
 interface PriceAlertButtonProps {
   cardId: string;
@@ -32,12 +33,31 @@ export default function PriceAlertButton({
       }
     },
     onSuccess: () => {
+      // Show success toast based on action
+      if (hasAlert) {
+        toast.success("Price alert removed", {
+          description:
+            "You will no longer receive notifications for this card.",
+        });
+      } else {
+        toast.success("Price alert added", {
+          description:
+            "You'll be notified daily when this card's price changes.",
+        });
+      }
+
       queryClient.invalidateQueries({
         queryKey: ["price-alerts", "batch"],
       });
     },
     onError: (error) => {
       console.error("Failed to toggle price alert:", error);
+
+      // Show error toast
+      toast.error("Failed to update price alert", {
+        description:
+          "Please try again. If the problem persists, contact support.",
+      });
 
       queryClient.invalidateQueries({
         queryKey: ["price-alerts", "batch"],
@@ -85,8 +105,8 @@ export default function PriceAlertButton({
               <div>
                 <p className="font-medium">Set price alert</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Get daily notifications when this card&apos;ss price changes.
-                  We&apos;sll check prices every 24 hours and alert you of any
+                  Get daily notifications when this card&apos;s price changes.
+                  We&apos;ll check prices every 24 hours and alert you of any
                   increases or decreases.
                 </p>
               </div>
