@@ -31,7 +31,11 @@ export async function middleware(request: NextRequest) {
     }
 
     // Always allow access to auth-related paths
-    if (pathname.startsWith("/auth") || pathname === "/login") {
+    if (
+      pathname.startsWith("/auth") ||
+      pathname.startsWith("/api/auth") ||
+      pathname === "/login"
+    ) {
       return response;
     }
 

@@ -167,26 +167,16 @@ export class UserService extends ServiceBase {
    * Sign in with Google OAuth
    */
   static async signInWithGoogle(): Promise<{ url: string }> {
-    return this.execute(
-      async () => {
-        const client = await this.getClient("client"); // OAuth must be client-side
-        const { data, error } = await client.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-          },
-        });
-
-        if (error) throw error;
-        if (!data.url) throw new Error("No redirect URL returned from OAuth");
-
-        return { url: data.url };
+    const client = await this.getClient("client"); // OAuth must be client-side
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_GOOGLE_AUTH_CALLBACK}`,
       },
-      {
-        service: "UserService",
-        method: "signInWithGoogle",
-      },
-    );
+    });
+    if (error) throw error;
+    if (!data.url) throw new Error("No redirect URL returned from OAuth");
+    return { url: data.url };
   }
 
   /**
