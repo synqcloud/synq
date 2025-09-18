@@ -1,7 +1,6 @@
 // FIXME: This page needs full refactoring
 "use client";
 
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { ChevronLeft, X, Search } from "lucide-react";
@@ -33,6 +32,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InventoryService, TransactionService } from "@synq/supabase/services";
 import TransactionCardRow from "@/features/transactions/components/record-transaction/transaction-card-row";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 // Types
 type SelectedStock = {
