@@ -56,7 +56,7 @@ type Card = {
 
 // Form schema
 const formSchema = z.object({
-  marketplace: z.string().min(1, "Please select a marketplace"),
+  source: z.string().min(1, "Please select a source"),
   tax_amount: z.coerce.number().min(0),
   shipping_amount: z.coerce.number().min(0),
 });
@@ -75,45 +75,48 @@ function BasicInfoForm({
   marketplaces,
   isLoadingMarketplaces,
 }: BasicInfoFormProps) {
+  // Combine hardcoded options with marketplace options
+  const getSourceOptions = () => {
+    const hardcodedOptions = ["in-store", "person"];
+    const marketplaceOptions = marketplaces || [];
+    return [...hardcodedOptions, ...marketplaceOptions];
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Basic Information</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Marketplace Selector */}
+        {/* Source Selector */}
         <FormField
           control={form.control}
-          name="marketplace"
+          name="source"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium">Marketplace</FormLabel>
+              <FormLabel className="text-sm font-medium">Source</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select a marketplace" />
+                    <SelectValue placeholder="Select a source" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {isLoadingMarketplaces ? (
                     <SelectItem value="loading" disabled>
-                      Loading marketplaces...
+                      Loading sources...
                     </SelectItem>
-                  ) : marketplaces && marketplaces.length > 0 ? (
-                    marketplaces.map((marketplaceName: string) => (
-                      <SelectItem key={marketplaceName} value={marketplaceName}>
-                        {marketplaceName}
+                  ) : (
+                    getSourceOptions().map((source: string) => (
+                      <SelectItem key={source} value={source}>
+                        {source}
                       </SelectItem>
                     ))
-                  ) : (
-                    <SelectItem value="no-marketplaces" disabled>
-                      No marketplaces available
-                    </SelectItem>
                   )}
                 </SelectContent>
               </Select>
               <FormDescription className="text-xs text-muted-foreground">
-                Choose the marketplace for this transaction
+                Choose the source for this transaction
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -420,7 +423,7 @@ export default function NewTransactionPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      marketplace: "",
+      source: "",
       tax_amount: 0,
       shipping_amount: 0,
     },
@@ -435,7 +438,10 @@ export default function NewTransactionPage() {
       );
 
       if (!stockList || stockList.length === 0) {
-        toast.error("No stock available for this card");
+        toast.error("No stock available for this card", {
+          descriptionClassName: "text-muted-foreground",
+          position: "bottom-left",
+        });
         return;
       }
 
@@ -463,10 +469,16 @@ export default function NewTransactionPage() {
         return [...prev, ...newStocks];
       });
 
-      toast.success(`Added ${cardName} to transaction`);
+      toast.success(`Added ${cardName} to transaction`, {
+        descriptionClassName: "text-muted-foreground",
+        position: "bottom-left",
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Error fetching stock for card");
+      toast.error("Error fetching stock for card", {
+        descriptionClassName: "text-muted-foreground",
+        position: "bottom-left",
+      });
     }
   };
 
@@ -491,10 +503,14 @@ export default function NewTransactionPage() {
 
     return null;
   };
+
   const onSubmit = async (values: FormValues) => {
     const validationError = validateSubmission(selectedStocks);
     if (validationError) {
-      toast.error(validationError);
+      toast.error(validationError, {
+        descriptionClassName: "text-muted-foreground",
+        position: "bottom-left",
+      });
       return;
     }
 
@@ -509,14 +525,17 @@ export default function NewTransactionPage() {
       const result = await TransactionService.createSaleTransactionUsingEdge(
         "client",
         {
-          source: values.marketplace,
+          source: values.source,
           items,
           tax_amount: values.tax_amount,
           shipping_amount: values.shipping_amount,
         },
       );
 
-      toast.success(`Transaction created successfully!`);
+      toast.success(`Transaction created successfully!`, {
+        descriptionClassName: "text-muted-foreground",
+        position: "bottom-left",
+      });
 
       await Promise.all([
         queryClient.invalidateQueries({
@@ -537,7 +556,10 @@ export default function NewTransactionPage() {
       router.push("/transactions");
     } catch (error) {
       console.error("Error creating transaction:", error);
-      toast.error("Failed to create transaction. Please try again.");
+      toast.error("Failed to create transaction. Please try again.", {
+        descriptionClassName: "text-muted-foreground",
+        position: "bottom-left",
+      });
     } finally {
       setIsSubmitting(false);
     }
