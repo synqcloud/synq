@@ -69,35 +69,58 @@ export class InventoryService extends ServiceBase {
    */
   static async getUserCoreLibrary(
     context: "client" | "server" = "client",
+    options?: {
+      offset?: number;
+      limit?: number;
+    },
   ): Promise<Array<{ id: string; name: string; stock: number }>> {
     const userId = await this.getCurrentUserId(context);
     const userLibraries = await LibraryService.getUserLibraries(context);
+    const { offset = 0, limit } = options || {};
 
     return this.execute(
       async () => {
         const client = await this.getClient(context);
 
-        const { data: libraries, error: libError } = await client
+        // Build the query for libraries with optional pagination
+        let librariesQuery = client
           .from("core_libraries")
           .select("id, name")
-          .in("id", userLibraries);
+          .in("id", userLibraries)
+          .order("name", { ascending: true });
+
+        // Apply pagination if limit is provided
+        if (limit) {
+          librariesQuery = librariesQuery.range(offset, offset + limit - 1);
+        }
+
+        const { data: libraries, error: libError } = await librariesQuery;
 
         if (libError) throw libError;
 
+        // If no libraries found, return empty array
+        if (!libraries || libraries.length === 0) {
+          return [];
+        }
+
+        // Get stock data for the fetched libraries
         const { data: stockData, error: stockError } = await client
           .from("user_card_stock")
           .select(
             `
-            quantity,
-            core_cards!inner(
-              core_sets!inner(
-                core_library_id
-              )
-            )
-          `,
+             quantity,
+             core_cards!inner(
+               core_sets!inner(
+                 core_library_id
+               )
+             )
+           `,
           )
           .eq("user_id", userId)
-          .in("core_cards.core_sets.core_library_id", userLibraries);
+          .in(
+            "core_cards.core_sets.core_library_id",
+            libraries.map((lib) => lib.id),
+          );
 
         if (stockError) throw stockError;
 
@@ -109,7 +132,7 @@ export class InventoryService extends ServiceBase {
           libraryStockMap.set(libraryId, currentStock + (stock.quantity || 0));
         });
 
-        return (libraries || []).map((library) => ({
+        return libraries.map((library) => ({
           id: library.id,
           name: library.name,
           stock: libraryStockMap.get(library.id) || 0,
@@ -124,40 +147,113 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
-   * Get sets by library with stock totals
+   * Get total count of libraries for a user (helper method for pagination)
    */
-  static async fetchSetsByLibrary(
+  static async getUserCoreLibraryCount(
     context: "client" | "server" = "client",
-    libraryId: string,
-  ): Promise<Array<{ id: string; name: string; stock: number }>> {
-    const userId = await this.getCurrentUserId(context);
+  ): Promise<number> {
+    const userLibraries = await LibraryService.getUserLibraries(context);
 
     return this.execute(
       async () => {
         const client = await this.getClient(context);
 
-        const { data: sets, error: setsError } = await client
+        const { count, error } = await client
+          .from("core_libraries")
+          .select("*", { count: "exact", head: true })
+          .in("id", userLibraries);
+
+        if (error) throw error;
+
+        return count || 0;
+      },
+      {
+        service: "InventoryService",
+        method: "getUserCoreLibraryCount",
+      },
+    );
+  }
+
+  /**
+   * Get total count of cards in a set (helper method for pagination)
+   */
+  static async getCardsBySetCount(
+    context: "client" | "server" = "client",
+    setId: string,
+  ): Promise<number> {
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { count, error } = await client
+          .from("core_cards")
+          .select("*", { count: "exact", head: true })
+          .eq("core_set_id", setId);
+
+        if (error) throw error;
+
+        return count || 0;
+      },
+      {
+        service: "InventoryService",
+        method: "getCardsBySetCount",
+      },
+    );
+  }
+  /**
+   * Get sets by library with stock totals
+   */
+  static async fetchSetsByLibrary(
+    context: "client" | "server" = "client",
+    libraryId: string,
+    options?: {
+      offset?: number;
+      limit?: number;
+    },
+  ): Promise<Array<{ id: string; name: string; stock: number }>> {
+    const userId = await this.getCurrentUserId(context);
+    const { offset = 0, limit } = options || {};
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        // Build the query for sets with optional pagination
+        let setsQuery = client
           .from("core_sets")
           .select("id, name")
           .eq("core_library_id", libraryId)
-          .limit(50);
+          .order("name", { ascending: true });
+
+        // Apply pagination if limit is provided
+        if (limit) {
+          setsQuery = setsQuery.range(offset, offset + limit - 1);
+        }
+
+        const { data: sets, error: setsError } = await setsQuery;
 
         if (setsError) throw setsError;
 
+        // If no sets found, return empty array
+        if (!sets || sets.length === 0) {
+          return [];
+        }
+
+        // Get stock data for the fetched sets
         const { data: stockData, error: stockError } = await client
           .from("user_card_stock")
           .select(
             `
-            quantity,
-            core_cards!inner(
-              core_set_id
-            )
-          `,
+             quantity,
+             core_cards!inner(
+               core_set_id
+             )
+           `,
           )
           .eq("user_id", userId)
           .in(
             "core_cards.core_set_id",
-            (sets || []).map((s) => s.id),
+            sets.map((s) => s.id),
           );
 
         if (stockError) throw stockError;
@@ -170,7 +266,7 @@ export class InventoryService extends ServiceBase {
           setStockMap.set(setId, currentStock + (stock.quantity || 0));
         });
 
-        return (sets || []).map((set) => ({
+        return sets.map((set) => ({
           id: set.id,
           name: set.name,
           stock: setStockMap.get(set.id) || 0,
@@ -190,27 +286,41 @@ export class InventoryService extends ServiceBase {
   static async fetchCardsBySet(
     context: "client" | "server" = "client",
     setId: string,
+    options?: {
+      offset?: number;
+      limit?: number;
+    },
   ): Promise<
     Array<Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & { stock: number }>
   > {
     const userId = await this.getCurrentUserId(context);
+    const { offset = 0, limit } = options || {};
 
     return this.execute(
       async () => {
         const client = await this.getClient(context);
 
-        const { data, error } = await client
+        // Build the query for cards with optional pagination
+        let cardsQuery = client
           .from("core_cards")
           .select(
             `
-            id,
-            name,
-            tcgplayer_id,
-            user_card_stock!left(quantity)
-          `,
+             id,
+             name,
+             tcgplayer_id,
+             user_card_stock!left(quantity)
+           `,
           )
           .eq("core_set_id", setId)
-          .eq("user_card_stock.user_id", userId);
+          .eq("user_card_stock.user_id", userId)
+          .order("name", { ascending: true });
+
+        // Apply pagination if limit is provided
+        if (limit) {
+          cardsQuery = cardsQuery.range(offset, offset + limit - 1);
+        }
+
+        const { data, error } = await cardsQuery;
 
         if (error) throw error;
 
@@ -294,8 +404,8 @@ export class InventoryService extends ServiceBase {
           if (error.code === "PGRST116") {
             return []; // Return empty array for no results
           }
-throw error;
-}
+          throw error;
+        }
 
         return data || [];
       },

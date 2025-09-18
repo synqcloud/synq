@@ -5,27 +5,100 @@
  */
 
 "use client";
-
-// Core
 import Link from "next/link";
-// Components
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Summary } from "./tree-table/summary";
 import { LibraryRow } from "./tree-table/library-row";
 import { Library } from "lucide-react";
-// Services
-import { CoreLibrary } from "@synq/supabase/services";
+import { InventoryService, CoreLibrary } from "@synq/supabase/services";
+
+const LIBRARIES_PER_BATCH = 10;
 
 export default function InventoryTable({
-  libraries,
+  libraries: initialLibraries,
 }: {
   libraries: Array<Pick<CoreLibrary, "id" | "name"> & { stock: number }>;
 }) {
+  const [allLibraries, setAllLibraries] = useState(initialLibraries);
+  const [offset, setOffset] = useState(initialLibraries.length);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(
+    initialLibraries.length >= LIBRARIES_PER_BATCH,
+  );
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const loadMore = async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+
+    try {
+      const newLibraries = await InventoryService.getUserCoreLibrary("client", {
+        offset,
+        limit: LIBRARIES_PER_BATCH,
+      });
+
+      if (
+        newLibraries.length === 0 ||
+        newLibraries.length < LIBRARIES_PER_BATCH
+      ) {
+        setHasMore(false);
+      }
+
+      setAllLibraries((prev) => [...prev, ...newLibraries]);
+      setOffset((prev) => prev + newLibraries.length);
+    } catch (error) {
+      console.error("Error loading more libraries:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container || isLoading || !hasMore) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const threshold = 200;
+
+    if (scrollHeight - scrollTop - clientHeight < threshold) {
+      loadMore();
+    }
+  };
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [isLoading, hasMore]);
+
   return (
     <div className="w-full h-full bg-background flex flex-col">
-      {/* Tree Table */}
-      <div className="flex-1 overflow-auto">
-        {libraries.length > 0 ? (
-          libraries.map((lib) => <LibraryRow key={lib.id} library={lib} />)
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto">
+        {allLibraries.length > 0 ? (
+          <>
+            {allLibraries.map((lib) => (
+              <LibraryRow key={lib.id} library={lib} />
+            ))}
+
+            {isLoading && (
+              <div className="flex items-center justify-center py-4 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-muted border-t-primary rounded-full animate-spin"></div>
+                  <span className="text-sm">Loading more libraries...</span>
+                </div>
+              </div>
+            )}
+
+            {!hasMore && allLibraries.length > LIBRARIES_PER_BATCH && (
+              <div className="text-center py-4 text-sm text-muted-foreground border-t bg-muted/20">
+                All {allLibraries.length} libraries loaded
+              </div>
+            )}
+          </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-muted-foreground gap-3">
             <Library className="w-12 h-12 text-muted-foreground" />
@@ -45,8 +118,6 @@ export default function InventoryTable({
           </div>
         )}
       </div>
-
-      {/* Summary - Lower Bar */}
       <Summary />
     </div>
   );
