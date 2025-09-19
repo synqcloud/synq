@@ -21,7 +21,10 @@ serve(async (req) => {
 
   // Get the current function URL from the request
   const url = new URL(req.url);
-  const functionUrl = `${url.protocol}//${url.host}${url.pathname}`;
+  // Extract function name from pathname and construct proper Supabase function URL
+  const functionName = url.pathname.split("/").pop() || "daily-price-update";
+  const functionUrl = `https://${url.host}/functions/v1/${functionName}`;
+  console.log(`Function URL constructed: ${functionUrl}`);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -95,7 +98,6 @@ serve(async (req) => {
           .single();
 
         const newPriceData = await fetchPriceData(card);
-
         if (!newPriceData) {
           console.warn(`No price data for ${card.name}`);
           await supabase
@@ -154,38 +156,62 @@ serve(async (req) => {
       }
     }
 
-    // Count remaining pending items
+    // Check remaining pending items BEFORE responding
     const { count: remaining } = await supabase
       .from("daily_processing_queue")
       .select("*", { count: "exact", head: true })
       .eq("created_date", today)
       .eq("status", "pending");
 
-    if (remaining && remaining > 0) {
-      console.log(`Still ${remaining} items left. Re-invoking self...`);
-      try {
-        await fetch(functionUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-            "Content-Type": "application/json",
-          },
-        });
-      } catch (err) {
-        console.error("Error auto-invoking self:", err);
-      }
-    }
-
     const endTime = Date.now();
     console.log(`Batch finished. Total execution: ${endTime - startTime} ms`);
+
+    // Self-invoke AFTER sending response to avoid timeout issues
+    if (remaining && remaining > 0) {
+      console.log(
+        `Still ${remaining} items left. Scheduling next invocation...`,
+      );
+
+      // Use setTimeout to invoke after response is sent
+      setTimeout(async () => {
+        try {
+          console.log(`Invoking next batch at: ${functionUrl}`);
+          const response = await fetch(functionUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              "Content-Type": "application/json",
+              "User-Agent": "Supabase-Edge-Function/1.0",
+            },
+            body: JSON.stringify({ auto_invoked: true, batch_continue: true }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(
+              `Self-invocation failed: ${response.status} - ${errorText}`,
+            );
+          } else {
+            const responseData = await response.json();
+            console.log("Successfully invoked next batch:", responseData);
+          }
+        } catch (err) {
+          console.error("Error auto-invoking self:", err);
+        }
+      }, 100); // Small delay to ensure response is sent first
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         processed: queueItems.length,
+        remaining: remaining || 0,
         execution_ms: endTime - startTime,
+        will_continue: remaining > 0,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   } catch (error) {
     const endTime = Date.now();
@@ -193,25 +219,30 @@ serve(async (req) => {
       `Batch processing error after ${endTime - startTime} ms:`,
       error,
     );
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+        details: error.message,
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });
 
 // Helper function to convert USD price key to EUR equivalent
-function convertUsdToEurPriceKey(usdPriceKey: string): string {
+function convertUsdToEurPriceKey(usdPriceKey) {
   const conversionMap = {
     usd: "eur",
     usd_foil: "eur_foil",
     usd_etched: "eur_etched",
   };
-
   return conversionMap[usdPriceKey] || "eur"; // fallback to 'eur' if no match
 }
 
-async function fetchPriceData(card: CoreCard): Promise<CardPriceData | null> {
+async function fetchPriceData(card) {
   try {
     console.log(`Fetching price data for ${card.external_source}`);
     switch (card.external_source) {
@@ -231,10 +262,7 @@ async function fetchPriceData(card: CoreCard): Promise<CardPriceData | null> {
   }
 }
 
-async function fetchScryfallPrice(
-  cardId: string,
-  priceKey: string,
-): Promise<CardPriceData> {
+async function fetchScryfallPrice(cardId, priceKey) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s
 
@@ -261,13 +289,10 @@ async function fetchScryfallPrice(
       return { tcgplayer_price: null, cardmarket_price: null };
     }
 
-    const result: CardPriceData = {
-      tcgplayer_price: null,
-      cardmarket_price: null,
-    };
+    const result = { tcgplayer_price: null, cardmarket_price: null };
 
     // Get USD price for TCGPlayer
-    let usdPrice: number | null = null;
+    let usdPrice = null;
     const usdPriceValue = cardData.prices[priceKey];
     if (usdPriceValue !== null && usdPriceValue !== undefined) {
       usdPrice =
@@ -281,7 +306,7 @@ async function fetchScryfallPrice(
 
     // Get EUR price for CardMarket (convert USD price key to EUR equivalent)
     const eurPriceKey = convertUsdToEurPriceKey(priceKey);
-    let eurPrice: number | null = null;
+    let eurPrice = null;
     const eurPriceValue = cardData.prices[eurPriceKey];
     if (eurPriceValue !== null && eurPriceValue !== undefined) {
       eurPrice =
@@ -309,7 +334,6 @@ async function fetchScryfallPrice(
     console.log(
       `Price data for card ${cardId}: TCG=${result.tcgplayer_price}, CM=${result.cardmarket_price} (keys: ${priceKey}/${eurPriceKey})`,
     );
-
     return result;
   } catch (error) {
     clearTimeout(timeoutId);
@@ -318,21 +342,18 @@ async function fetchScryfallPrice(
   }
 }
 
-async function fetchTCGPlayerPrice(productId: string): Promise<CardPriceData> {
+async function fetchTCGPlayerPrice(productId) {
   throw new Error("TCGPlayer API not implemented yet");
 }
 
-async function fetchCardMarketPrice(productId: string): Promise<CardPriceData> {
+async function fetchCardMarketPrice(productId) {
   throw new Error("CardMarket API not implemented yet");
 }
 
-function calculatePriceChanges(
-  existingPrice: ExistingPrice | null,
-  newPrice: CardPriceData,
-) {
+function calculatePriceChanges(existingPrice, newPrice) {
   const changes = {
-    tcgplayer_change: null as number | null,
-    cardmarket_change: null as number | null,
+    tcgplayer_change: null,
+    cardmarket_change: null,
   };
 
   // TCGPlayer
@@ -369,15 +390,12 @@ function calculatePriceChanges(
 }
 
 async function createPriceChangeNotifications(
-  supabaseClient: any,
-  coreCardId: string,
-  cardName: string,
-  priceChanges: {
-    tcgplayer_change: number | null;
-    cardmarket_change: number | null;
-  },
-  existingPrice: ExistingPrice | null,
-  newPrice: CardPriceData,
+  supabaseClient,
+  coreCardId,
+  cardName,
+  priceChanges,
+  existingPrice,
+  newPrice,
 ) {
   const { data: alertUsers, error } = await supabaseClient
     .from("user_card_price_alerts")
@@ -389,8 +407,8 @@ async function createPriceChangeNotifications(
   const notifications = [];
 
   for (const alertUser of alertUsers) {
-    const changesMessages: string[] = [];
-    const priceChangeDetails: any = {};
+    const changesMessages = [];
+    const priceChangeDetails = {};
 
     // TCGPlayer
     const oldTCG = existingPrice?.tcgplayer_price ?? null;
@@ -442,7 +460,6 @@ async function createPriceChangeNotifications(
 
     if (changesMessages.length > 0) {
       const message = `Price update for ${cardName}: ${changesMessages.join(", ")}`;
-
       notifications.push({
         user_id: alertUser.user_id,
         core_card_id: coreCardId,
