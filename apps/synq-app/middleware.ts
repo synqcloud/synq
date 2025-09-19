@@ -24,6 +24,12 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
+    // Allow access to mail API endpoints without onboarding/auth redirects
+    // so routes like /api/mail/send-test-notification-email can run
+    if (pathname.startsWith("/api/mail")) {
+      return response;
+    }
+
     if (user && pathname === "/login") {
       const url = request.nextUrl.clone();
       url.pathname = "/home";
@@ -59,6 +65,25 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/setup-account";
       return NextResponse.redirect(url);
+    }
+
+    // Evita consulta infinita si ya estamos en /onboarding
+    if (!pathname.startsWith("/onboarding")) {
+      const { data, error } = await supabase
+        .from("user_preferences")
+        .select("onboarding_completed")
+        .eq("user_id", user.id)
+        .single();
+
+      const onboardingDone = data?.onboarding_completed ?? false;
+
+      if (error) {
+        console.error("Onboarding check failed:", error);
+      } else if (!onboardingDone) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/onboarding";
+        return NextResponse.redirect(url);
+      }
     }
 
     // If user has full name and tries to access setup-account, redirect to home

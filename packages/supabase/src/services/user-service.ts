@@ -332,4 +332,70 @@ export class UserService extends ServiceBase {
       },
     );
   }
+
+  // ==========================================
+  // Onboarding - Track onboarding completion
+  // ==========================================
+
+  /**
+   * Get the current user's onboarding status
+   */
+  static async getUserOnboarding(
+    context: "server" | "client" = "server",
+  ): Promise<boolean> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        if (!userId) throw new Error("User not authenticated");
+        const client = await this.getClient(context);
+
+        const { data, error } = await client
+          .from("user_preferences")
+          .select("onboarding_completed")
+          .eq("user_id", userId)
+          .single();
+
+        if (error) throw error;
+
+        return data?.onboarding_completed ?? false;
+      },
+      {
+        service: "UserService",
+        method: "getUserOnboarding",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Mark onboarding as completed for the current user
+   */
+  static async completeUserOnboarding(
+    context: "server" | "client" = "server",
+  ): Promise<void> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        if (!userId) throw new Error("User not authenticated");
+        const client = await this.getClient(context);
+
+        const { error } = await client
+          .from("user_preferences")
+          .update({
+            onboarding_completed: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId);
+
+        if (error) throw error;
+      },
+      {
+        service: "UserService",
+        method: "completeUserOnboarding",
+        userId: userId || undefined,
+      },
+    );
+  }
 }

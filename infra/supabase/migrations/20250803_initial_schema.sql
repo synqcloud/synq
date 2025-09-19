@@ -7,21 +7,21 @@ BEGIN;
 -- Storage Buckets Setup
 -- =============================================
 
--- Eliminar políticas de avatars si ya existen
+-- Remove avatar policies if they already exist
 DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload their own avatars" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own avatars" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own avatars" ON storage.objects;
 
--- Eliminar bucket avatars si ya existe (borra también objetos)
+-- Remove the avatars bucket if it already exists (this also deletes its objects)
 DELETE FROM storage.objects WHERE bucket_id = 'avatars';
 DELETE FROM storage.buckets WHERE id = 'avatars';
 
--- Crear bucket avatars
+-- Create avatars bucket
 INSERT INTO storage.buckets (id, name, public, file_size_limit)
 VALUES ('avatars', 'avatars', true, 5242880);
 
--- Volver a crear políticas
+-- Recreate policies
 CREATE POLICY "Public Access" ON storage.objects
     FOR SELECT USING (bucket_id = 'avatars');
 
@@ -50,35 +50,46 @@ CREATE POLICY "Users can delete their own avatars" ON storage.objects
 -- User Management
 -- =============================================
 
--- Eliminar tabla si ya existe
+-- Drop table if it already exists
 DROP TABLE IF EXISTS public.user_preferences CASCADE;
 
--- Crear tabla
+-- Create table with onboarding tracking
 CREATE TABLE public.user_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
+    onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE(user_id)
 );
 
 ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 
--- Políticas de user_preferences
+-- user_preferences policies
 DROP POLICY IF EXISTS "Users can view their own preferences" ON public.user_preferences;
 DROP POLICY IF EXISTS "Users can update their own preferences" ON public.user_preferences;
 DROP POLICY IF EXISTS "Users can insert their own preferences" ON public.user_preferences;
+DROP POLICY IF EXISTS "Users can mark onboarding complete" ON public.user_preferences;
 
 CREATE POLICY "Users can view their own preferences"
-    ON public.user_preferences FOR SELECT USING (auth.uid() = user_id);
+    ON public.user_preferences FOR SELECT
+    USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own preferences"
-    ON public.user_preferences FOR UPDATE USING (auth.uid() = user_id);
+    ON public.user_preferences FOR UPDATE
+    USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can insert their own preferences"
-    ON public.user_preferences FOR INSERT WITH CHECK (auth.uid() = user_id);
+    ON public.user_preferences FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
 
--- Función y trigger para insertar user_preferences al crear usuario
+-- Optional extra policy: explicitly allow users to mark onboarding as complete
+CREATE POLICY "Users can mark onboarding complete"
+    ON public.user_preferences FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Function and trigger to insert user_preferences when a new user is created
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
 CREATE FUNCTION public.handle_new_user()

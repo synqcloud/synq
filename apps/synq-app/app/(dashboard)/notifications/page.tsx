@@ -123,65 +123,102 @@ export default function NotificationsPage() {
     return "unknown card";
   };
 
+  // Helper function to get notification styling based on type
+  const getNotificationStyling = (notification: EnrichedNotification) => {
+    switch (notification.notification_type) {
+      case "price_alert":
+        return {
+          borderColor: "border-l-blue-500",
+          icon: "📈",
+          iconColor: "text-blue-600",
+        };
+      case "discrepancy_stock":
+        return {
+          borderColor: "border-l-red-500",
+          icon: "⚠️",
+          iconColor: "text-red-600",
+        };
+      default:
+        return {
+          borderColor: "border-l-gray-300",
+          icon: "ℹ️",
+          iconColor: "text-gray-500",
+        };
+    }
+  };
+
   // Helper function to render notification content based on type
   const renderNotificationContent = (notification: EnrichedNotification) => {
     const cardName = getCardName(notification);
 
     switch (notification.notification_type) {
       case "discrepancy_stock":
-        return (
-          <div className="text-sm text-card-foreground leading-relaxed">
-            <span>There is a possible stock discrepancy on </span>
-            <span className="font-medium text-foreground">{cardName}</span>
-            {notification.stock_audit_id && (
-              <>
-                <span> after this change </span>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="inline-flex items-center gap-1 h-auto p-0 text-primary hover:text-primary/80 font-medium"
-                  onClick={() => openAudit(notification.stock_audit_id!)}
-                >
-                  view audit
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
-              </>
-            )}
-            {notification.marketplace && (
-              <>
-                <span> - Please update the stock in </span>
-                <MarketplaceIcon
-                  marketplace={notification.marketplace.name}
-                  showLabel
-                  isIntegration={false}
-                  className="inline-flex items-center align-middle"
-                />
-              </>
-            )}
-          </div>
-        );
+        return {
+          title: "Stock discrepancy detected",
+          body: (
+            <>
+              <span className="font-medium">{cardName}</span> may need updating.
+              {notification.stock_audit_id && (
+                <>
+                  <span> </span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="inline-flex items-center gap-1 h-auto p-0 text-primary hover:text-primary/80 font-medium underline"
+                    onClick={() => openAudit(notification.stock_audit_id!)}
+                  >
+                    View audit
+                    <ExternalLink className="w-3 h-3" />
+                  </Button>
+                </>
+              )}
+              {notification.marketplace && (
+                <>
+                  <span> or update stock in </span>
+                  <MarketplaceIcon
+                    marketplace={notification.marketplace.name}
+                    showLabel
+                    isIntegration={false}
+                    className="inline-flex items-center align-middle"
+                  />
+                </>
+              )}
+            </>
+          ),
+        };
 
       case "price_alert":
-        return (
-          <div className="text-sm text-card-foreground leading-relaxed">
-            <span>Price alert for </span>
-            <span className="font-medium text-foreground">{cardName}</span>
-            {notification.message && <span> - {notification.message}</span>}
-          </div>
-        );
+        return {
+          title: `Price alert for ${cardName}`,
+          body: (
+            <>
+              {notification.message
+                ? `Price update: ${notification.message
+                    .replace(/price /gi, "")
+                    .replace(/TCGPlayer/gi, "TCGPlayer")
+                    .replace(/CardMarket/gi, "CardMarket")}`
+                : "Target price reached"}
+            </>
+          ),
+        };
 
       default:
-        return (
-          <div className="text-sm text-card-foreground leading-relaxed">
-            {notification.message || "New notification"}
-            {cardName !== "unknown card" && (
-              <>
-                <span> for </span>
-                <span className="font-medium text-foreground">{cardName}</span>
-              </>
-            )}
-          </div>
-        );
+        return {
+          title: "Notification",
+          body: (
+            <>
+              {notification.message || "New notification"}
+              {cardName !== "unknown card" && (
+                <>
+                  <span> for </span>
+                  <span className="font-medium text-foreground">
+                    {cardName}
+                  </span>
+                </>
+              )}
+            </>
+          ),
+        };
     }
   };
 
@@ -266,52 +303,71 @@ export default function NotificationsPage() {
       {/* Scrollable notifications list */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-3">
-          {notifications.map((notification: EnrichedNotification) => (
-            <div
-              key={notification.id}
-              className="bg-card rounded-lg border hover:border-accent transition-colors duration-200 p-4"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0 space-y-2">
-                  {/* Notification content */}
-                  {renderNotificationContent(notification)}
+          {notifications.map((notification: EnrichedNotification) => {
+            const styling = getNotificationStyling(notification);
+            const content = renderNotificationContent(notification);
 
-                  {/* Timestamp */}
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(
-                      notification.created_at ?? new Date(),
-                    ).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+            return (
+              <div
+                key={notification.id}
+                className={`bg-card rounded-lg border ${styling.borderColor} border-l-4 hover:border-accent transition-colors duration-200 p-4 shadow-sm`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg mt-0.5 flex-shrink-0">
+                        {styling.icon}
+                      </span>
+                      <div className="space-y-2">
+                        {/* Title */}
+                        <div className="text-sm font-medium text-foreground">
+                          {content.title}
+                        </div>
+
+                        {/* Body */}
+                        <div className="text-sm text-muted-foreground leading-relaxed">
+                          {content.body}
+                        </div>
+
+                        {/* Timestamp */}
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(
+                            notification.created_at ?? new Date(),
+                          ).toLocaleString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action button */}
+                  <div className="flex-shrink-0">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => markAsReadMutation.mutate(notification.id)}
+                      disabled={markAsReadMutation.isPending}
+                      className="gap-2 font-light px-3 py-1.5 hover:bg-accent transition-colors"
+                    >
+                      {markAsReadMutation.isPending &&
+                      markAsReadMutation.variables === notification.id ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                          Marking...
+                        </>
+                      ) : (
+                        "Mark as completed"
+                      )}
+                    </Button>
                   </div>
                 </div>
-
-                {/* Action button */}
-                <div className="flex-shrink-0">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => markAsReadMutation.mutate(notification.id)}
-                    disabled={markAsReadMutation.isPending}
-                    className="gap-2 font-light"
-                  >
-                    {markAsReadMutation.isPending &&
-                    markAsReadMutation.variables === notification.id ? (
-                      <>
-                        <RefreshCw className="w-3 h-3 animate-spin" />
-                        Marking...
-                      </>
-                    ) : (
-                      "Mark as completed"
-                    )}
-                  </Button>
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
