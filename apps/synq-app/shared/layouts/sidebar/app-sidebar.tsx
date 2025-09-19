@@ -77,7 +77,7 @@ const featureItems: NavItem[] = [
 
 // SETTINGS ITEMS
 const settingsItems: NavItem[] = [
-  { title: "Integrations", url: "/integrations", icon: Zap, disabled: true },
+  { title: "Integrations", url: "/integrations", icon: Zap },
   { title: "Library", url: "/library", icon: BookOpen },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
