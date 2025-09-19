@@ -48,10 +48,15 @@ export function SetupAccountForm() {
         "client",
       );
 
-      // Upload avatar if provided
+      // 2. Upload avatar if provided
       if (values.avatar) {
         await UserService.uploadAvatar(values.avatar, "client");
       }
+
+      // 3. Call your welcome email API
+      await fetch("/api/mail/send-welcome", {
+        method: "POST",
+      });
 
       // Let the middleware handle the redirect based on whether the user has a provider profile
       router.refresh();
