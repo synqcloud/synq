@@ -60,6 +60,8 @@ CREATE TABLE public.user_preferences (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    currency TEXT NOT NULL DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR')),
+
     UNIQUE(user_id)
 );
 

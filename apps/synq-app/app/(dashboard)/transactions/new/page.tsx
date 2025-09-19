@@ -33,6 +33,7 @@ import { InventoryService, TransactionService } from "@synq/supabase/services";
 import TransactionCardRow from "@/features/transactions/components/record-transaction/transaction-card-row";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useCurrency } from "@/shared/contexts/currency-context";
 
 // Types
 type SelectedStock = {
@@ -142,9 +143,6 @@ function BasicInfoForm({
                     {...field}
                   />
                 </FormControl>
-                <FormDescription className="text-xs text-muted-foreground">
-                  Tax in dollars
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -167,9 +165,6 @@ function BasicInfoForm({
                     {...field}
                   />
                 </FormControl>
-                <FormDescription className="text-xs text-muted-foreground">
-                  Shipping in dollars
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -263,6 +258,8 @@ function SelectedStocksList({
   selectedStocks,
   setSelectedStocks,
 }: SelectedStocksListProps) {
+  const { symbol } = useCurrency();
+
   const updateStock = (stockId: string, updates: Partial<SelectedStock>) => {
     setSelectedStocks((prev) =>
       prev.map((stock) =>
@@ -296,7 +293,8 @@ function SelectedStocksList({
           <div className="text-sm text-muted-foreground">
             Total:{" "}
             <span className="font-medium text-foreground">
-              ${totalValue.toFixed(2)}
+              {symbol}
+              {totalValue.toFixed(2)}
             </span>
           </div>
         </div>
@@ -365,7 +363,7 @@ function SelectedStocksList({
                     Total
                   </label>
                   <div className="h-8 px-2 bg-muted rounded text-xs flex items-center min-w-[60px] justify-end">
-                    $
+                    {symbol}
                     {(
                       (stock.soldQuantity || 0) * (stock.unitPrice || 0)
                     ).toFixed(2)}
@@ -522,15 +520,12 @@ export default function NewTransactionPage() {
         unit_price: stock.unitPrice,
       }));
 
-      const result = await TransactionService.createSaleTransactionUsingEdge(
-        "client",
-        {
-          source: values.source,
-          items,
-          tax_amount: values.tax_amount,
-          shipping_amount: values.shipping_amount,
-        },
-      );
+      await TransactionService.createSaleTransactionUsingEdge("client", {
+        source: values.source,
+        items,
+        tax_amount: values.tax_amount,
+        shipping_amount: values.shipping_amount,
+      });
 
       toast.success(`Transaction created successfully!`, {
         descriptionClassName: "text-muted-foreground",

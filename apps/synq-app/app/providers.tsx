@@ -4,6 +4,7 @@ import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { TooltipProvider } from "@synq/ui/component";
+import { CurrencyProvider } from "@/shared/contexts/currency-context";
 
 interface SynqProvidersProps {
   children: React.ReactNode;
@@ -24,7 +25,9 @@ export function SynqProviders({
         enableSystem
         disableTransitionOnChange
       >
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          <CurrencyProvider>{children}</CurrencyProvider>
+        </TooltipProvider>
       </NextThemesProvider>
     </QueryClientProvider>
   );

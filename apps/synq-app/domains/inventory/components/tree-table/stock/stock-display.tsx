@@ -2,6 +2,8 @@ import React from "react";
 import { UserStockWithListings } from "@synq/supabase/services";
 import { StockTableActions } from "../stock-table-actions";
 import { MarketplaceSection } from "../marketplace/marketplace-section";
+import { useCurrency } from "@/shared/contexts/currency-context";
+import { formatCurrency } from "@/shared/utils/format-currency";
 
 const conditionColors: Record<string, string> = {
   "near mint": "text-green-600",
@@ -24,6 +26,9 @@ export function StockDisplay({
   onEdit,
   onOpenDialog,
 }: StockDisplayProps) {
+  const { currency } = useCurrency();
+  const total = (stock.soldQuantity || 0) * (stock.unitPrice || 0);
+
   return (
     <>
       {/* Quantity */}
@@ -42,7 +47,7 @@ export function StockDisplay({
 
       {/* Cost (COGS) */}
       <span className="text-accent-foreground">
-        {stock.cogs ? `$${stock.cogs.toFixed(2)}` : "-"}
+        {formatCurrency(total, currency)}
       </span>
 
       {/* SKU */}

@@ -17,6 +17,10 @@ import { validateStock } from "../../utils/stock-validation";
 import { StockDisplay } from "./stock/stock-display";
 import { StockEditForm } from "./stock/stock-edit-form";
 
+// Providers
+import { useCurrency } from "@/shared/contexts/currency-context";
+import { formatCurrency } from "@/shared/utils/format-currency";
+
 type StockTableRowProps = {
   stock: UserStockWithListings;
   cardId: string;
@@ -32,6 +36,8 @@ export default function StockTableRow({
   existingCombinations = [],
 }: StockTableRowProps) {
   const queryClient = useQueryClient();
+  const { currency } = useCurrency();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const { conditions, languages } = useStockData();
@@ -304,7 +310,9 @@ export default function StockTableRow({
                       Cost
                     </span>
                     <span className="text-accent-foreground">
-                      {stock.cogs ? `${stock.cogs.toFixed(2)}` : "-"}
+                      {stock.cogs != null
+                        ? formatCurrency(stock.cogs, currency)
+                        : "-"}
                     </span>
                   </div>
                 </div>

@@ -20,6 +20,7 @@ import { formatCurrency } from "@/shared/utils/format-currency";
 import { cn } from "@synq/ui/utils";
 // Services
 import { UserTransaction } from "@synq/supabase/services";
+import { useCurrency } from "@/shared/contexts/currency-context";
 
 interface TransactionTableSheetProps {
   order: UserTransaction & { total_quantity: number };
@@ -33,6 +34,7 @@ export function TransactionTableSheet({
   onOpenChange,
 }: TransactionTableSheetProps) {
   const isMobile = useIsMobile();
+  const { currency } = useCurrency();
 
   // Status styling functions
   const getOrderStatusColor = (status: string) => {
@@ -134,7 +136,9 @@ export function TransactionTableSheet({
             <VStack gap={2}>
               <HStack justify="between" className="text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>{formatCurrency(order.subtotal_amount ?? 0)}</span>
+                <span>
+                  {formatCurrency(order.subtotal_amount ?? 0, currency)}
+                </span>
               </HStack>
               <HStack justify="between" className="text-sm">
                 <span className="text-muted-foreground">Fees</span>
@@ -142,13 +146,14 @@ export function TransactionTableSheet({
                   -
                   {formatCurrency(
                     (order.subtotal_amount ?? 0) - (order.net_amount ?? 0),
+                    currency,
                   )}
                 </span>
               </HStack>
               <Separator />
               <HStack justify="between" className="text-base font-medium">
                 <span>Net Amount</span>
-                <span>{formatCurrency(order.net_amount ?? 0)}</span>
+                <span>{formatCurrency(order.net_amount ?? 0, currency)}</span>
               </HStack>
             </VStack>
           </VStack>

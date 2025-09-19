@@ -13,6 +13,7 @@ import { cn } from "@synq/ui/utils";
 
 // Services
 import { UserTransaction } from "@synq/supabase/services";
+import { useCurrency } from "@/shared/contexts/currency-context";
 
 export function TransactionTableRow({
   order,
@@ -54,6 +55,7 @@ export function TransactionTableRow({
     setSheetOpen(true);
   };
 
+  const { currency } = useCurrency();
   return (
     <>
       <TableRow
@@ -132,7 +134,7 @@ export function TransactionTableRow({
               color: "hsl(var(--chart-4))",
             }}
           >
-            {formatCurrency(order.tax_amount ?? 0)}
+            {formatCurrency(order.tax_amount ?? 0, currency)}
           </p>
         </TableCell>
 
@@ -162,7 +164,7 @@ export function TransactionTableRow({
                   : "hsl(var(--chart-3))",
             }}
           >
-            {formatCurrency(order.net_amount ?? 0)}
+            {formatCurrency(order.net_amount ?? 0, currency)}
           </p>
         </TableCell>
 

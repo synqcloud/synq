@@ -378,7 +378,6 @@ export class UserService extends ServiceBase {
 
     return this.execute(
       async () => {
-        if (!userId) throw new Error("User not authenticated");
         const client = await this.getClient(context);
 
         const { error } = await client
@@ -395,6 +394,67 @@ export class UserService extends ServiceBase {
         service: "UserService",
         method: "completeUserOnboarding",
         userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Get the user currency
+   */
+  static async fetchUserCurrency(
+    context: "client" | "server" = "client",
+  ): Promise<"USD" | "EUR" | undefined> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+        const { data, error } = await client
+          .from("user_preferences")
+          .select("currency")
+          .eq("user_id", userId)
+          .single();
+
+        if (error) throw error;
+
+        return data?.currency.toLowerCase() as "USD" | "EUR" | undefined;
+      },
+      {
+        service: "UserService",
+        method: "fetchUserCurrency",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  static async updateUserCurrency(
+    newCurrency: "usd" | "eur",
+    context: "client" | "server" = "client",
+  ): Promise<"usd" | "eur"> {
+    const userId = await this.getCurrentUserId(context);
+
+    if (!userId) throw new Error("User not found");
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data, error } = await client
+          .from("user_preferences")
+          .update({ currency: newCurrency.toUpperCase() }) // store as 'USD' or 'EUR'
+          .eq("user_id", userId)
+          .select("currency")
+          .single();
+
+        if (error) throw error;
+
+        // return lowercase to match TypeScript type
+        return data.currency.toLowerCase() as "usd" | "eur";
+      },
+      {
+        service: "UserService",
+        method: "updateUserCurrency",
+        userId,
       },
     );
   }

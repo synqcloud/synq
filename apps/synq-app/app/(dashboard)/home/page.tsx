@@ -19,6 +19,8 @@ import {
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { motion, HTMLMotionProps, MotionProps } from "framer-motion";
 import { DashboardService } from "@synq/supabase/services";
+import { useCurrency } from "@/shared/contexts/currency-context";
+import { formatCurrency } from "@/shared/utils/format-currency";
 
 // Motion div
 type MotionDivProps = HTMLMotionProps<"div"> &
@@ -34,15 +36,6 @@ const staggerContainer = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
-
-// Format currency
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
 
 // Chart config
 const chartConfig = {
@@ -68,6 +61,7 @@ type MappedTopStockData = {
 
 export default function HomePage() {
   const sectionRef = useRef(null);
+  const { currency } = useCurrency();
 
   const [monthlyData, setMonthlyData] = useState<MappedMonthlyData[]>([]);
   const [topStock, setTopStock] = useState<MappedTopStockData[]>([]);
@@ -206,7 +200,7 @@ export default function HomePage() {
                       tickLine={false}
                       axisLine={false}
                       tickMargin={8}
-                      tickFormatter={formatCurrency}
+                      tickFormatter={(value) => formatCurrency(value, currency)}
                       tick={{ fontSize: 12, fontFamily: "Inter" }}
                       className="text-muted-foreground"
                     />
@@ -262,7 +256,8 @@ export default function HomePage() {
                                 {item.sku}
                               </div>
                               <div className="text-xs font-light tracking-[-0.01em] text-muted-foreground">
-                                Revenue: {formatCurrency(item.revenue)}
+                                Revenue:{" "}
+                                {formatCurrency(item.revenue, currency)}
                               </div>
                             </div>
                             <div className="text-right ml-2">

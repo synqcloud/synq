@@ -16,6 +16,7 @@ import {
 // Services
 import { UserStockWithListings } from "@synq/supabase/services";
 import { MarketplaceIcon } from "../marketplace-icon";
+import { useCurrency } from "@/shared/contexts/currency-context";
 
 type StockTableRowProps = {
   stock: UserStockWithListings;
@@ -61,6 +62,8 @@ export default function TransactionStockTableRow({
     [],
   );
 
+  const { symbol } = useCurrency();
+
   return (
     <div className="bg-background w-full">
       {/* Desktop View */}
@@ -104,7 +107,10 @@ export default function TransactionStockTableRow({
             <span className={conditionColor}>{stock.condition || "-"}</span>
 
             {/* Cost */}
-            <span className="text-accent-foreground">{formattedCost}</span>
+            <span className="text-accent-foreground">
+              {symbol}
+              {formattedCost}
+            </span>
 
             {/* SKU */}
             <span>{stock.sku || "-"}</span>

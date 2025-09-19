@@ -2,13 +2,14 @@
 // Core
 import { useQuery } from "@tanstack/react-query";
 // Components
-import { Button, HStack, VStack } from "@synq/ui/component";
-import { Package, Loader2, ExternalLink } from "lucide-react";
+import { HStack, VStack } from "@synq/ui/component";
+import { Package, Loader2 } from "lucide-react";
 // Utils
 import { cn } from "@synq/ui/utils";
 import { formatCurrency } from "@/shared/utils/format-currency";
 // Services
 import { TransactionService } from "@synq/supabase/services";
+import { useCurrency } from "@/shared/contexts/currency-context";
 
 export function TransactionItemsDisplay({
   orderId,
@@ -17,6 +18,8 @@ export function TransactionItemsDisplay({
   orderId: string;
   isIntegration: boolean;
 }) {
+  const { currency } = useCurrency();
+
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["transactionItems", orderId],
     queryFn: () =>
@@ -124,12 +127,15 @@ export function TransactionItemsDisplay({
               >
                 <span className="font-medium">{item.quantity}</span>
                 <span>×</span>
-                <span>{formatCurrency(item.unit_price || 0)}</span>
+                <span>{formatCurrency(item.unit_price || 0, currency)}</span>
               </HStack>
 
               {/* Total Revenue */}
               <div className="font-semibold text-sm">
-                {formatCurrency((item.quantity ?? 0) * (item.unit_price ?? 0))}
+                {formatCurrency(
+                  (item.quantity ?? 0) * (item.unit_price ?? 0),
+                  currency,
+                )}
               </div>
 
               {/* COGS & Profit */}
@@ -137,7 +143,10 @@ export function TransactionItemsDisplay({
                 <VStack align="end" gap={0.5} className="text-xs">
                   <div className="text-muted-foreground">
                     COGS{" "}
-                    {formatCurrency((item.quantity ?? 0) * (item.cogs ?? 0))}
+                    {formatCurrency(
+                      (item.quantity ?? 0) * (item.cogs ?? 0),
+                      currency,
+                    )}
                   </div>
                   <div
                     className="font-medium"
@@ -158,6 +167,7 @@ export function TransactionItemsDisplay({
                     {formatCurrency(
                       (item.quantity ?? 0) *
                         ((item.unit_price ?? 0) - (item.cogs ?? 0)),
+                      currency,
                     )}
                   </div>
                 </VStack>
