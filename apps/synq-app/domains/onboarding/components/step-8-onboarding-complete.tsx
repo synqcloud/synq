@@ -1,164 +1,65 @@
 "use client";
-import React, { useState } from "react";
-import { StepWrapper } from "@/domains/onboarding/components/step-wrapper";
-import { Button, Spinner } from "@synq/ui/component";
+import React from "react";
+import { Button } from "@synq/ui/component";
+import { useOnboarding } from "@/domains/onboarding/hooks/use-onboarding";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { UserService } from "@synq/supabase/services";
+import { CheckCircle, ArrowRight } from "lucide-react";
 
 export default function StepOnboardingCompleted() {
+  const { completeCurrentStep } = useOnboarding();
   const router = useRouter();
-  const [isCompleting, setIsCompleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
 
-  const handleContinue = async () => {
-    setIsCompleting(true);
-    setError(null);
+  async function handleFinish() {
     try {
+      setLoading(true);
+      completeCurrentStep();
       await UserService.completeUserOnboarding("client");
-      setIsCompleting(false);
-      router.push("/home");
-    } catch (err) {
-      console.error("Failed to complete onboarding:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to complete onboarding",
-      );
-      setIsCompleting(false);
+      router.push("/inventory?fromOnboarding=1");
+    } catch (e) {
+      console.error("Failed to complete onboarding", e);
+      // Even if completion fails, redirect to inventory
+      router.push("/inventory");
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleRetry = async () => {
-    setIsCompleting(true);
-    setError(null);
-    try {
-      await UserService.completeUserOnboarding("client");
-      setIsCompleting(false);
-      router.push("/home");
-    } catch (err) {
-      console.error("Failed to complete onboarding:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to complete onboarding",
-      );
-      setIsCompleting(false);
-    }
-  };
-
-  if (error) {
-    return (
-      <StepWrapper>
-        <motion.div
-          className="flex flex-col items-center text-center"
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: { opacity: 0 },
-            show: { opacity: 1, transition: { staggerChildren: 0.1 } },
-          }}
-        >
-          <motion.div
-            className="mb-6 text-red-500"
-            variants={{
-              hidden: { opacity: 0, scale: 0.8 },
-              show: { opacity: 1, scale: 1 },
-            }}
-          >
-            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-              <span className="text-2xl">⚠️</span>
-            </div>
-          </motion.div>
-
-          <motion.h1
-            className="text-2xl font-medium text-gray-900"
-            variants={{
-              hidden: { opacity: 0, y: 8 },
-              show: { opacity: 1, y: 0 },
-            }}
-          >
-            Something went wrong
-          </motion.h1>
-
-          <motion.p
-            className="mt-3 max-w-md text-gray-600"
-            variants={{
-              hidden: { opacity: 0, y: 8 },
-              show: { opacity: 1, y: 0 },
-            }}
-          >
-            We couldn't complete your onboarding setup. You can try again or
-            continue to the app.
-          </motion.p>
-
-          <motion.div
-            className="mt-8 flex gap-3"
-            variants={{
-              hidden: { opacity: 0, y: 8 },
-              show: { opacity: 1, y: 0 },
-            }}
-          >
-            <Button variant="outline" onClick={handleContinue}>
-              Continue anyway
-            </Button>
-            <Button onClick={handleRetry}>Try again</Button>
-          </motion.div>
-        </motion.div>
-      </StepWrapper>
-    );
-  }
-
-  if (isCompleting) {
-    return (
-      <StepWrapper>
-        <Spinner />
-      </StepWrapper>
-    );
   }
 
   return (
-    <StepWrapper>
-      <motion.div
-        className="flex flex-col items-center text-center max-w-2xl mx-auto"
-        initial="hidden"
-        animate="show"
-        variants={{
-          hidden: { opacity: 0 },
-          show: { opacity: 1, transition: { staggerChildren: 0.1 } },
-        }}
-      >
-        <motion.h1
-          className="text-3xl font-light mb-4"
-          variants={{
-            hidden: { opacity: 0, y: 8 },
-            show: { opacity: 1, y: 0 },
-          }}
-        >
-          You're good to go
-        </motion.h1>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      <div className="w-full max-w-lg mx-auto text-center space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <h1 className="text-3xl font-light text-foreground">
+            You're all set!
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Your account is ready to go. Start managing your card inventory,
+            tracking prices, and syncing across marketplaces.
+          </p>
+        </div>
 
-        <motion.p
-          className="mb-8 "
-          variants={{
-            hidden: { opacity: 0, y: 8 },
-            show: { opacity: 1, y: 0 },
-          }}
-        >
-          Go ahead and explore the app.
-        </motion.p>
-
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 8 },
-            show: { opacity: 1, y: 0 },
-          }}
-        >
+        {/* Action */}
+        <div className="flex flex-col items-center space-y-4">
           <Button
             variant="outline"
-            onClick={handleContinue}
-            className="px-8 py-2.5 text-base font-medium"
+            onClick={handleFinish}
+            disabled={loading}
+            size="lg"
+            className="px-8 gap-2"
           >
-            Open Synq
+            {loading ? (
+              "Setting up..."
+            ) : (
+              <>
+                Go to Inventory
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </Button>
-        </motion.div>
-      </motion.div>
-    </StepWrapper>
+        </div>
+      </div>
+    </div>
   );
 }

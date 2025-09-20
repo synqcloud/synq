@@ -11,6 +11,7 @@ import { SidebarProvider } from "@synq/ui/component";
 import AppHeader from "@/shared/layouts/header/app-header";
 import AppContent from "@/shared/layouts/content/app-content";
 import { AppSidebar } from "@/shared/layouts/sidebar/app-sidebar";
+import { CurrencyProvider } from "@/shared/contexts/currency-context";
 
 export default async function Layout({
   children,
@@ -22,16 +23,18 @@ export default async function Layout({
   const defaultOpen = sidebarState?.value === "true";
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <div className="flex h-screen w-full">
-        <AppSidebar />
-        <div className="flex flex-col flex-1 max-w-full min-h-0">
-          <AppHeader />
-          <main className="flex-1 min-h-0">
-            <AppContent>{children}</AppContent>
-          </main>
+    <CurrencyProvider>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <div className="flex h-screen w-full">
+          <AppSidebar />
+          <div className="flex flex-col flex-1 max-w-full min-h-0">
+            <AppHeader />
+            <main className="flex-1 min-h-0">
+              <AppContent>{children}</AppContent>
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </CurrencyProvider>
   );
 }

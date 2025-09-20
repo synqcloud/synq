@@ -61,7 +61,6 @@ CREATE TABLE public.user_preferences (
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
     currency TEXT NOT NULL DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR')),
-
     UNIQUE(user_id)
 );
 
@@ -94,13 +93,15 @@ CREATE POLICY "Users can mark onboarding complete"
 -- Function and trigger to insert user_preferences when a new user is created
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
-CREATE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $inner$
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.user_preferences (user_id) VALUES (NEW.id);
-    RETURN NEW;
+  INSERT INTO public.user_preferences (user_id)
+  VALUES (NEW.id);
+  RETURN NEW;
 END;
-$inner$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 

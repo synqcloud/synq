@@ -48,7 +48,7 @@ function testNotificationEmailTemplate(
 
                   <div style="margin-bottom:12px;padding:8px 0;border-bottom:1px solid #e9ecef;">
                     <div style="font-size:13px;color:#666;margin-bottom:4px;">📈 Price alerts</div>
-                    <div style="font-size:14px;color:#000;">Stay informed when card prices hit your target thresholds</div>
+                    <div style="font-size:14px;color:#000;">Stay informed when card prices update</div>
                   </div>
                 </div>
 

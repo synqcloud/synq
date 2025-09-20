@@ -201,7 +201,17 @@ serve(async (req: Request) => {
     }
 
     // Insert discrepancy notifications for each marketplace only if quantity changed
-    if (quantityChanged && discrepancy && marketplaces.length > 0) {
+    const conditionChanged =
+      condition !== undefined && condition !== stockData.condition;
+    const languageChanged =
+      language !== undefined && language !== stockData.language;
+
+    // Only insert notifications if quantity, condition, or language changed
+    if (
+      (quantityChanged || conditionChanged || languageChanged) &&
+      discrepancy &&
+      marketplaces.length > 0
+    ) {
       // Fetch marketplace names
       const { data: marketplaceData } = await supabase
         .from("marketplaces")

@@ -67,8 +67,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Evita consulta infinita si ya estamos en /onboarding
-    if (!pathname.startsWith("/onboarding")) {
+    // avoind infinte call if we are already in  /welcome
+    if (!pathname.startsWith("/welcome")) {
       const { data, error } = await supabase
         .from("user_preferences")
         .select("onboarding_completed")
@@ -81,7 +81,7 @@ export async function middleware(request: NextRequest) {
         console.error("Onboarding check failed:", error);
       } else if (!onboardingDone) {
         const url = request.nextUrl.clone();
-        url.pathname = "/onboarding";
+        url.pathname = "/welcome";
         return NextResponse.redirect(url);
       }
     }
