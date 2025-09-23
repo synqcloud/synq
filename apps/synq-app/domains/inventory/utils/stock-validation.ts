@@ -10,25 +10,7 @@ const stockSchema = z.object({
   language: z.string().nonempty("Language is required"),
 });
 
-export function validateStock(
-  editData: EditData,
-  existingCombinations: Array<{
-    condition?: string;
-    language: string;
-  }>,
-): string | null {
-  // Check for duplicates - condition + language combination
-  const isDuplicate = existingCombinations.some((combo) => {
-    return (
-      combo.condition === editData.condition &&
-      combo.language === editData.language
-    );
-  });
-
-  if (isDuplicate) {
-    return "This combination already exists in your inventory.";
-  }
-
+export function validateStock(editData: EditData): string | null {
   // Zod validation
   const parseResult = stockSchema.safeParse({
     quantity: editData.quantity,

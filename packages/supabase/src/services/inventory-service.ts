@@ -626,6 +626,7 @@ export class InventoryService extends ServiceBase {
           })
           .select("id")
           .single();
+
         // TODO: Return success false so the UI can handle it
         if (error) throw error;
         // in case there is no error

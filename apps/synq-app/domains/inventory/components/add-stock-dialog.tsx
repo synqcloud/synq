@@ -127,24 +127,8 @@ export function AddStockDialog({
       form.reset();
       onOpenChangeAction(false);
     },
-    onError: (error: Error) => {
-      // Check for ServiceError with "This item already exists" message
-      if (
-        error?.message === "This item already exists" ||
-        error?.message?.includes("already exists") ||
-        error?.message?.includes(
-          "duplicate key value violates unique constraint",
-        ) ||
-        error?.message?.includes("duplicate")
-      ) {
-        toast.error(
-          "This combination of condition and language already exists for this card",
-        );
-      } else {
-        // Only log non-duplicate errors for debugging
-        console.error("Unexpected error adding stock:", error);
-        toast.error("Failed to add stock");
-      }
+    onError: () => {
+      toast.error("Something went wrong, please try again or contact support");
     },
   });
 

@@ -24,17 +24,9 @@ import { formatCurrency } from "@/shared/utils/format-currency";
 type StockTableRowProps = {
   stock: UserStockWithListings;
   cardId: string;
-  existingCombinations?: Array<{
-    condition?: string;
-    language: string;
-  }>;
 };
 
-export default function StockTableRow({
-  stock,
-  cardId,
-  existingCombinations = [],
-}: StockTableRowProps) {
+export default function StockTableRow({ stock, cardId }: StockTableRowProps) {
   const queryClient = useQueryClient();
   const { currency } = useCurrency();
 
@@ -60,7 +52,7 @@ export default function StockTableRow({
       return;
     }
 
-    const validationError = validateStock(editData, existingCombinations);
+    const validationError = validateStock(editData);
     if (validationError) {
       toast.error(validationError);
       return;
@@ -446,9 +438,6 @@ function buildUpdatePayload(editData: EditData) {
 
 function handleUpdateError(error: string) {
   switch (error) {
-    case "duplicate":
-      toast.error("This combination already exists in your inventory.");
-      break;
     case "invalid_input":
       toast.error("Invalid input. Please check your data.");
       break;
