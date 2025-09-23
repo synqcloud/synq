@@ -44,4 +44,9 @@ BEGIN
     -- Store user_uuid for other seed files
     CREATE TEMP TABLE IF NOT EXISTS temp_users (id UUID);
     INSERT INTO temp_users (id) VALUES (user_uuid);
+
+    -- Mark onboarding as done for this test user
+    UPDATE public.user_preferences
+    SET onboarding_completed = TRUE
+    WHERE user_id = user_uuid;
 END $$;
