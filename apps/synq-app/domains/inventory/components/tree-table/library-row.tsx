@@ -3,15 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import SetRow from "./set-row";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { CoreLibrary, InventoryService } from "@synq/supabase/services";
+import { StockFilterType } from "../inventory-table-filters";
 
 const SETS_PER_BATCH = 24;
 
 export function LibraryRow({
   library,
+  stockFilter,
 }: {
   library: Pick<CoreLibrary, "id" | "name"> & { stock: number | null };
+  stockFilter: StockFilterType;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [allSets, setAllSets] = useState<
     Array<{ id: string; name: string; stock: number | null }>
   >([]);
@@ -21,47 +24,43 @@ export function LibraryRow({
   const scrollObserverRef = useRef<HTMLDivElement>(null);
 
   const queryKey = expanded
-    ? ["sets", library.id, expanded]
-    : ["sets", library.id, "disabled"];
+    ? ["sets", library.id, expanded, stockFilter]
+    : ["sets", library.id, "disabled", stockFilter];
 
-  const {
-    data: initialSets,
-    isFetched,
-    refetch,
-  } = useQuery({
+  const { data: initialSets } = useQuery({
     queryKey,
     queryFn: () =>
       InventoryService.fetchSetsByLibrary("client", library.id, {
         offset: 0,
         limit: SETS_PER_BATCH,
+        stockFilter,
       }),
     enabled: expanded,
     staleTime: 0,
   });
 
-  // Reset & refetch when expanding/collapsing
+  // Reset when expanding/collapsing or stockFilter changes (refetch handled by key change)
   useEffect(() => {
     if (expanded) {
       setAllSets([]);
       setOffset(0);
       setHasMore(true);
       setIsLoading(false);
-      if (isFetched) refetch();
     } else {
       setAllSets([]);
       setOffset(0);
       setHasMore(true);
     }
-  }, [expanded, isFetched, refetch]);
+  }, [expanded, stockFilter]);
 
   // Populate first batch
   useEffect(() => {
-    if (expanded && isFetched && initialSets) {
+    if (expanded && initialSets) {
       setAllSets(initialSets);
       setOffset(initialSets.length);
       setHasMore(initialSets.length >= SETS_PER_BATCH);
     }
-  }, [expanded, isFetched, initialSets]);
+  }, [expanded, initialSets]);
 
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore || !expanded) return;
@@ -71,7 +70,7 @@ export function LibraryRow({
       const newSets = await InventoryService.fetchSetsByLibrary(
         "client",
         library.id,
-        { offset, limit: SETS_PER_BATCH },
+        { offset, limit: SETS_PER_BATCH, stockFilter },
       );
       if (newSets.length === 0 || newSets.length < SETS_PER_BATCH) {
         setHasMore(false);
@@ -83,7 +82,7 @@ export function LibraryRow({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, expanded, library.id, offset]);
+  }, [isLoading, hasMore, expanded, library.id, offset, stockFilter]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -127,7 +126,7 @@ export function LibraryRow({
       {expanded && (
         <>
           {allSets.map((set) => (
-            <SetRow key={set.id} set={set} />
+            <SetRow key={set.id} set={set} stockFilter={stockFilter} />
           ))}
 
           {isLoading && (

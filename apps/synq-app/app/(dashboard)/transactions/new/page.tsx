@@ -545,6 +545,18 @@ export default function NewTransactionPage() {
           queryKey: ["userTransactions"],
           exact: false,
         }),
+        queryClient.invalidateQueries({
+          queryKey: ["library"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["sets"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["cards"],
+          exact: false,
+        }),
         // …other invalidations
       ]);
 

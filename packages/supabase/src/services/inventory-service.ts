@@ -58,10 +58,14 @@ export class InventoryService extends ServiceBase {
    */
   static async getUserCoreLibrary(
     context: "client" | "server" = "client",
-    options?: { offset?: number; limit?: number },
+    options?: {
+      offset?: number;
+      limit?: number;
+      stockFilter?: "all" | "in-stock" | "out-of-stock";
+    },
   ): Promise<Array<{ id: string; name: string; stock: number | null }>> {
     const userId = await this.getCurrentUserId(context);
-    const { offset = 0, limit } = options || {};
+    const { offset = 0, limit, stockFilter = "all" } = options || {};
 
     return this.execute(
       async () => {
@@ -74,14 +78,13 @@ export class InventoryService extends ServiceBase {
             p_user_id: userId,
             p_library_ids: userLibraries,
             p_offset: offset,
-            p_limit: limit ?? undefined,
+            p_limit: limit ?? undefined, // don't pass null
+            p_stock_filter: stockFilter,
           },
         );
 
         if (error) throw error;
-        if (!libraries) return [];
-
-        return libraries as Array<{
+        return (libraries ?? []) as Array<{
           id: string;
           name: string;
           stock: number | null;
@@ -104,10 +107,11 @@ export class InventoryService extends ServiceBase {
     options?: {
       offset?: number;
       limit?: number;
+      stockFilter?: "all" | "in-stock" | "out-of-stock";
     },
   ): Promise<Array<{ id: string; name: string; stock: number | null }>> {
     const userId = await this.getCurrentUserId(context);
-    const { offset = 0, limit } = options || {};
+    const { offset = 0, limit, stockFilter = "all" } = options || {};
 
     return this.execute(
       async () => {
@@ -120,13 +124,12 @@ export class InventoryService extends ServiceBase {
             p_library_id: libraryId,
             p_offset: offset,
             p_limit: limit ?? undefined, // don't pass null
+            p_stock_filter: stockFilter,
           },
         );
 
         if (error) throw error;
-        if (!sets) return [];
-
-        return sets as Array<{
+        return (sets ?? []) as Array<{
           id: string;
           name: string;
           stock: number | null;
@@ -149,6 +152,7 @@ export class InventoryService extends ServiceBase {
     options?: {
       offset?: number;
       limit?: number;
+      stockFilter?: "all" | "in-stock" | "out-of-stock";
     },
   ): Promise<
     Array<
@@ -156,7 +160,7 @@ export class InventoryService extends ServiceBase {
     >
   > {
     const userId = await this.getCurrentUserId(context);
-    const { offset = 0, limit } = options || {};
+    const { offset = 0, limit, stockFilter = "all" } = options || {};
 
     return this.execute(
       async () => {
@@ -168,14 +172,13 @@ export class InventoryService extends ServiceBase {
             p_user_id: userId,
             p_set_id: setId,
             p_offset: offset,
-            p_limit: limit ?? undefined, // avoid passing NULL
+            p_limit: limit ?? undefined, // avoid passing null
+            p_stock_filter: stockFilter,
           },
         );
 
         if (error) throw error;
-        if (!cards) return [];
-
-        return cards as Array<
+        return (cards ?? []) as Array<
           Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & {
             stock: number | null;
           }

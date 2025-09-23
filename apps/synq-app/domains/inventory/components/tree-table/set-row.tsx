@@ -8,13 +8,16 @@ import {
   InventoryService,
   PriceService,
 } from "@synq/supabase/services";
+import { StockFilterType } from "../inventory-table-filters";
 
 const CARDS_PER_BATCH = 15;
 
 export default function SetRow({
   set,
+  stockFilter,
 }: {
   set: Pick<CoreSet, "id" | "name"> & { stock: number | null };
+  stockFilter: StockFilterType;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [allCards, setAllCards] = useState<
@@ -27,12 +30,13 @@ export default function SetRow({
   const [hasMore, setHasMore] = useState(true);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
 
-  const { data: initialCards, isFetched } = useQuery({
-    queryKey: ["cards", set.id],
+  const { data: initialCards } = useQuery({
+    queryKey: ["cards", set.id, stockFilter],
     queryFn: () =>
       InventoryService.fetchCardsBySet("client", set.id, {
         offset: 0,
         limit: CARDS_PER_BATCH,
+        stockFilter,
       }),
     enabled: expanded,
     staleTime: 0,
@@ -49,15 +53,15 @@ export default function SetRow({
       setOffset(0);
       setHasMore(true);
     }
-  }, [expanded]);
+  }, [expanded, stockFilter]);
 
   useEffect(() => {
-    if (expanded && isFetched && initialCards) {
+    if (expanded && initialCards) {
       setAllCards(initialCards);
       setOffset(initialCards.length);
       setHasMore(initialCards.length >= CARDS_PER_BATCH);
     }
-  }, [expanded, isFetched, initialCards]);
+  }, [expanded, initialCards]);
 
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore || !expanded) return;
@@ -69,6 +73,7 @@ export default function SetRow({
         {
           offset,
           limit: CARDS_PER_BATCH,
+          stockFilter,
         },
       );
       if (newCards.length < CARDS_PER_BATCH) setHasMore(false);

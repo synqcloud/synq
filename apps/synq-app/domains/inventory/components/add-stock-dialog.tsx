@@ -123,6 +123,9 @@ export function AddStockDialog({
     ) => InventoryService.addStockEntry("client", cardId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stock", cardId] });
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      queryClient.invalidateQueries({ queryKey: ["sets"] });
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
       toast.success("Stock added successfully!");
       form.reset();
       onOpenChangeAction(false);
