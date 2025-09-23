@@ -31,17 +31,15 @@ const NotificationBell: React.FC = () => {
     enabled: isMountedRef.current, // Only run query when component is mounted
   });
 
-  const handleClick = () => {
-    if (isMountedRef.current) {
-      router.push("/notifications");
-    }
-  };
-
   return (
     <Button
       variant="ghost"
       size="sm"
-      onClick={handleClick}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        router.push("/notifications");
+      }}
       className="relative p-2 h-9 w-9"
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
     >
