@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import CardRow from "./card-row";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
+  CoreCard,
   CoreSet,
   InventoryService,
   PriceService,
@@ -13,18 +14,19 @@ const CARDS_PER_BATCH = 15;
 export default function SetRow({
   set,
 }: {
-  set: Pick<CoreSet, "id" | "name"> & { stock: number };
+  set: Pick<CoreSet, "id" | "name"> & { stock: number | null };
 }) {
   const [expanded, setExpanded] = useState(false);
   const [allCards, setAllCards] = useState<
-    Array<{ id: string; name: string; stock: number }>
+    Array<
+      Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & { stock: number | null }
+    >
   >([]);
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
 
-  // ✅ stable key
   const { data: initialCards, isFetched } = useQuery({
     queryKey: ["cards", set.id],
     queryFn: () =>
@@ -36,7 +38,6 @@ export default function SetRow({
     staleTime: 0,
   });
 
-  // ✅ reset only when expanded toggles
   useEffect(() => {
     if (expanded) {
       setAllCards([]);
@@ -108,7 +109,9 @@ export default function SetRow({
   return (
     <div>
       <div
-        className="flex items-center px-4 py-2 cursor-pointer hover:bg-accent bg-accent"
+        className={`flex items-center px-4 py-2 cursor-pointer hover:bg-accent bg-accent ${
+          set.stock === null ? "opacity-60" : ""
+        }`}
         style={{ paddingLeft: `${16 + 1 * 24}px` }}
         onClick={() => setExpanded((e) => !e)}
       >
@@ -118,7 +121,11 @@ export default function SetRow({
           <ChevronRight className="w-4 h-4 mr-2" />
         )}
         <span className="flex-1">
-          {set.name} ({set.stock})
+          {set.name}
+          {set.stock !== null ? ` (${set.stock})` : ""}
+          {set.stock === 0 && (
+            <span className="text-xs text-red-500 ml-2">(Out of Stock)</span>
+          )}
         </span>
       </div>
 

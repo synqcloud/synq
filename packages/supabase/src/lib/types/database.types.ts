@@ -482,6 +482,7 @@ export type Database = {
       user_preferences: {
         Row: {
           created_at: string | null
+          currency: string
           id: string
           onboarding_completed: boolean
           updated_at: string | null
@@ -489,6 +490,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          currency?: string
           id?: string
           onboarding_completed?: boolean
           updated_at?: string | null
@@ -496,6 +498,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          currency?: string
           id?: string
           onboarding_completed?: boolean
           updated_at?: string | null
@@ -696,6 +699,33 @@ export type Database = {
           stock_id: string
         }[]
       }
+      get_user_cards_with_stock: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_set_id: string
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          stock: number
+          tcgplayer_id: string
+        }[]
+      }
+      get_user_libraries_with_stock: {
+        Args: {
+          p_library_ids: string[]
+          p_limit?: number
+          p_offset?: number
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          stock: number
+        }[]
+      }
       get_user_marketplaces: {
         Args: { p_user_id: string }
         Returns: string[]
@@ -711,6 +741,19 @@ export type Database = {
         Returns: {
           monthly: Json
           top_stock: Json
+        }[]
+      }
+      get_user_sets_with_stock: {
+        Args: {
+          p_library_id: string
+          p_limit?: number
+          p_offset?: number
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          stock: number
         }[]
       }
       get_user_transactions: {

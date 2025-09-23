@@ -7,7 +7,6 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Summary } from "./tree-table/summary";
 import { LibraryRow } from "./tree-table/library-row";
 import { Library } from "lucide-react";
@@ -18,7 +17,7 @@ const LIBRARIES_PER_BATCH = 10;
 export default function InventoryTable({
   libraries: initialLibraries,
 }: {
-  libraries: Array<Pick<CoreLibrary, "id" | "name"> & { stock: number }>;
+  libraries: Array<Pick<CoreLibrary, "id" | "name"> & { stock: number | null }>;
 }) {
   const [allLibraries, setAllLibraries] = useState(initialLibraries);
   const [offset, setOffset] = useState(initialLibraries.length);

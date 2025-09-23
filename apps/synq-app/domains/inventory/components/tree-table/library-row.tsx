@@ -9,11 +9,11 @@ const SETS_PER_BATCH = 24;
 export function LibraryRow({
   library,
 }: {
-  library: Pick<CoreLibrary, "id" | "name"> & { stock: number };
+  library: Pick<CoreLibrary, "id" | "name"> & { stock: number | null };
 }) {
   const [expanded, setExpanded] = useState(false);
   const [allSets, setAllSets] = useState<
-    Array<{ id: string; name: string; stock: number }>
+    Array<{ id: string; name: string; stock: number | null }>
   >([]);
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +63,6 @@ export function LibraryRow({
     }
   }, [expanded, isFetched, initialSets]);
 
-  // ✅ stable loadMore function
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore || !expanded) return;
 
@@ -117,7 +116,11 @@ export function LibraryRow({
           <ChevronRight className="w-4 h-4 mr-2" />
         )}
         <span className="flex-1">
-          {library.name} ({library.stock})
+          {library.name}
+          {library.stock !== null ? ` (${library.stock})` : ""}
+          {library.stock === 0 && (
+            <span className="text-xs text-red-500 ml-2">(Out of Stock)</span>
+          )}
         </span>
       </div>
 

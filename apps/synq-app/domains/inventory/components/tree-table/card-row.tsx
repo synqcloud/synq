@@ -3,7 +3,7 @@ import { useState } from "react";
 // Components
 import StockTable from "./stock-table";
 import PriceAlertButton from "./card/price-alerts-button";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 // Services
 import { CoreCard } from "@synq/supabase/services";
 import Link from "next/link";
@@ -12,7 +12,9 @@ export default function CardRow({
   card,
   hasAlert,
 }: {
-  card: Pick<CoreCard, "id" | "name"> & { stock: number };
+  card: Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & {
+    stock: number | null;
+  };
   hasAlert: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -38,7 +40,8 @@ export default function CardRow({
         <span
           className={`flex-1 font-light tracking-[-0.01em] ${outOfStock ? "text-muted-foreground" : ""}`}
         >
-          {card.name} ({card.stock})
+          {card.name}
+          {card.stock !== null ? ` (${card.stock})` : ""}
           {outOfStock && (
             <span className="text-xs text-red-500 ml-2">(Out of Stock)</span>
           )}

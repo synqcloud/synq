@@ -30,6 +30,113 @@ CREATE TABLE IF NOT EXISTS public.user_card_stock (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE OR REPLACE FUNCTION public.get_user_sets_with_stock(
+    p_user_id UUID,
+    p_library_id UUID,
+    p_offset INT DEFAULT 0,
+    p_limit INT DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID,
+    name VARCHAR,
+    stock INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        s.id,
+        s.name,
+        CASE
+            WHEN COUNT(ucs.id) = 0 THEN NULL
+            ELSE SUM(ucs.quantity)::INT  -- cast bigint -> int
+        END AS stock
+    FROM public.core_sets s
+    LEFT JOIN public.core_cards c ON c.core_set_id = s.id
+    LEFT JOIN public.user_card_stock ucs
+        ON ucs.core_card_id = c.id
+        AND ucs.user_id = p_user_id
+    WHERE s.core_library_id = p_library_id
+    GROUP BY s.id, s.name
+    ORDER BY s.name ASC
+    OFFSET p_offset
+    LIMIT COALESCE(p_limit, NULL);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_user_cards_with_stock(
+    p_user_id UUID,
+    p_set_id UUID,
+    p_offset INT DEFAULT 0,
+    p_limit INT DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID,
+    name VARCHAR,
+    tcgplayer_id TEXT,
+    stock INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        c.id,
+        c.name,
+        c.tcgplayer_id,
+        CASE
+            WHEN COUNT(ucs.id) = 0 THEN NULL
+            ELSE SUM(ucs.quantity)::INT
+        END AS stock
+    FROM public.core_cards c
+    LEFT JOIN public.user_card_stock ucs
+        ON ucs.core_card_id = c.id
+        AND ucs.user_id = p_user_id
+    WHERE c.core_set_id = p_set_id
+    GROUP BY c.id, c.name, c.tcgplayer_id
+    ORDER BY c.name ASC
+    OFFSET p_offset
+    LIMIT COALESCE(p_limit, NULL);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_user_libraries_with_stock(
+    p_user_id UUID,
+    p_library_ids UUID[],
+    p_offset INT DEFAULT 0,
+    p_limit INT DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID,
+    name VARCHAR,
+    stock INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        l.id,
+        l.name,
+        CASE
+            WHEN COUNT(ucs.id) = 0 THEN NULL
+            ELSE SUM(ucs.quantity)::INT
+        END AS stock
+    FROM public.core_libraries l
+    LEFT JOIN public.core_sets s ON s.core_library_id = l.id
+    LEFT JOIN public.core_cards c ON c.core_set_id = s.id
+    LEFT JOIN public.user_card_stock ucs
+        ON ucs.core_card_id = c.id
+        AND ucs.user_id = p_user_id
+    WHERE l.id = ANY(p_library_ids)
+    GROUP BY l.id, l.name
+    ORDER BY l.name ASC
+    OFFSET p_offset
+    LIMIT COALESCE(p_limit, NULL);
+END;
+$$;
+
 
 -- =============================================
 -- Table: marketplaces
