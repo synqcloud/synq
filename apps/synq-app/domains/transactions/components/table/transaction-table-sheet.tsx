@@ -171,6 +171,7 @@ export function TransactionTableSheet({
 
             <TransactionItemsDisplay
               orderId={order.id}
+              isOpen={isOpen}
               isIntegration={order.is_integration}
             />
           </VStack>

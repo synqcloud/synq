@@ -15,6 +15,7 @@ export {
   type UserTransaction,
   type UserTransactionItem,
   type TransactionStatus,
+  type TransactionType,
 } from "./transactions-service";
 export {
   DashboardService,

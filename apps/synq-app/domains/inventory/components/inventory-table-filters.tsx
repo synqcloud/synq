@@ -63,7 +63,7 @@ export default function InventoryTableFilters({
           disabled={isLoading}
         />
       </div>
-      <HStack gap={4}>
+      <HStack gap={1}>
         {buttons.map((b) => (
           <Button
             key={b}

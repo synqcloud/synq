@@ -304,14 +304,15 @@ export class TransactionService extends ServiceBase {
     const userId = await this.getCurrentUserId(context);
     return this.execute(
       async () => {
+        // TODO: Implement type filtering
         const client = await this.getClient(context);
-        // Call RPC function to get transactions with total_quantity already calculated
         const { data, error } = await client.rpc("get_user_transactions", {
           p_user_id: userId,
           p_start_date: filters?.startDate?.toISOString() ?? null,
           p_end_date: filters?.endDate?.toISOString() ?? null,
           p_statuses: filters?.statuses ?? null,
           p_types: null, // No longer needed since all transactions are sales
+          p_sources: filters?.sources ?? null,
           p_offset: 0,
           p_limit: null,
         });
@@ -348,6 +349,7 @@ export class TransactionService extends ServiceBase {
           p_end_date: params?.filters?.endDate?.toISOString() ?? null,
           p_statuses: params?.filters?.statuses ?? null,
           p_types: null,
+          p_sources: params?.filters?.sources ?? null,
           p_offset: params?.offset ?? 0,
           p_limit: params?.limit ?? null,
         });

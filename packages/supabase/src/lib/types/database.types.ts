@@ -704,6 +704,7 @@ export type Database = {
           p_limit?: number
           p_offset?: number
           p_set_id: string
+          p_stock_filter?: string
           p_user_id: string
         }
         Returns: {
@@ -718,6 +719,7 @@ export type Database = {
           p_library_ids: string[]
           p_limit?: number
           p_offset?: number
+          p_stock_filter?: string
           p_user_id: string
         }
         Returns: {
@@ -748,6 +750,7 @@ export type Database = {
           p_library_id: string
           p_limit?: number
           p_offset?: number
+          p_stock_filter?: string
           p_user_id: string
         }
         Returns: {
@@ -759,6 +762,9 @@ export type Database = {
       get_user_transactions: {
         Args: {
           p_end_date?: string
+          p_limit?: number
+          p_offset?: number
+          p_sources?: string[]
           p_start_date?: string
           p_statuses?: Database["public"]["Enums"]["transaction_status"][]
           p_types?: Database["public"]["Enums"]["transaction_type"][]
@@ -808,6 +814,7 @@ export type Database = {
           id: string
           name: string
           stock: number
+          tcgplayer_id: string
         }[]
       }
     }

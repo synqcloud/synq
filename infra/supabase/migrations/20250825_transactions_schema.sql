@@ -117,6 +117,7 @@ CREATE OR REPLACE FUNCTION public.get_user_transactions(
     p_end_date TIMESTAMPTZ DEFAULT NULL,
     p_statuses public.transaction_status[] DEFAULT NULL,
     p_types public.transaction_type[] DEFAULT NULL,
+    p_sources TEXT[] DEFAULT NULL,
     p_offset INT DEFAULT 0,
     p_limit INT DEFAULT NULL
 )
@@ -164,6 +165,7 @@ BEGIN
       AND (p_end_date IS NULL OR t.created_at <= p_end_date)
       AND (p_statuses IS NULL OR t.transaction_status = ANY(p_statuses))
       AND (p_types IS NULL OR t.transaction_type = ANY(p_types))
+      AND (p_sources IS NULL OR t.source = ANY(p_sources))
     GROUP BY
         t.id,
         t.user_id,

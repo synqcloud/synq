@@ -14,9 +14,11 @@ import { useCurrency } from "@/shared/contexts/currency-context";
 export function TransactionItemsDisplay({
   orderId,
   isIntegration,
+  isOpen,
 }: {
   orderId: string;
   isIntegration: boolean;
+  isOpen: boolean;
 }) {
   const { currency } = useCurrency();
 
@@ -24,7 +26,8 @@ export function TransactionItemsDisplay({
     queryKey: ["transactionItems", orderId],
     queryFn: () =>
       TransactionService.fetchUserTransactionItems("client", orderId),
-    enabled: !!orderId,
+    enabled: !!orderId && isOpen,
+    staleTime: 60_000,
   });
 
   if (isLoading) {

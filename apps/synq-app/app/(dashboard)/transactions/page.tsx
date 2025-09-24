@@ -1,13 +1,19 @@
 "use client";
 // Core
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 // Components
 import { TransactionTable } from "@/features/transactions/components/table/transaction-table";
+import TransactionsFilters from "@/features/transactions/components/transactions-filters";
 import TransactionsSkeleton from "@/features/transactions/components/transactions-skeleton";
 import { Spinner } from "@synq/ui/component";
 // Services
-import { TransactionService } from "@synq/supabase/services";
+import {
+  TransactionService,
+  TransactionStatus,
+  TransactionType,
+} from "@synq/supabase/services";
+import { InventoryService } from "@synq/supabase/services";
 
 export default function TransactionsPage() {
   useEffect(() => {
@@ -15,6 +21,31 @@ export default function TransactionsPage() {
   }, []);
 
   const PAGE_SIZE = 50;
+
+  const [filters, setFilters] = useState<{
+    statuses?: TransactionStatus[];
+    types?: TransactionType[];
+    sources?: string[];
+    startDate?: Date;
+    endDate?: Date;
+  }>({});
+
+  // Load available sources for the filter (unique marketplaces)
+  const [availableSources, setAvailableSources] = useState<string[]>([]);
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([
+      TransactionService.fetchUserMarketplaces("client"),
+      InventoryService.getAvailableMarketplaces("client"),
+    ]).then(([userSources, allSources]) => {
+      if (!mounted) return;
+      const merged = Array.from(new Set([...(userSources || []), ...(allSources || [])])).sort();
+      setAvailableSources(merged);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const {
     data,
@@ -24,11 +55,28 @@ export default function TransactionsPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["userTransactions", { pageSize: PAGE_SIZE }],
+    queryKey: [
+      "userTransactions",
+      {
+        pageSize: PAGE_SIZE,
+        statuses: filters.statuses ?? null,
+        types: filters.types ?? null,
+        sources: (filters.sources && filters.sources.length > 0) ? filters.sources : null,
+        startDate: filters.startDate?.toISOString() ?? null,
+        endDate: filters.endDate?.toISOString() ?? null,
+      },
+    ],
     queryFn: ({ pageParam = 0 }) =>
       TransactionService.fetchUserTransactionsPage("client", {
         offset: pageParam,
         limit: PAGE_SIZE,
+        filters: {
+          statuses: filters.statuses,
+          sources: (filters.sources && filters.sources.length > 0) ? filters.sources : undefined,
+          integrationOnly: undefined,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+        },
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -90,6 +138,21 @@ export default function TransactionsPage() {
 
   return (
     <>
+      <div className="p-4 border-b bg-muted/30">
+        <TransactionsFilters
+          isLoading={isLoading}
+          sources={availableSources}
+          onChange={(next) => {
+            setFilters({
+              statuses: next.statuses,
+              types: next.types,
+              sources: next.sources,
+              startDate: next.startDate,
+              endDate: next.endDate,
+            });
+          }}
+        />
+      </div>
       <div ref={scrollContainerRef} className="h-full overflow-y-scroll p-4 space-y-4">
         <TransactionTable transactions={transactions} />
         <div ref={sentinelRef} />
