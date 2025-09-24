@@ -24,9 +24,8 @@ export function TransactionTable({ transactions }: { transactions: Order[] }) {
     <BaseTable<Order>
       data={transactions}
       columns={orderColumns}
-      renderRowAction={(order) => (
-        <TransactionTableRow key={order.id} order={order} />
-      )}
+      getRowKey={(order) => order.id}
+      renderRowAction={(order) => <TransactionTableRow order={order} />}
     />
   );
 }

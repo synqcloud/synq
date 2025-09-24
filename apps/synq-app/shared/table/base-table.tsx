@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import {
   Table,
   TableBody,
@@ -19,10 +20,12 @@ export function BaseTable<T>({
   data,
   columns,
   renderRowAction,
+  getRowKey,
 }: {
   data: T[];
   columns: Column<T>[];
   renderRowAction: (row: T) => React.ReactNode;
+  getRowKey?: (row: T) => string | number;
 }) {
   return (
     <Table>
@@ -40,7 +43,15 @@ export function BaseTable<T>({
           ))}
         </TableRow>
       </TableHeader>
-      <TableBody>{data.map((row) => renderRowAction(row))}</TableBody>
+      <TableBody>
+        {data.map((row, index) => (
+          <React.Fragment
+            key={(getRowKey?.(row) ?? (row as any)?.id ?? index).toString()}
+          >
+            {renderRowAction(row)}
+          </React.Fragment>
+        ))}
+      </TableBody>
     </Table>
   );
 }

@@ -116,7 +116,9 @@ CREATE OR REPLACE FUNCTION public.get_user_transactions(
     p_start_date TIMESTAMPTZ DEFAULT NULL,
     p_end_date TIMESTAMPTZ DEFAULT NULL,
     p_statuses public.transaction_status[] DEFAULT NULL,
-    p_types public.transaction_type[] DEFAULT NULL
+    p_types public.transaction_type[] DEFAULT NULL,
+    p_offset INT DEFAULT 0,
+    p_limit INT DEFAULT NULL
 )
 RETURNS TABLE (
     id UUID,
@@ -175,7 +177,9 @@ BEGIN
         t.net_amount,
         t.is_integration,
         t.created_at
-    ORDER BY t.created_at DESC;
+    ORDER BY t.created_at DESC
+    OFFSET p_offset
+    LIMIT COALESCE(p_limit, NULL);
 END;
 $$;
 

@@ -312,6 +312,8 @@ export class TransactionService extends ServiceBase {
           p_end_date: filters?.endDate?.toISOString() ?? null,
           p_statuses: filters?.statuses ?? null,
           p_types: null, // No longer needed since all transactions are sales
+          p_offset: 0,
+          p_limit: null,
         });
 
         if (error) throw error;
@@ -320,6 +322,42 @@ export class TransactionService extends ServiceBase {
       {
         service: "TransactionService",
         method: "fetchUserTransactions",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Fetch user transactions page (paginated)
+   */
+  static async fetchUserTransactionsPage(
+    context: "server" | "client" = "server",
+    params?: {
+      filters?: TransactionFilters;
+      offset?: number;
+      limit?: number | null;
+    },
+  ): Promise<Array<TransactionWithQuantity>> {
+    const userId = await this.getCurrentUserId(context);
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+        const { data, error } = await client.rpc("get_user_transactions", {
+          p_user_id: userId,
+          p_start_date: params?.filters?.startDate?.toISOString() ?? null,
+          p_end_date: params?.filters?.endDate?.toISOString() ?? null,
+          p_statuses: params?.filters?.statuses ?? null,
+          p_types: null,
+          p_offset: params?.offset ?? 0,
+          p_limit: params?.limit ?? null,
+        });
+
+        if (error) throw error;
+        return data ?? [];
+      },
+      {
+        service: "TransactionService",
+        method: "fetchUserTransactionsPage",
         userId: userId || undefined,
       },
     );
