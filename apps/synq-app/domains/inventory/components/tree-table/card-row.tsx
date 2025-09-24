@@ -3,10 +3,10 @@ import { useState } from "react";
 // Components
 import StockTable from "./stock-table";
 import PriceAlertButton from "./card/price-alerts-button";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 // Services
 import { CoreCard } from "@synq/supabase/services";
-import Link from "next/link";
+import { Button } from "@synq/ui/component";
 
 export default function CardRow({
   card,
@@ -48,14 +48,24 @@ export default function CardRow({
         </span>
         <div className="flex items-center gap-2">
           <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
-          {/*<Link
-            href={`/inventory/item/${card.id}`}
-            target="_blank"
-            className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent/70 transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Search className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-          </Link>*/}
+          {card.tcgplayer_id && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                window.open(
+                  `https://www.tcgplayer.com/product/${card.tcgplayer_id}`,
+                  "_blank",
+                );
+              }}
+              className="p-1 hover:bg-muted rounded transition-colors"
+              title="View on TCGPlayer"
+            >
+              <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+            </Button>
+          )}
         </div>
       </div>
       {/* Expanded Stock Table */}
