@@ -155,7 +155,7 @@ export function AddStockDialog({
         <DialogHeader className="space-y-3">
           <DialogTitle className="font-extralight">Add Stock Entry</DialogTitle>
           <DialogDescription className="text-body text-muted-foreground">
-            Add new stock for{" "}
+            Add new stock purchase for{" "}
             <span className="font-medium text-foreground">{cardName}</span>
           </DialogDescription>
         </DialogHeader>

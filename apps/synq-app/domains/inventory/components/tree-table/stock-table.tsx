@@ -89,7 +89,7 @@ export default function StockTable({
         <div className="flex items-center gap-3">
           <Plus className="w-4 h-4 text-primary" />
           <span className="text-sm font-light tracking-[-0.01em] text-muted-foreground">
-            Add new stock
+            Add new purchase
           </span>
         </div>
       </div>

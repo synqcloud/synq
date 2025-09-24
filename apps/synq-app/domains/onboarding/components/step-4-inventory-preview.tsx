@@ -210,7 +210,7 @@ export default function Step4InventoryPreview() {
                     <div className="flex items-center gap-3">
                       <Plus className="w-4 h-4 text-primary/60" />
                       <span className="text-sm font-light tracking-[-0.01em]">
-                        Add new stock
+                        Add new purchase
                       </span>
                     </div>
                   </motion.div>
