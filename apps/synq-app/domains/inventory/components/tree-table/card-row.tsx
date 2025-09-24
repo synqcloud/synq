@@ -12,7 +12,8 @@ export default function CardRow({
   card,
   hasAlert,
 }: {
-  card: Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & {
+  card: Pick<CoreCard, "id" | "name"> & {
+    tcgplayer_id?: string | null;
     stock: number | null;
   };
   hasAlert: boolean;

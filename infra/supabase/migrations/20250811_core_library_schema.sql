@@ -93,6 +93,7 @@ CREATE OR REPLACE FUNCTION public.search_cards(
 RETURNS TABLE (
     id UUID,
     name TEXT,
+    tcgplayer_id TEXT,
     core_set_name TEXT,
     core_library_name TEXT,
     stock INTEGER
@@ -106,6 +107,7 @@ BEGIN
     SELECT
         cc.id,
         cc.name::TEXT,
+        cc.tcgplayer_id::TEXT,
         cs.name::TEXT AS core_set_name,
         cl.name::TEXT AS core_library_name,
         COALESCE(SUM(ucs.quantity)::INTEGER, 0) AS stock

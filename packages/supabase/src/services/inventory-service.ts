@@ -362,6 +362,7 @@ export class InventoryService extends ServiceBase {
       name: string;
       core_set_name: string | null;
       core_library_name: string | null;
+      tcgplayer_id: string | null;
       stock: number;
     }>
   > {
@@ -372,8 +373,6 @@ export class InventoryService extends ServiceBase {
         const { data, error } = await client.rpc("search_cards", {
           search_query: searchQuery,
         });
-
-        console.log("RPC search_cards result:", data);
 
         if (error) throw error;
 
@@ -386,6 +385,7 @@ export class InventoryService extends ServiceBase {
           name: String(card.name),
           core_set_name: card.core_set_name ?? null,
           core_library_name: card.core_library_name ?? null,
+          tcgplayer_id: card.tcgplayer_id ?? null,
           stock: Number(card.stock ?? 0),
         }));
       },

@@ -13,12 +13,14 @@ import { LibraryRow } from "./tree-table/library-row";
 import InventoryTableFilters, {
   StockFilterType,
 } from "./inventory-table-filters";
+import InventoryTableSearchResults from "./inventory-table-search-results";
 // Services
 import { InventoryService } from "@synq/supabase/services";
 import { useQuery } from "@tanstack/react-query";
 
 export default function InventoryTable() {
   const [stockFilter, setStockFilter] = useState<StockFilterType>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: allLibraries = [], isLoading } = useQuery({
     queryKey: ["libraries", stockFilter],
@@ -37,12 +39,15 @@ export default function InventoryTable() {
         <InventoryTableFilters
           onChange={setStockFilter}
           isLoading={isLoading}
+          onSearchChange={setSearchQuery}
         />
       </div>
       {isLoading && <InventoryTableSkeleton />}
 
       <div className="flex-1 overflow-auto">
-        {allLibraries.length === 0 && !isLoading ? (
+        {searchQuery ? (
+          <InventoryTableSearchResults query={searchQuery} />
+        ) : allLibraries.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
             <p>No items in your inventory.</p>
           </div>
