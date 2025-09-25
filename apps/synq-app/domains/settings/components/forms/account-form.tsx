@@ -22,10 +22,11 @@ import {
   FormDescription,
   Button,
   Input,
+  HStack,
 } from "@synq/ui/component";
 
 // SHARED COMPONENTS
-import { Save } from "lucide-react";
+import { Save, Settings } from "lucide-react";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { AvatarUpload } from "@/shared/avatar-upload";
 import { Spinner } from "@synq/ui/component";
@@ -156,7 +157,23 @@ export function AccountForm({ initialData }: AccountFormProps) {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t">
+        <HStack justify="end" gap={4} className="pt-4 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const portalUrl = process.env.NEXT_PUBLIC_STRIPE_PORTAL_URL;
+              if (portalUrl) {
+                window.location.href = portalUrl;
+              } else {
+                console.error("Stripe portal URL is not defined");
+              }
+            }}
+            className="min-w-[120px] gap-2"
+          >
+            <Settings />
+            Manage Subscription
+          </Button>
           <Button
             type="submit"
             disabled={isSubmitting}
@@ -165,7 +182,7 @@ export function AccountForm({ initialData }: AccountFormProps) {
             {isSubmitting ? <Spinner /> : <Save className="w-4 h-4" />}
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
-        </div>
+        </HStack>
       </form>
     </Form>
   );

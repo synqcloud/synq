@@ -551,6 +551,39 @@ export type Database = {
           },
         ]
       }
+      user_subscriptions: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: Database["public"]["Enums"]["subscription_status"] | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["subscription_status"] | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["subscription_status"] | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_transaction: {
         Row: {
           created_at: string
@@ -817,9 +850,14 @@ export type Database = {
           tcgplayer_id: string
         }[]
       }
+      user_has_access: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       notification_type: "discrepancy_stock" | "price_alert"
+      subscription_status: "trialing" | "active" | "canceled" | "past_due"
       transaction_status: "PENDING" | "IN_PROGRESS" | "COMPLETED"
       transaction_type: "sale"
     }
@@ -953,6 +991,7 @@ export const Constants = {
   public: {
     Enums: {
       notification_type: ["discrepancy_stock", "price_alert"],
+      subscription_status: ["trialing", "active", "canceled", "past_due"],
       transaction_status: ["PENDING", "IN_PROGRESS", "COMPLETED"],
       transaction_type: ["sale"],
     },

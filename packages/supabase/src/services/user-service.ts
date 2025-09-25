@@ -458,4 +458,92 @@ export class UserService extends ServiceBase {
       },
     );
   }
+
+  // ==========================================
+  // Subscription - Simple actions
+  // ==========================================
+
+  /**
+   * Check if user has active subscription or trial access
+   */
+  static async checkUserAccess(
+    context: "client" | "server" = "server",
+  ): Promise<boolean> {
+    const userId = await this.getCurrentUserId(context);
+    if (!userId) return false;
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        // Use the simplified database function
+        const { data, error } = await client.rpc("user_has_access", {
+          user_id: userId,
+        });
+
+        if (error) throw error;
+        return data as boolean;
+      },
+      {
+        service: "UserService",
+        method: "checkUserAccess",
+        userId,
+      },
+    );
+  }
+
+  /**
+   * Get user subscription status (optional - for displaying in UI)
+   */
+  static async getSubscriptionStatus(
+    context: "client" | "server" = "client",
+  ): Promise<{
+    hasAccess: boolean;
+    isOnTrial: boolean;
+    trialEndsAt: string | null;
+    hasActiveSubscription: boolean;
+  }> {
+    const userId = await this.getCurrentUserId(context);
+    if (!userId) {
+      return {
+        hasAccess: false,
+        isOnTrial: false,
+        trialEndsAt: null,
+        hasActiveSubscription: false,
+      };
+    }
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data: profile, error } = await client
+          .from("user_subscriptions")
+          .select("has_active_subscription, trial_ends_at")
+          .eq("id", userId)
+          .single();
+
+        if (error) throw error;
+
+        const now = new Date();
+        const trialEndsAt = profile?.trial_ends_at
+          ? new Date(profile.trial_ends_at)
+          : null;
+        const isOnTrial = trialEndsAt ? trialEndsAt > now : false;
+        const hasAccess = profile?.has_active_subscription || isOnTrial;
+
+        return {
+          hasAccess,
+          isOnTrial,
+          trialEndsAt: profile?.trial_ends_at || null,
+          hasActiveSubscription: profile?.has_active_subscription || false,
+        };
+      },
+      {
+        service: "UserService",
+        method: "getSubscriptionStatus",
+        userId,
+      },
+    );
+  }
 }

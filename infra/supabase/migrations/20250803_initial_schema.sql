@@ -96,11 +96,18 @@ DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Insert default preferences
   INSERT INTO public.user_preferences (user_id)
   VALUES (NEW.id);
+
+  -- Insert a trial subscription for the new user
+  INSERT INTO public.user_subscriptions (user_id, status, trial_ends_at)
+  VALUES (NEW.id, 'trialing', NOW() + INTERVAL '7 days');
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
 
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;

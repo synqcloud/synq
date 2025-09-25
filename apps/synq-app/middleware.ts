@@ -10,6 +10,21 @@ export async function middleware(request: NextRequest) {
     });
 
     const supabase = await createClient();
+    const pathname = request.nextUrl.pathname;
+
+    // Allow access to webhook endpoints without authentication
+    if (pathname.startsWith("/api/stripe")) {
+      return response;
+    }
+
+    if (pathname.startsWith("/api/account/delete")) {
+      return response;
+    }
+
+    // Allow access to mail API endpoints without onboarding/auth redirects
+    if (pathname.startsWith("/api/mail")) {
+      return response;
+    }
 
     // Get the current user from Supabase
     const {
@@ -17,19 +32,7 @@ export async function middleware(request: NextRequest) {
       error: userError,
     } = await supabase.auth.getUser();
 
-    const pathname = request.nextUrl.pathname;
-
-    // Allow access to webhook endpoints without authentication
-    if (pathname.startsWith("/api/stripe/webhook")) {
-      return response;
-    }
-
-    // Allow access to mail API endpoints without onboarding/auth redirects
-    // so routes like /api/mail/send-test-notification-email can run
-    if (pathname.startsWith("/api/mail")) {
-      return response;
-    }
-
+    // If user is authenticated and trying to access login, redirect to home
     if (user && pathname === "/login") {
       const url = request.nextUrl.clone();
       url.pathname = "/home";
@@ -67,7 +70,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // avoind infinte call if we are already in  /welcome
+    // Check onboarding completion
     if (!pathname.startsWith("/welcome")) {
       const { data, error } = await supabase
         .from("user_preferences")
@@ -86,11 +89,88 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+    // If user has completed onboarding and tries to access welcome, redirect based on subscription
+    if (pathname === "/welcome") {
+      const { data, error } = await supabase
+        .from("user_preferences")
+        .select("onboarding_completed")
+        .eq("user_id", user.id)
+        .single();
+
+      const onboardingDone = data?.onboarding_completed ?? false;
+
+      if (onboardingDone) {
+        // Check if user has access
+        try {
+          const { data: hasAccess, error: accessError } = await supabase.rpc(
+            "user_has_access",
+            {
+              p_user_id: user.id,
+            },
+          );
+
+          if (accessError) {
+            console.error("Access check failed:", accessError);
+            // Default to home on error
+            const url = request.nextUrl.clone();
+            url.pathname = "/home";
+            return NextResponse.redirect(url);
+          } else if (hasAccess === false) {
+            const url = request.nextUrl.clone();
+            url.pathname = "/plan-required";
+            return NextResponse.redirect(url);
+          } else {
+            const url = request.nextUrl.clone();
+            url.pathname = "/home";
+            return NextResponse.redirect(url);
+          }
+        } catch (error) {
+          console.error("Subscription check error:", error);
+          // Default to home on error
+          const url = request.nextUrl.clone();
+          url.pathname = "/home";
+          return NextResponse.redirect(url);
+        }
+      }
+    }
+
     // If user has full name and tries to access setup-account, redirect to home
     if (pathname === "/setup-account") {
       const url = request.nextUrl.clone();
       url.pathname = "/home";
       return NextResponse.redirect(url);
+    }
+
+    // Check subscription status for protected routes
+    // Allow access to subscription-related pages and settings without subscription check
+    const subscriptionPages = ["/plan-required", "/billing", "/settings"];
+    const isSubscriptionPage = subscriptionPages.some((page) =>
+      pathname.startsWith(page),
+    );
+
+    if (!isSubscriptionPage) {
+      try {
+        // Check if user has access using the Supabase function
+        const { data: hasAccess, error: accessError } = await supabase.rpc(
+          "user_has_access",
+          {
+            p_user_id: user.id,
+          },
+        );
+
+        if (accessError) {
+          console.error("Access check failed:", accessError);
+          // Don't block access if the check fails, but log it
+        } else if (hasAccess === false) {
+          // User doesn't have access - redirect to plan-required page
+          const url = request.nextUrl.clone();
+          url.pathname = "/plan-required";
+          return NextResponse.redirect(url);
+        }
+      } catch (error) {
+        console.error("Subscription check error:", error);
+        // Don't block access on error, but log it for debugging
+      }
     }
 
     return response;
