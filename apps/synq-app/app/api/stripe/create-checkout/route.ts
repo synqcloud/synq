@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         {
           price_data: {
             currency: "eur",
-            product: "prod_T6SILald5yqH4N",
+            product: process.env.STRIPE_PRODUCT_ID!,
             unit_amount: amount,
             recurring: { interval: "month" },
           },
