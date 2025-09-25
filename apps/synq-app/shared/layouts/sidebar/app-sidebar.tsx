@@ -43,6 +43,7 @@ import {
 // SHARED COMPONENTS
 import { SynqIcon } from "@/shared/icons/icons";
 import { NavUser } from "@/shared/layouts/header/nav-user";
+import { FeedbackButton } from "@/shared/feedback-button";
 
 // TYPES
 interface NavItem {
@@ -263,6 +264,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="px-0">
+        <FeedbackButton isCollapsed={isCollapsed} />
         <NavUser isCollapsed={isCollapsed} />
       </SidebarFooter>
     </Sidebar>

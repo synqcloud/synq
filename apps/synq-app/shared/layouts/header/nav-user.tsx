@@ -137,17 +137,6 @@ export function NavUser({ isCollapsed = false }: NavUserProps) {
                       <span>Account Settings</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="https://trysynq.com/help"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      <span>Contact Support</span>
-                    </Link>
-                  </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
