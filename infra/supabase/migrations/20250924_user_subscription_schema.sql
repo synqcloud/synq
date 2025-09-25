@@ -1,3 +1,18 @@
+-- Drop existing objects in reverse dependency order
+DROP POLICY IF EXISTS user_delete_own_subscriptions ON user_subscriptions;
+DROP POLICY IF EXISTS user_update_own_subscriptions ON user_subscriptions;
+DROP POLICY IF EXISTS user_select_own_subscriptions ON user_subscriptions;
+
+DROP FUNCTION IF EXISTS public.user_has_access(UUID);
+
+DROP INDEX IF EXISTS user_subscriptions_stripe_subscription_id_idx;
+DROP INDEX IF EXISTS user_subscriptions_user_id_idx;
+
+DROP TABLE IF EXISTS user_subscriptions;
+
+DROP TYPE IF EXISTS subscription_status;
+
+-- Now create everything fresh
 -- Simple subscription status enum
 CREATE TYPE subscription_status AS ENUM (
   'trialing',
@@ -21,7 +36,6 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
 -- Indexes
 CREATE INDEX IF NOT EXISTS user_subscriptions_user_id_idx ON user_subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS user_subscriptions_stripe_subscription_id_idx ON user_subscriptions(stripe_subscription_id);
-
 
 -- Function to check if user has access
 CREATE OR REPLACE FUNCTION public.user_has_access(p_user_id UUID)

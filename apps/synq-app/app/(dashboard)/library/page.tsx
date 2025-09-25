@@ -5,7 +5,10 @@ import { toast } from "sonner";
 import { DatabaseGrid } from "@/domains/library/components";
 
 // DATA
-import { LibraryItemsWithStatus, LibraryService } from "@synq/supabase/services";
+import {
+  LibraryItemsWithStatus,
+  LibraryService,
+} from "@synq/supabase/services";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function LibraryPage() {
@@ -19,23 +22,30 @@ export default function LibraryPage() {
 
   // Install mutation
   const installMutation = useMutation({
-    mutationFn: (databaseId: string) => LibraryService.installLibraryToUser("client", databaseId),
+    mutationFn: (databaseId: string) =>
+      LibraryService.installLibraryToUser("client", databaseId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraryItems"] });
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      queryClient.invalidateQueries({ queryKey: ["sets"] });
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
     },
   });
 
   // Remove mutation
   const removeMutation = useMutation({
-    mutationFn: (databaseId: string) => LibraryService.removeLibraryToUser("client", databaseId, false),
+    mutationFn: (databaseId: string) =>
+      LibraryService.removeLibraryToUser("client", databaseId, false),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraryItems"] });
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      queryClient.invalidateQueries({ queryKey: ["sets"] });
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
     },
   });
 
   // Handlers
   const handleInstall = async (databaseId: string) => {
-
     try {
       await installMutation.mutateAsync(databaseId);
       toast.success("Installed successfully!", {
@@ -51,7 +61,6 @@ export default function LibraryPage() {
   };
 
   const handleRemove = async (databaseId: string) => {
-
     try {
       await removeMutation.mutateAsync(databaseId);
       toast.success("Successfully Removed!", {

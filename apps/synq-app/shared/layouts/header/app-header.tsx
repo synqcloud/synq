@@ -95,7 +95,8 @@ const AppHeader: React.FC = () => {
           onValueChange={(val) => handleCurrencyChange(val as "usd" | "eur")}
           disabled={loading}
         >
-          <SelectTrigger className="h-8 text-xs px-3">
+          <SelectTrigger className="h-7 text-xs px-3">
+            {" "}
             <SelectValue placeholder="Currency" />
           </SelectTrigger>
           <SelectContent>
