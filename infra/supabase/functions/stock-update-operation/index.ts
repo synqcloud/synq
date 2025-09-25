@@ -175,31 +175,6 @@ serve(async (req: Request) => {
       );
     }
 
-    // Insert stock audit log
-    const { data: auditData, error: auditError } = await supabase
-      .from("stock_audit_log")
-      .insert({
-        stock_id,
-        user_id: stockData.user_id,
-        quantity_before: quantityBefore,
-        quantity_after: quantityEffective,
-        change_type,
-        performed_by,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (auditError || !auditData) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Error creating stock audit log",
-        }),
-        { status: 500, headers },
-      );
-    }
-
     // Insert discrepancy notifications for each marketplace only if quantity changed
     const conditionChanged =
       condition !== undefined && condition !== stockData.condition;
@@ -222,7 +197,6 @@ serve(async (req: Request) => {
         const notificationsToInsert = marketplaceData.map((mp) => ({
           user_id: stockData.user_id,
           stock_id,
-          stock_audit_id: auditData.id,
           marketplace_id: mp.id,
           notification_type: "discrepancy_stock",
           created_at: new Date().toISOString(),
@@ -243,7 +217,6 @@ serve(async (req: Request) => {
       quantity_after: quantityEffective,
       discrepancy,
       marketplaces_listed: marketplaces,
-      stock_audit_id: auditData.id,
     };
     console.log("stock-update-operation result:", result);
 

@@ -98,12 +98,6 @@ export default function NotificationsPage() {
     },
   });
 
-  const openAudit = useCallback((auditId: string) => {
-    if (isMountedRef.current) {
-      window.open(`/stock-updates?id=${auditId}`, "_blank");
-    }
-  }, []);
-
   const handleRefetch = useCallback(() => {
     if (isMountedRef.current) {
       refetch();
@@ -158,20 +152,6 @@ export default function NotificationsPage() {
           body: (
             <>
               <span className="font-medium">{cardName}</span> may need updating.
-              {notification.stock_audit_id && (
-                <>
-                  <span> </span>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="inline-flex items-center gap-1 h-auto p-0 text-primary hover:text-primary/80 font-medium underline"
-                    onClick={() => openAudit(notification.stock_audit_id!)}
-                  >
-                    View audit
-                    <ExternalLink className="w-3 h-3" />
-                  </Button>
-                </>
-              )}
               {notification.marketplace && (
                 <>
                   <span> or update stock in </span>

@@ -1,24 +1,8 @@
--- Migration: 20250908_stock_audits_schema.sql
--- Description: Core Library schema for stock audits and notifications
+-- Migration: 20250908_notifications_schema.sql
+-- Description: Core Library schema for notifications
 -- Tables: core_libraries, core_sets, core_cards, user_library_access
 
 BEGIN;
-
--- =============================================
--- Table: stock_audit_log (Any stock upadate by manual edit or by a transacion is stored here. Mainly procesed by edge functions)
--- =============================================
-DROP TABLE IF EXISTS public.stock_audit_log CASCADE;
-
-CREATE TABLE public.stock_audit_log (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    stock_id UUID NOT NULL REFERENCES public.user_card_stock(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL,
-    quantity_before INTEGER NOT NULL,
-    quantity_after INTEGER NOT NULL,
-    change_type VARCHAR(50) NOT NULL,
-    performed_by UUID,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
 
 -- =============================================
 -- Type: notification_type
@@ -42,7 +26,6 @@ CREATE TABLE public.notifications (
 
     -- Stock-related notifications (optional)
     stock_id UUID REFERENCES public.user_card_stock(id) ON DELETE CASCADE,
-    stock_audit_id UUID REFERENCES public.stock_audit_log(id) ON DELETE CASCADE,
     marketplace_id UUID REFERENCES public.marketplaces(id) ON DELETE CASCADE, -- the affected marketplace
 
     -- Price alert notifications (optional)
@@ -203,22 +186,7 @@ BEGIN
 END$$;
 
 -- Enable RLS on public tables exposed via PostgREST
-ALTER TABLE public.stock_audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-
--- Policies for stock_audit_log
-DROP POLICY IF EXISTS "Users can view their own stock audit logs" ON public.stock_audit_log;
-CREATE POLICY "Users can view their own stock audit logs" ON public.stock_audit_log
-  FOR SELECT USING (user_id = auth.uid());
-
-DROP POLICY IF EXISTS "Users can insert their own stock audit logs" ON public.stock_audit_log;
-CREATE POLICY "Users can insert their own stock audit logs" ON public.stock_audit_log
-  FOR INSERT WITH CHECK (user_id = auth.uid());
-
--- Optionally allow owners to delete their own audit logs
-DROP POLICY IF EXISTS "Users can delete their own stock audit logs" ON public.stock_audit_log;
-CREATE POLICY "Users can delete their own stock audit logs" ON public.stock_audit_log
-  FOR DELETE USING (user_id = auth.uid());
 
 -- Policies for notifications
 DROP POLICY IF EXISTS "Users can view their notifications" ON public.notifications;

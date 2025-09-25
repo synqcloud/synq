@@ -269,7 +269,6 @@ export type Database = {
           message: string | null
           metadata: Json | null
           notification_type: Database["public"]["Enums"]["notification_type"]
-          stock_audit_id: string | null
           stock_id: string | null
           user_id: string
         }
@@ -282,7 +281,6 @@ export type Database = {
           message?: string | null
           metadata?: Json | null
           notification_type: Database["public"]["Enums"]["notification_type"]
-          stock_audit_id?: string | null
           stock_id?: string | null
           user_id: string
         }
@@ -295,7 +293,6 @@ export type Database = {
           message?: string | null
           metadata?: Json | null
           notification_type?: Database["public"]["Enums"]["notification_type"]
-          stock_audit_id?: string | null
           stock_id?: string | null
           user_id?: string
         }
@@ -315,55 +312,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "notifications_stock_audit_id_fkey"
-            columns: ["stock_audit_id"]
-            isOneToOne: false
-            referencedRelation: "stock_audit_log"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "notifications_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "user_card_stock"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stock_audit_log: {
-        Row: {
-          change_type: string
-          created_at: string | null
-          id: string
-          performed_by: string | null
-          quantity_after: number
-          quantity_before: number
-          stock_id: string
-          user_id: string
-        }
-        Insert: {
-          change_type: string
-          created_at?: string | null
-          id?: string
-          performed_by?: string | null
-          quantity_after: number
-          quantity_before: number
-          stock_id: string
-          user_id: string
-        }
-        Update: {
-          change_type?: string
-          created_at?: string | null
-          id?: string
-          performed_by?: string | null
-          quantity_after?: number
-          quantity_before?: number
-          stock_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stock_audit_log_stock_id_fkey"
             columns: ["stock_id"]
             isOneToOne: false
             referencedRelation: "user_card_stock"

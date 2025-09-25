@@ -204,11 +204,7 @@ export default function Step6NotificationsPreview() {
                     <span className="font-medium">
                       Andrios, Roaming Explorer
                     </span>{" "}
-                    may need updating.{" "}
-                    <span className="text-primary hover:text-primary/80 cursor-pointer underline">
-                      View audit
-                    </span>{" "}
-                    or update stock in{" "}
+                    may need updating. or update stock in{" "}
                     <MarketplaceIcon
                       marketplace="CardMarket"
                       showLabel

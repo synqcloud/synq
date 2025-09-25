@@ -11,9 +11,6 @@ export type EnrichedNotification = NotificationRow & {
       name: string;
     };
   };
-  audit?: {
-    id: string;
-  };
   marketplace?: {
     id: string;
     name: string;
@@ -73,7 +70,6 @@ export class NotificationsService extends ServiceBase {
             id,
             user_id,
             stock_id,
-            stock_audit_id,
             marketplace_id,
             core_card_id,
             notification_type,
@@ -86,9 +82,6 @@ export class NotificationsService extends ServiceBase {
               core_card:core_cards!core_card_id(
                 name
               )
-            ),
-            audit:stock_audit_log!stock_audit_id(
-              id
             ),
             marketplace:marketplaces!marketplace_id(
               id,
@@ -113,7 +106,6 @@ export class NotificationsService extends ServiceBase {
         // Transform to match expected interface
         const enriched: EnrichedNotification[] = notifications.map((n) => {
           const stock = Array.isArray(n.stock) ? n.stock[0] : n.stock;
-          const audit = Array.isArray(n.audit) ? n.audit[0] : n.audit;
           const marketplace = Array.isArray(n.marketplace)
             ? n.marketplace[0]
             : n.marketplace;
@@ -131,7 +123,6 @@ export class NotificationsService extends ServiceBase {
                     : stock.core_card,
                 } as { id: string; core_card: { name: string } })
               : undefined,
-            audit: audit as { id: string } | undefined,
             marketplace: marketplace as
               | { id: string; name: string }
               | undefined,

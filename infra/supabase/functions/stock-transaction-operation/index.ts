@@ -213,37 +213,6 @@ async function getMarketplaceId(
   }
 }
 
-// Audit Operations
-async function createAuditLog(
-  stock_id: string,
-  user_id: string,
-  quantityBefore: number,
-  quantityAfter: number,
-  change_type: string,
-  performed_by: string,
-) {
-  const { data: audit, error: auditError } = await supabase
-    .from("stock_audit_log")
-    .insert({
-      stock_id,
-      user_id,
-      quantity_before: quantityBefore,
-      quantity_after: quantityAfter,
-      change_type,
-      performed_by,
-      created_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (auditError) {
-    console.error(`Audit log error for ${stock_id}:`, auditError);
-    throw new Error(`Error creating audit log: ${auditError.message}`);
-  }
-
-  return audit;
-}
-
 // Transaction Operations
 async function createTransaction(
   userId: string,
@@ -318,23 +287,6 @@ async function createDiscrepancyNotification(
     for (const detail of discrepancyDetails) {
       const { stock_id, marketplace_details } = detail;
 
-      // Find the corresponding audit log for this stock item
-      const { data: auditLog, error: auditError } = await supabase
-        .from("stock_audit_log")
-        .select("id")
-        .eq("stock_id", stock_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (auditError || !auditLog) {
-        console.error(
-          `Could not find audit log for stock ${stock_id}:`,
-          auditError,
-        );
-        continue; // Skip this notification if we can't find the audit log
-      }
-
       // Get all marketplace listings for this stock to create notifications for each one
       const { data: listings, error: listingsError } = await supabase
         .from("user_stock_listings")
@@ -371,7 +323,6 @@ async function createDiscrepancyNotification(
         const notificationData = {
           user_id: userId,
           stock_id: stock_id,
-          stock_audit_id: auditLog.id,
           marketplace_id: marketplaceId,
           notification_type: "discrepancy_stock" as const,
           is_read: false,
@@ -413,7 +364,6 @@ async function processStockItems(
   let subtotal = 0;
   let discrepancy = false;
   const transactionItems: TransactionItem[] = [];
-  const auditLogs: any[] = [];
   const discrepancyDetails: any[] = [];
   let userId: string | null = null;
 
@@ -443,17 +393,6 @@ async function processStockItems(
 
       // Update stock
       await updateStockQuantity(stock_id, quantityAfter);
-
-      // Create audit log
-      const audit = await createAuditLog(
-        stock_id,
-        stockData.user_id,
-        quantityBefore,
-        quantityAfter,
-        change_type,
-        performed_by,
-      );
-      auditLogs.push(audit);
 
       // Check marketplace discrepancies - ENHANCED
       const marketplaceCheck = await checkStockMarketplaces(
@@ -508,7 +447,6 @@ async function processStockItems(
     discrepancy,
     discrepancyDetails, // Add detailed discrepancy information
     transactionItems,
-    auditLogs,
     userId,
   };
 }
@@ -541,7 +479,6 @@ async function handleStockTransaction(body: RequestBody) {
     discrepancy,
     discrepancyDetails,
     transactionItems,
-    auditLogs,
     userId,
   } = result;
 
@@ -579,7 +516,6 @@ async function handleStockTransaction(body: RequestBody) {
   return {
     transaction,
     items: insertedItems,
-    audit_logs: auditLogs,
     discrepancy,
     discrepancy_details: discrepancyDetails, // Include detailed discrepancy info in response
   };

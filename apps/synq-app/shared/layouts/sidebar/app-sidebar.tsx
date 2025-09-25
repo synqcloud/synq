@@ -60,6 +60,7 @@ const navItems: NavItem[] = [
     title: "Stock Updates",
     url: "/stock-updates",
     icon: ClockFading,
+    disabled: true,
   },
 ];
 

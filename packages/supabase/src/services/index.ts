@@ -28,7 +28,3 @@ export {
   type NotificationRow,
 } from "./notifications-service";
 export { PriceService } from "./prices-service";
-export {
-  StockAuditLogService,
-  type StockAuditLogItem,
-} from "./stock-audit-service";

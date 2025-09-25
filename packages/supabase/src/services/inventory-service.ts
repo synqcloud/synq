@@ -266,19 +266,6 @@ export class InventoryService extends ServiceBase {
 
         // TODO: Return success false so the UI can handle it
         if (error) throw error;
-        // in case there is no error
-        const { error: insertError } = await client
-          .from("stock_audit_log")
-          .insert({
-            stock_id: data.id,
-            user_id: userId,
-            quantity_before: 0,
-            quantity_after: stockData.quantity,
-            change_type: "create",
-            performed_by: userId,
-          });
-
-        if (insertError) throw insertError;
 
         return data.id;
       },
