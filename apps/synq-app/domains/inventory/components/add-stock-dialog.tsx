@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from "@synq/ui/component";
 import { Plus } from "lucide-react";
-import { InventoryService, UserStock } from "@synq/supabase/services";
+import { InventoryService } from "@synq/supabase/services";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as z from "zod";
 
@@ -49,6 +49,9 @@ const stockFormSchema = z.object({
   sku: z.string().optional(),
   location: z.string().optional(),
   language: z.string().nonempty("Language is required"),
+  source: z.string(),
+  shipping_amount: z.number().min(0).optional(),
+  tax_amount: z.number().min(0).optional(),
 });
 
 type StockFormData = z.infer<typeof stockFormSchema>;
@@ -60,6 +63,9 @@ export function AddStockDialog({
   cardName,
 }: AddStockDialogProps) {
   const queryClient = useQueryClient();
+  const [availableMarketplaces, setAvailableMarketplaces] = useState<string[]>(
+    [],
+  );
   const [availableConditions, setAvailableConditions] = useState<string[]>([]);
   const [availableLanguages, setAvailableLanguages] = useState<string[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
@@ -73,6 +79,9 @@ export function AddStockDialog({
       sku: "",
       location: "",
       language: "",
+      source: "",
+      shipping_amount: 0,
+      tax_amount: 0,
     },
   });
 
@@ -84,13 +93,15 @@ export function AddStockDialog({
 
       setIsLoadingOptions(true);
       try {
-        const [conditions, languages] = await Promise.all([
+        const [conditions, languages, marketplaces] = await Promise.all([
           InventoryService.getAvailableConditions("client"),
           InventoryService.getAvailableLanguages("client"),
+          InventoryService.getAvailableMarketplaces("client"),
         ]);
 
         // Only update state if component hasn't been unmounted/dialog closed
         if (!isCancelled) {
+          setAvailableMarketplaces(marketplaces);
           setAvailableConditions(conditions);
           setAvailableLanguages(languages);
         }
@@ -118,14 +129,39 @@ export function AddStockDialog({
   }, [open, form]);
 
   const addStockMutation = useMutation({
-    mutationFn: (
-      data: Omit<UserStock, "id" | "user_id"> & { quantity: number },
-    ) => InventoryService.addStockEntry("client", cardId, data),
+    mutationFn: (data: StockFormData) => {
+      const transactionData = {
+        source: data.source,
+        tax_amount:
+          data.tax_amount && data.tax_amount > 0 ? data.tax_amount : undefined,
+        shipping_amount:
+          data.shipping_amount && data.shipping_amount > 0
+            ? data.shipping_amount
+            : undefined,
+      };
+
+      const stockData = {
+        quantity: Number(data.quantity),
+        condition: data.condition,
+        cost: data.cost && data.cost > 0 ? Number(data.cost) : undefined,
+        sku: data.sku || undefined,
+        location: data.location || undefined,
+        language: data.language,
+      };
+
+      return InventoryService.addStockEntry(
+        "client",
+        cardId,
+        transactionData,
+        stockData,
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stock", cardId] });
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       queryClient.invalidateQueries({ queryKey: ["sets"] });
       queryClient.invalidateQueries({ queryKey: ["cards"] });
+      queryClient.invalidateQueries({ queryKey: ["userTransactions"] });
       toast.success("Stock added successfully!");
       form.reset();
       onOpenChangeAction(false);
@@ -136,14 +172,7 @@ export function AddStockDialog({
   });
 
   const onSubmit = (values: StockFormData) => {
-    const stockData: Omit<UserStock, "id" | "user_id"> & { quantity: number } =
-      {
-        ...values,
-        quantity: Number(values.quantity),
-        // Only include cost if it's greater than 0, otherwise send undefined
-        cost: values.cost && values.cost > 0 ? Number(values.cost) : undefined,
-      };
-    addStockMutation.mutate(stockData);
+    addStockMutation.mutate(values);
   };
 
   // Get form state for debugging
@@ -303,6 +332,85 @@ export function AddStockDialog({
                         {...field}
                         className="h-9"
                         placeholder="Optional"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            {/* Row 3: Source, Shipping & Tax */}
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="source"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-caption">Source</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select Source" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableMarketplaces.map((m) => (
+                            <SelectItem key={m} value={m}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="shipping_amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-caption">Shipping</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        {...field}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          field.onChange(isNaN(val) ? 0 : val);
+                        }}
+                        className="h-9"
+                        placeholder="0.00"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="tax_amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-caption">Tax</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        {...field}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          field.onChange(isNaN(val) ? 0 : val);
+                        }}
+                        className="h-9"
+                        placeholder="0.00"
                       />
                     </FormControl>
                     <FormMessage />

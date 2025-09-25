@@ -11,8 +11,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  TooltipProvider,
+  TooltipTrigger,
+  Tooltip,
+  TooltipContent,
 } from "@synq/ui/component";
-import { Plus } from "lucide-react";
+import { Camera, Plus, ScanEye } from "lucide-react";
 import NotificationBell from "@/features/notifications/components/notification-bell";
 import { UserService } from "@synq/supabase/services";
 

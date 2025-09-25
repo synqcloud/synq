@@ -39,7 +39,9 @@ export default function TransactionsPage() {
       InventoryService.getAvailableMarketplaces("client"),
     ]).then(([userSources, allSources]) => {
       if (!mounted) return;
-      const merged = Array.from(new Set([...(userSources || []), ...(allSources || [])])).sort();
+      const merged = Array.from(
+        new Set([...(userSources || []), ...(allSources || [])]),
+      ).sort();
       setAvailableSources(merged);
     });
     return () => {
@@ -61,7 +63,10 @@ export default function TransactionsPage() {
         pageSize: PAGE_SIZE,
         statuses: filters.statuses ?? null,
         types: filters.types ?? null,
-        sources: (filters.sources && filters.sources.length > 0) ? filters.sources : null,
+        sources:
+          filters.sources && filters.sources.length > 0
+            ? filters.sources
+            : null,
         startDate: filters.startDate?.toISOString() ?? null,
         endDate: filters.endDate?.toISOString() ?? null,
       },
@@ -72,7 +77,10 @@ export default function TransactionsPage() {
         limit: PAGE_SIZE,
         filters: {
           statuses: filters.statuses,
-          sources: (filters.sources && filters.sources.length > 0) ? filters.sources : undefined,
+          sources:
+            filters.sources && filters.sources.length > 0
+              ? filters.sources
+              : undefined,
           integrationOnly: undefined,
           startDate: filters.startDate,
           endDate: filters.endDate,
@@ -153,7 +161,10 @@ export default function TransactionsPage() {
           }}
         />
       </div>
-      <div ref={scrollContainerRef} className="h-full overflow-y-scroll p-4 space-y-4">
+      <div
+        ref={scrollContainerRef}
+        className="h-full overflow-y-scroll p-4 space-y-4"
+      >
         <TransactionTable transactions={transactions} />
         <div ref={sentinelRef} />
         {isFetchingNextPage && (

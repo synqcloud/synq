@@ -27,5 +27,3 @@ export default function TransactionsSkeleton({ rows = 10 }: { rows?: number }) {
     </div>
   );
 }
-
-

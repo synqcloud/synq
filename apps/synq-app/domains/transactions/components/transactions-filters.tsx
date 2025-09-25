@@ -11,12 +11,9 @@ import {
   SelectValue,
 } from "@synq/ui/component";
 import { Calendar } from "@synq/ui/component";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, X } from "lucide-react";
 import { DateRange } from "react-day-picker";
-import {
-  TransactionStatus,
-  TransactionType,
-} from "@synq/supabase/services";
+import { TransactionStatus, TransactionType } from "@synq/supabase/services";
 
 type Filters = {
   statuses?: TransactionStatus[];
@@ -68,9 +65,16 @@ export default function TransactionsFilters({
         }
         // Emit on mount
         onChange({
-          statuses: parsed.status && parsed.status !== "all" ? [parsed.status] : undefined,
-          types: parsed.type && parsed.type !== "all" ? [parsed.type] : undefined,
-          sources: parsed.sources && parsed.sources.length > 0 ? parsed.sources : undefined,
+          statuses:
+            parsed.status && parsed.status !== "all"
+              ? [parsed.status]
+              : undefined,
+          types:
+            parsed.type && parsed.type !== "all" ? [parsed.type] : undefined,
+          sources:
+            parsed.sources && parsed.sources.length > 0
+              ? parsed.sources
+              : undefined,
           startDate: parsed.startDate ? new Date(parsed.startDate) : undefined,
           endDate: parsed.endDate ? new Date(parsed.endDate) : undefined,
         });
@@ -80,19 +84,34 @@ export default function TransactionsFilters({
   }, []);
 
   // Persist and emit changes
-  const emit = (next: Partial<Filters> & { status?: TransactionStatus | "all"; type?: TransactionType | "all" }) => {
+  const emit = (
+    next: Partial<Filters> & {
+      status?: TransactionStatus | "all";
+      type?: TransactionType | "all";
+    },
+  ) => {
     const nextStatus = next.status ?? status;
     const nextType = next.type ?? type;
-    const nextStart = next.startDate ?? dateRange?.from;
-    const nextEnd = next.endDate ?? dateRange?.to;
-    const nextSource = (Object.prototype.hasOwnProperty.call(next, "sources")
-      ? next.sources
-      : source === "all"
-        ? undefined
-        : [source]) as string[] | undefined;
+
+    // Fix: Check if dates are explicitly provided in the next object
+    const nextStart = Object.prototype.hasOwnProperty.call(next, "startDate")
+      ? next.startDate
+      : dateRange?.from;
+    const nextEnd = Object.prototype.hasOwnProperty.call(next, "endDate")
+      ? next.endDate
+      : dateRange?.to;
+
+    const nextSource = (
+      Object.prototype.hasOwnProperty.call(next, "sources")
+        ? next.sources
+        : source === "all"
+          ? undefined
+          : [source]
+    ) as string[] | undefined;
 
     const payload: Filters = {
-      statuses: nextStatus !== "all" ? [nextStatus as TransactionStatus] : undefined,
+      statuses:
+        nextStatus !== "all" ? [nextStatus as TransactionStatus] : undefined,
       types: nextType !== "all" ? [nextType as TransactionType] : undefined,
       sources: nextSource,
       startDate: nextStart,
@@ -125,135 +144,248 @@ export default function TransactionsFilters({
             year: "numeric",
           })
         : "";
-    return dateRange?.to ? `${fmt(dateRange.from)} – ${fmt(dateRange.to)}` : fmt(dateRange.from);
+    return dateRange?.to
+      ? `${fmt(dateRange.from)} – ${fmt(dateRange.to)}`
+      : fmt(dateRange.from);
   }, [dateRange]);
 
+  // Active filters for badges
+  const activeFilters = useMemo(() => {
+    const filters: Array<{ key: string; label: string; onRemove: () => void }> =
+      [];
+
+    if (status !== "all") {
+      filters.push({
+        key: "status",
+        label:
+          status === "PENDING"
+            ? "Pending"
+            : status === "IN_PROGRESS"
+              ? "In Progress"
+              : "Completed",
+        onRemove: () => {
+          setStatus("all");
+          emit({ status: "all" });
+        },
+      });
+    }
+
+    if (type !== "all") {
+      filters.push({
+        key: "type",
+        label: type === "sale" ? "Sale" : "Purchase",
+        onRemove: () => {
+          setType("all");
+          emit({ type: "all" });
+        },
+      });
+    }
+
+    if (source !== "all") {
+      filters.push({
+        key: "source",
+        label: source,
+        onRemove: () => {
+          setSource("all");
+          emit({ sources: undefined });
+        },
+      });
+    }
+
+    if (dateRange?.from || dateRange?.to) {
+      filters.push({
+        key: "dateRange",
+        label: prettyRange === "Date" ? "Date Range" : prettyRange,
+        onRemove: () => {
+          setDateRange(undefined);
+          setPendingRange(undefined);
+          emit({ startDate: undefined, endDate: undefined });
+        },
+      });
+    }
+
+    return filters;
+  }, [status, type, source, dateRange, prettyRange, emit]);
+
+  const clearAllFilters = () => {
+    setStatus("all");
+    setType("all");
+    setSource("all");
+    setDateRange(undefined);
+    setPendingRange(undefined);
+    emit({
+      status: "all",
+      type: "all",
+      sources: undefined,
+      startDate: undefined,
+      endDate: undefined,
+    });
+  };
+
   return (
-    <div className="flex items-center gap-3 justify-between">
-      <HStack gap={3} className="flex-1">
-        {/* Status */}
-        <div className="w-44">
-          <Select
-            value={status}
-            onValueChange={(v) => {
-              const value = v as TransactionStatus | "all";
-              setStatus(value);
-              emit({ status: value });
-            }}
-            disabled={isLoading}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="IN_PROGRESS">In progress</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="space-y-3">
+      {/* Filter Controls */}
+      <div className="flex items-center gap-3 justify-between">
+        <HStack gap={3} className="flex-1">
+          {/* Status */}
+          <div className="w-44">
+            <Select
+              value={status}
+              onValueChange={(v) => {
+                const value = v as TransactionStatus | "all";
+                setStatus(value);
+                emit({ status: value });
+              }}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All status</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="IN_PROGRESS">In progress</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Type */}
-        <div className="w-44">
-          <Select
-            value={type}
-            onValueChange={(v) => {
-              const value = v as TransactionType | "all";
-              setType(value);
-              emit({ type: value });
-            }}
-            disabled={isLoading}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="sale">Sale</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+          {/* Type */}
+          <div className="w-44">
+            <Select
+              value={type}
+              onValueChange={(v) => {
+                const value = v as TransactionType | "all";
+                setType(value);
+                emit({ type: value });
+              }}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="sale">Sale</SelectItem>
+                <SelectItem value="purchase">Purchase</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Source */}
-        <div className="w-44">
-          <Select
-            value={source}
-            onValueChange={(v) => {
-              const value = v as string | "all";
-              setSource(value);
-              emit({ sources: value === "all" ? undefined : [value] });
-            }}
-            disabled={isLoading}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All sources" />
-            </SelectTrigger>
-            <SelectContent emptyPlaceholder="No sources">
-              <SelectItem value="all">All sources</SelectItem>
-              {sources.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          {/* Source */}
+          <div className="w-44">
+            <Select
+              value={source}
+              onValueChange={(v) => {
+                const value = v as string | "all";
+                setSource(value);
+                emit({ sources: value === "all" ? undefined : [value] });
+              }}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All sources" />
+              </SelectTrigger>
+              <SelectContent emptyPlaceholder="No sources">
+                <SelectItem value="all">All sources</SelectItem>
+                {sources.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Date Range (last) */}
-        <div className="relative">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => {
-              setPendingRange(dateRange);
-              setRangeOpen((v) => !v);
-            }}
-            disabled={isLoading}
-          >
-            <CalendarIcon className="h-4 w-4" />
-            {prettyRange}
-          </Button>
-          {rangeOpen && (
-            <div className="absolute z-10 mt-2 p-2 bg-background border rounded-md shadow-md">
-              <Calendar
-                mode="range"
-                numberOfMonths={2}
-                selected={pendingRange}
-                onSelect={(r) => {
-                  setPendingRange(r);
-                }}
-              />
-              <div className="flex items-center justify-end gap-2 p-2 pt-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setPendingRange(undefined);
-                    setDateRange(undefined);
-                    emit({ startDate: undefined, endDate: undefined });
-                    setRangeOpen(false);
+          {/* Date Range (last) */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                setPendingRange(dateRange);
+                setRangeOpen((v) => !v);
+              }}
+              disabled={isLoading}
+            >
+              <CalendarIcon className="h-4 w-4" />
+              {prettyRange}
+            </Button>
+            {rangeOpen && (
+              <div className="absolute z-10 mt-2 p-2 bg-background border rounded-md shadow-md">
+                <Calendar
+                  mode="range"
+                  numberOfMonths={2}
+                  selected={pendingRange}
+                  onSelect={(r) => {
+                    setPendingRange(r);
                   }}
-                >
-                  Clear
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setDateRange(pendingRange);
-                    emit({ startDate: pendingRange?.from, endDate: pendingRange?.to });
-                    setRangeOpen(false);
-                  }}
-                >
-                  Apply
-                </Button>
+                />
+                <div className="flex items-center justify-end gap-2 p-2 pt-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setPendingRange(undefined);
+                      setDateRange(undefined);
+                      emit({ startDate: undefined, endDate: undefined });
+                      setRangeOpen(false);
+                    }}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setDateRange(pendingRange);
+                      emit({
+                        startDate: pendingRange?.from,
+                        endDate: pendingRange?.to,
+                      });
+                      setRangeOpen(false);
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </div>
               </div>
+            )}
+          </div>
+        </HStack>
+      </div>
+
+      {/* Active Filter Badges */}
+      {activeFilters.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground">Active filters:</span>
+          {activeFilters.map((filter) => (
+            <div
+              key={filter.key}
+              className="inline-flex items-center gap-1 px-2 py-1 bg-muted rounded-md text-sm"
+            >
+              <span>{filter.label}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 hover:bg-transparent"
+                onClick={filter.onRemove}
+              >
+                <X className="h-3 w-3" />
+              </Button>
             </div>
+          ))}
+          {activeFilters.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllFilters}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear all
+            </Button>
           )}
         </div>
-      </HStack>
+      )}
     </div>
   );
 }
-
-
