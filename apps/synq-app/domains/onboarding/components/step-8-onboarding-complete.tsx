@@ -16,7 +16,7 @@ export default function StepOnboardingCompleted() {
       setLoading(true);
       completeCurrentStep();
       await UserService.completeUserOnboarding("client");
-      router.push("/inventory?fromOnboarding=1");
+      router.push("/inventory");
     } catch (e) {
       console.error("Failed to complete onboarding", e);
       // Even if completion fails, redirect to inventory

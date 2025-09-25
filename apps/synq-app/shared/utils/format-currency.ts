@@ -5,6 +5,7 @@ export const formatCurrency = (amount: number, currency: "usd" | "eur") => {
     useGrouping: true,
   };
 
-  if (currency === "usd") return "$" + amount.toLocaleString("en-US", options);
-  return "€" + amount.toLocaleString("de-DE", options);
+  if (currency === "usd")
+    return "$" + (amount?.toLocaleString("en-US", options) || 0);
+  return "€" + (amount?.toLocaleString("de-DE", options) || 0);
 };
