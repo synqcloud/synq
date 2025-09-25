@@ -82,33 +82,37 @@ export abstract class ServiceBase {
       // Calculate duration
       const duration = performance.now() - startTime;
 
-      // Log performance with colors
-      this.logPerformance({
-        ...context,
-        duration,
-        success: true,
-        timestamp,
-      });
+      // Log performance only in development
+      if (process.env.NODE_ENV === "development") {
+        this.logPerformance({
+          ...context,
+          duration,
+          success: true,
+          timestamp,
+        });
+      }
 
       return result;
     } catch (error) {
       const duration = performance.now() - startTime;
 
-      // Log error performance
-      this.logPerformance({
-        ...context,
-        duration,
-        success: false,
-        error: error,
-        timestamp,
-      });
+      // Log error performance only in development
+      if (process.env.NODE_ENV === "development") {
+        this.logPerformance({
+          ...context,
+          duration,
+          success: false,
+          error: error,
+          timestamp,
+        });
+      }
 
       // Convert to human-readable error
       throw this.createHumanError(error);
     }
   }
 
-  // Performance logging with colors
+  // Performance logging with colors (only runs in development)
   private static logPerformance(data: {
     service: string;
     method: string;
@@ -151,8 +155,8 @@ export abstract class ServiceBase {
         `${COLORS.RED}  ❌ Error: ${error.message || "Unknown error"}${COLORS.RESET}`,
       );
 
-      // Log stack trace in development
-      if (process.env.NODE_ENV === "development" && error.stack) {
+      // Log stack trace in development (redundant check but kept for clarity)
+      if (error.stack) {
         console.log(`${COLORS.RED}  📋 Stack: ${error.stack}${COLORS.RESET}`);
       }
     }
