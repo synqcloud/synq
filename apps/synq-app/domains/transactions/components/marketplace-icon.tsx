@@ -32,11 +32,13 @@ export function MarketplaceIcon({
     } else if (lowerMarketplace.includes("whatnot")) {
       return "/whatnot.svg";
     } else if (lowerMarketplace.includes("ebay")) {
-      return "/ebay.svg";
+      return "/eBay.svg";
     } else if (lowerMarketplace.includes("shopify")) {
       return "/shopify.svg";
     } else if (lowerMarketplace.includes("cardtrader")) {
       return "/cardtrader.svg";
+    } else if (lowerMarketplace.includes("amazon")) {
+      return "/amazon.svg";
     }
     return null;
   };
