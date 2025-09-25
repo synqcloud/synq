@@ -38,7 +38,6 @@ export function StockDisplay({
   onOpenDialog,
 }: StockDisplayProps) {
   const { currency } = useCurrency();
-  const total = (stock.soldQuantity || 0) * (stock.unitPrice || 0);
 
   return (
     <>
@@ -58,7 +57,7 @@ export function StockDisplay({
 
       {/* Cost (COGS) */}
       <span className="text-accent-foreground">
-        {formatCurrency(total, currency)}
+        {formatCurrency(stock.cogs, currency)}
       </span>
 
       {/* SKU */}

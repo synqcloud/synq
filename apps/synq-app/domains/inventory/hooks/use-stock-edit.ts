@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserStockWithListings } from "@synq/supabase/services";
 
 export type EditData = {
@@ -24,6 +24,18 @@ export function useStockEdit(stock: UserStockWithListings) {
     location: stock.location || "",
     language: stock.language || "",
   });
+
+  useEffect(() => {
+    setEditData({
+      quantity: stock.quantity || 1,
+      condition: stock.condition || "",
+      cogs: stock.cogs || 0,
+      sku: stock.sku || "",
+      location: stock.location || "",
+      language: stock.language || "",
+    });
+    setMarketplaces(stock.marketplaces || []);
+  }, [stock]);
 
   const startEdit = () => setIsEditing(true);
 
