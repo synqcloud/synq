@@ -1,19 +1,17 @@
--- Drop existing objects in reverse dependency order
-DROP POLICY IF EXISTS user_delete_own_subscriptions ON user_subscriptions;
-DROP POLICY IF EXISTS user_update_own_subscriptions ON user_subscriptions;
-DROP POLICY IF EXISTS user_select_own_subscriptions ON user_subscriptions;
+-- ===============================================
+-- 20250924_user_subscription_schema.sql
+-- Idempotent migration for user_subscriptions
+-- ===============================================
 
-DROP FUNCTION IF EXISTS public.user_has_access(UUID);
+-- Drop table and dependent objects first
+DROP TABLE IF EXISTS user_subscriptions CASCADE;
 
-DROP INDEX IF EXISTS user_subscriptions_stripe_subscription_id_idx;
-DROP INDEX IF EXISTS user_subscriptions_user_id_idx;
-
-DROP TABLE IF EXISTS user_subscriptions;
-
+-- Drop type
 DROP TYPE IF EXISTS subscription_status;
 
--- Now create everything fresh
--- Simple subscription status enum
+-- -----------------------------------------------
+-- Create subscription status enum
+-- -----------------------------------------------
 CREATE TYPE subscription_status AS ENUM (
   'trialing',
   'active',
@@ -21,7 +19,9 @@ CREATE TYPE subscription_status AS ENUM (
   'past_due'
 );
 
--- Single subscriptions table
+-- -----------------------------------------------
+-- Create subscriptions table
+-- -----------------------------------------------
 CREATE TABLE IF NOT EXISTS user_subscriptions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -33,11 +33,18 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- -----------------------------------------------
 -- Indexes
-CREATE INDEX IF NOT EXISTS user_subscriptions_user_id_idx ON user_subscriptions(user_id);
-CREATE INDEX IF NOT EXISTS user_subscriptions_stripe_subscription_id_idx ON user_subscriptions(stripe_subscription_id);
+-- -----------------------------------------------
+CREATE INDEX IF NOT EXISTS user_subscriptions_user_id_idx
+    ON user_subscriptions(user_id);
 
+CREATE INDEX IF NOT EXISTS user_subscriptions_stripe_subscription_id_idx
+    ON user_subscriptions(stripe_subscription_id);
+
+-- -----------------------------------------------
 -- Function to check if user has access
+-- -----------------------------------------------
 CREATE OR REPLACE FUNCTION public.user_has_access(p_user_id UUID)
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -56,22 +63,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- -----------------------------------------------
 -- Enable Row-Level Security
+-- -----------------------------------------------
 ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
 
--- Policy: users can select only their own subscriptions
+-- -----------------------------------------------
+-- Policies
+-- -----------------------------------------------
 CREATE POLICY user_select_own_subscriptions
 ON user_subscriptions
 FOR SELECT
 USING (user_id = auth.uid());
 
--- Policy: users can update only their own subscriptions
 CREATE POLICY user_update_own_subscriptions
 ON user_subscriptions
 FOR UPDATE
 USING (user_id = auth.uid());
 
--- Policy: users can delete only their own subscriptions (optional)
 CREATE POLICY user_delete_own_subscriptions
 ON user_subscriptions
 FOR DELETE
