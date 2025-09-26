@@ -6,6 +6,7 @@ import { Showcase } from "../components/showcase";
 import { ContactSection } from "../components/contact-section";
 import { HeroSection } from "../components/hero-section";
 import { Footer } from "../components/footer";
+import { EarlyAccessSection } from "@/components/early-access-section";
 
 export default function HomePage() {
   return (
@@ -30,6 +31,11 @@ export default function HomePage() {
           </div>
           <StoryContent />
         </div>
+      </section>
+
+      {/* Early Access Pricing Section */}
+      <section id="early-access" className="py-24 bg-muted/30">
+        <EarlyAccessSection />
       </section>
 
       {/* Contact Form Section - Last */}

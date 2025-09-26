@@ -19,6 +19,12 @@ export function Footer() {
               Features
             </a>
             <a
+              href="#early-access"
+              className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Early Access
+            </a>
+            <a
               href="#about-us"
               className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
             >

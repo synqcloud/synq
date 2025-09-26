@@ -31,6 +31,12 @@ export function Nav() {
           >
             Contact Us
           </a>
+          <a
+            href="#early-access"
+            className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Early Access
+          </a>
           <ThemeToggle />
           {/*<a
             href="https://github.com/synqcloud/synq"
