@@ -8,7 +8,7 @@ export function EarlyAccessSection() {
   const features = [
     "7-day free trial of the current development version",
     "Explore experimental features before public release",
-    "Directly influence Sync's evolution with your feedback",
+    "Directly influence Synq's evolution with your feedback",
     "Get a sneak peek at upcoming improvements",
     "Optionally support the project early",
   ];
@@ -31,10 +31,10 @@ export function EarlyAccessSection() {
           transition={{ duration: 0.6, ease: [0.25, 0.25, 0, 1] }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-[-0.01em] text-foreground mb-6">
-            Step Inside Sync
+            Step Inside Synq
           </h2>
           <p className="text-base font-light tracking-[-0.01em] text-muted-foreground max-w-2xl mx-auto">
-            Try Sync’s current development state for 7 days. Explore
+            Try Synq’s current development state for 7 days. Explore
             experimental features, share feedback, and help shape the future of
             the platform.
           </p>

@@ -15,7 +15,7 @@ export function PricingSection() {
         "Unlimited SKUs per month",
         "Multi-user access",
         "Advanced integrations",
-        "Custom reporting",
+        "Custom reportings",
         "Dedicated support",
       ],
       cta: "Get Started",
