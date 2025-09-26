@@ -1,11 +1,15 @@
-// CORE
 import Image from "next/image";
-
 // COMPONENTS
-import { Card, CardContent, VStack, HStack, Button, Spinner } from "@synq/ui/component";
+import {
+  Card,
+  CardContent,
+  VStack,
+  HStack,
+  Button,
+  Spinner,
+} from "@synq/ui/component";
 import { Check, DatabaseIcon, Plus, Trash2 } from "lucide-react";
 import { cn } from "@synq/ui/utils";
-
 // SERVICES
 import { LibraryItemsWithStatus } from "@synq/supabase/services";
 
@@ -16,24 +20,20 @@ interface DatabaseCardProps {
   isLoading: boolean;
 }
 
-const ENABLED_INACTIVE_DATABASES = ["Disney Lorcana", "Pokémon"] as const;
-
 export function DatabaseCard({
   database,
   onInstall,
   onRemove,
-  isLoading
+  isLoading,
 }: DatabaseCardProps) {
-  const isDisabled =
-    database.status === "inactive" &&
-    !ENABLED_INACTIVE_DATABASES.includes(
-      database.name as (typeof ENABLED_INACTIVE_DATABASES)[number]
-    );
-
+  const isDisabled = database.status === "inactive";
   const isInstalled = database.user_library_access?.length > 0;
 
-
   const getButtonContent = () => {
+    if (isDisabled) {
+      return "Coming Soon";
+    }
+
     if (isInstalled) {
       return (
         <>
@@ -42,6 +42,7 @@ export function DatabaseCard({
         </>
       );
     }
+
     if (isLoading) {
       return (
         <>
@@ -50,6 +51,7 @@ export function DatabaseCard({
         </>
       );
     }
+
     return (
       <>
         <Plus className="w-4 h-4 mr-2" />
@@ -62,7 +64,7 @@ export function DatabaseCard({
     "border bg-transparent shadow-sm rounded-lg transition-all duration-200",
     isDisabled
       ? "opacity-50 border-border"
-      : "border-border shadow-sm hover:shadow-md bg-card"
+      : "border-border shadow-sm hover:shadow-md bg-card",
   );
 
   const imageStyles = cn("w-8 h-8 object-contain transition-all duration-200", {
@@ -71,12 +73,12 @@ export function DatabaseCard({
 
   const titleStyles = cn(
     "text-sm font-light tracking-tight",
-    isDisabled ? "text-muted-foreground" : "text-foreground"
+    isDisabled ? "text-muted-foreground" : "text-foreground",
   );
 
   const descriptionStyles = cn(
     "text-xs leading-relaxed",
-    isDisabled ? "text-muted-foreground" : "text-foreground"
+    isDisabled ? "text-muted-foreground" : "text-foreground",
   );
 
   return (
@@ -94,19 +96,12 @@ export function DatabaseCard({
           ) : (
             <span className="text-lg">{<DatabaseIcon />}</span>
           )}
-
           <h4 className={titleStyles}>{database.name}</h4>
-
           <p className={descriptionStyles}>{database.description}</p>
 
           {isInstalled ? (
             <HStack className="w-full gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                disabled
-              >
+              <Button variant="outline" size="sm" className="w-full" disabled>
                 {getButtonContent()}
               </Button>
               <Button
