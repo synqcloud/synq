@@ -109,7 +109,14 @@ export class InventoryService extends ServiceBase {
       limit?: number;
       stockFilter?: "all" | "in-stock" | "out-of-stock";
     },
-  ): Promise<Array<{ id: string; name: string; stock: number | null }>> {
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+      stock: number | null;
+      is_upcoming: boolean;
+    }>
+  > {
     const userId = await this.getCurrentUserId(context);
     const { offset = 0, limit, stockFilter = "all" } = options || {};
 
@@ -129,11 +136,13 @@ export class InventoryService extends ServiceBase {
         );
 
         if (error) throw error;
-        return (sets ?? []) as Array<{
-          id: string;
-          name: string;
-          stock: number | null;
-        }>;
+        return (sets ?? []) as Array<
+          {
+            id: string;
+            name: string;
+            stock: number | null;
+          } & { is_upcoming: boolean }
+        >;
       },
       {
         service: "InventoryService",
@@ -156,7 +165,13 @@ export class InventoryService extends ServiceBase {
     },
   ): Promise<
     Array<
-      Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & { stock: number | null }
+      Pick<
+        CoreCard,
+        "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+      > & {
+        stock: number | null;
+        tcgplayer_price: number;
+      }
     >
   > {
     const userId = await this.getCurrentUserId(context);
@@ -179,8 +194,12 @@ export class InventoryService extends ServiceBase {
 
         if (error) throw error;
         return (cards ?? []) as Array<
-          Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & {
+          Pick<
+            CoreCard,
+            "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+          > & {
             stock: number | null;
+            tcgplayer_price: number;
           }
         >;
       },
@@ -391,44 +410,63 @@ export class InventoryService extends ServiceBase {
    * Search cards with stock to create transactions
    */
   static async searchCardsByName(
-    context: "client" | "server",
+    context: "client" | "server" = "client",
     searchQuery: string,
+    options?: {
+      offset?: number;
+      limit?: number;
+      stockFilter?: "all" | "in-stock" | "out-of-stock";
+    },
   ): Promise<
-    Array<{
-      id: string;
-      name: string;
-      core_set_name: string | null;
-      core_library_name: string | null;
-      tcgplayer_id: string | null;
-      stock: number;
-    }>
+    Array<
+      Pick<
+        CoreCard,
+        "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+      > & {
+        stock: number | null;
+        tcgplayer_price: number | null;
+        core_set_name: string;
+        core_library_name: string;
+      }
+    >
   > {
+    const userId = await this.getCurrentUserId(context);
+    const { offset = 0, limit, stockFilter = "all" } = options || {};
+
     return this.execute(
       async () => {
         const client = await this.getClient(context);
 
-        const { data, error } = await client.rpc("search_cards", {
-          search_query: searchQuery,
-        });
+        const { data: cards, error } = await client.rpc(
+          "get_user_cards_with_stock",
+          {
+            p_user_id: userId,
+            p_set_id: null, // ✅ no specific set
+            p_search_query: searchQuery,
+            p_offset: offset,
+            p_limit: limit ?? null,
+            p_stock_filter: stockFilter,
+          },
+        );
 
         if (error) throw error;
 
-        // Normalize null to empty array
-        const cards = data ?? [];
-
-        // Ensure all fields match the RPC type exactly
-        return cards.map((card: any) => ({
-          id: String(card.id),
-          name: String(card.name),
-          core_set_name: card.core_set_name ?? null,
-          core_library_name: card.core_library_name ?? null,
-          tcgplayer_id: card.tcgplayer_id ?? null,
-          stock: Number(card.stock ?? 0),
-        }));
+        return (cards ?? []) as Array<
+          Pick<
+            CoreCard,
+            "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+          > & {
+            stock: number | null;
+            tcgplayer_price: number | null;
+            core_set_name: string;
+            core_library_name: string;
+          }
+        >;
       },
       {
         service: "InventoryService",
         method: "searchCardsByName",
+        userId: userId || undefined,
       },
     );
   }

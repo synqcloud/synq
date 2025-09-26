@@ -173,7 +173,7 @@ export default function TransactionsFilters({
     if (type !== "all") {
       filters.push({
         key: "type",
-        label: type === "sale" ? "Sale" : "Purchase",
+        label: type === "sale" ? "sale" : "purchase",
         onRemove: () => {
           setType("all");
           emit({ type: "all" });

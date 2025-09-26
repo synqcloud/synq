@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import CardRow from "./card-row";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock } from "lucide-react";
 import {
   CoreCard,
   CoreSet,
@@ -10,19 +10,28 @@ import {
 } from "@synq/supabase/services";
 import { StockFilterType } from "../inventory-table-filters";
 
-const CARDS_PER_BATCH = 15;
+const CARDS_PER_BATCH = 44;
 
 export default function SetRow({
   set,
   stockFilter,
 }: {
-  set: Pick<CoreSet, "id" | "name"> & { stock: number | null };
+  set: Pick<CoreSet, "id" | "name"> & {
+    stock: number | null;
+    is_upcoming: boolean;
+  };
   stockFilter: StockFilterType;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [allCards, setAllCards] = useState<
     Array<
-      Pick<CoreCard, "id" | "name" | "tcgplayer_id"> & { stock: number | null }
+      Pick<
+        CoreCard,
+        "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+      > & {
+        stock: number | null;
+        tcgplayer_price: number | null;
+      }
     >
   >([]);
   const [offset, setOffset] = useState(0);
@@ -114,28 +123,48 @@ export default function SetRow({
   return (
     <div>
       <div
-        className={`flex items-center px-4 py-2 cursor-pointer hover:bg-accent bg-accent ${
-          set.stock === null ? "opacity-60" : ""
-        }`}
+        className={`
+          flex items-center px-4 py-2 cursor-pointer hover:bg-muted/30 transition-colors
+          ${set.stock === 0 ? "opacity-60" : ""}
+        `}
         style={{ paddingLeft: `${16 + 1 * 24}px` }}
         onClick={() => setExpanded((e) => !e)}
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 mr-2" />
+          <ChevronDown className="w-4 h-4 mr-2 text-muted-foreground" />
         ) : (
-          <ChevronRight className="w-4 h-4 mr-2" />
+          <ChevronRight className="w-4 h-4 mr-2 text-muted-foreground" />
         )}
-        <span className="flex-1">
-          {set.name}
-          {set.stock !== null ? ` (${set.stock})` : ""}
-          {set.stock === 0 && (
-            <span className="text-xs text-red-500 ml-2">(Out of Stock)</span>
+
+        <div className="flex items-center flex-1">
+          <span className="font-light text-md text-foreground">{set.name}</span>
+
+          {/* Upcoming Badge */}
+          {set.is_upcoming && (
+            <div className="ml-2 flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-full">
+              <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                Upcoming
+              </span>
+            </div>
           )}
-        </span>
+
+          {/* Stock Badge */}
+          {set.stock !== null && (
+            <span className="ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded">
+              {set.stock}
+            </span>
+          )}
+
+          {/* Out of Stock */}
+          {set.stock === 0 && (
+            <span className="ml-1 text-xs text-red-500">(Out of Stock)</span>
+          )}
+        </div>
       </div>
 
       {expanded && (
-        <>
+        <div>
           {allCards.map((card) => (
             <CardRow
               key={card.id}
@@ -143,13 +172,26 @@ export default function SetRow({
               hasAlert={alertCardIds.has(card.id)}
             />
           ))}
+
           {isLoading && (
-            <div className="text-center py-2 text-xs">Loading more…</div>
+            <div className="flex items-center justify-center py-2 text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 border-2 border-muted border-t-foreground rounded-full animate-spin"></div>
+                <span className="text-xs">Loading more cards...</span>
+              </div>
+            </div>
           )}
+
           {hasMore && !isLoading && allCards.length > 0 && (
             <div ref={scrollObserverRef} className="h-1" />
           )}
-        </>
+
+          {!hasMore && allCards.length > CARDS_PER_BATCH && (
+            <div className="text-center py-2 text-xs text-muted-foreground">
+              All {allCards.length} cards loaded
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

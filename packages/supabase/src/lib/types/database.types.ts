@@ -685,15 +685,21 @@ export type Database = {
         Args: {
           p_limit?: number
           p_offset?: number
-          p_set_id: string
+          p_search_query?: string
+          p_set_id?: string
           p_stock_filter?: string
           p_user_id: string
         }
         Returns: {
+          core_library_name: string
+          core_set_name: string
           id: string
+          image_url: string
           name: string
+          rarity: string
           stock: number
           tcgplayer_id: string
+          tcgplayer_price: number
         }[]
       }
       get_user_libraries_with_stock: {
@@ -737,6 +743,7 @@ export type Database = {
         }
         Returns: {
           id: string
+          is_upcoming: boolean
           name: string
           stock: number
         }[]
@@ -788,17 +795,6 @@ export type Database = {
           transaction_id: string
         }[]
       }
-      search_cards: {
-        Args: { search_query: string }
-        Returns: {
-          core_library_name: string
-          core_set_name: string
-          id: string
-          name: string
-          stock: number
-          tcgplayer_id: string
-        }[]
-      }
       user_has_access: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -808,7 +804,7 @@ export type Database = {
       notification_type: "discrepancy_stock" | "price_alert"
       subscription_status: "trialing" | "active" | "canceled" | "past_due"
       transaction_status: "PENDING" | "IN_PROGRESS" | "COMPLETED"
-      transaction_type: "sale"
+      transaction_type: "sale" | "purchase"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -942,7 +938,7 @@ export const Constants = {
       notification_type: ["discrepancy_stock", "price_alert"],
       subscription_status: ["trialing", "active", "canceled", "past_due"],
       transaction_status: ["PENDING", "IN_PROGRESS", "COMPLETED"],
-      transaction_type: ["sale"],
+      transaction_type: ["sale", "purchase"],
     },
   },
 } as const

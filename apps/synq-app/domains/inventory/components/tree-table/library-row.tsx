@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { CoreLibrary, InventoryService } from "@synq/supabase/services";
 import { StockFilterType } from "../inventory-table-filters";
 
-const SETS_PER_BATCH = 24;
+const SETS_PER_BATCH = 44;
 
 export function LibraryRow({
   library,
@@ -16,7 +16,12 @@ export function LibraryRow({
 }) {
   const [expanded, setExpanded] = useState(true);
   const [allSets, setAllSets] = useState<
-    Array<{ id: string; name: string; stock: number | null }>
+    Array<{
+      id: string;
+      name: string;
+      stock: number | null;
+      is_upcoming: boolean;
+    }>
   >([]);
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,28 +44,22 @@ export function LibraryRow({
     staleTime: 0,
   });
 
-  // Reset when expanding/collapsing or stockFilter changes (refetch handled by key change)
+  // Reset when expanding/collapsing or stockFilter changes
   useEffect(() => {
-    if (expanded) {
-      setAllSets([]);
-      setOffset(0);
-      setHasMore(true);
-      setIsLoading(false);
-    } else {
-      setAllSets([]);
-      setOffset(0);
-      setHasMore(true);
-    }
+    setAllSets([]);
+    setOffset(0);
+    setHasMore(true);
+    setIsLoading(false);
   }, [expanded, stockFilter]);
 
   // Populate first batch
   useEffect(() => {
-    if (expanded && initialSets) {
+    if (expanded && initialSets && allSets.length === 0) {
       setAllSets(initialSets);
       setOffset(initialSets.length);
       setHasMore(initialSets.length >= SETS_PER_BATCH);
     }
-  }, [expanded, initialSets]);
+  }, [expanded, initialSets, allSets.length]);
 
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore || !expanded) return;
@@ -105,59 +104,52 @@ export function LibraryRow({
   return (
     <div key={library.id}>
       <div
-        className="flex items-center px-4 py-2 cursor-pointer hover:bg-accent bg-muted font-light tracking-[-0.01em]"
-        style={{ paddingLeft: `${16 + 0 * 24}px` }}
+        className="flex items-center px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
         onClick={() => setExpanded((prev) => !prev)}
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 mr-2" />
+          <ChevronDown className="w-4 h-4 mr-2 text-muted-foreground" />
         ) : (
-          <ChevronRight className="w-4 h-4 mr-2" />
+          <ChevronRight className="w-4 h-4 mr-2 text-muted-foreground" />
         )}
-        <span className="flex-1">
+        <span className="flex-1 font-light text-lg text-foreground">
           {library.name}
-          {library.stock !== null ? ` (${library.stock})` : ""}
+          {library.stock !== null && (
+            <span className="ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded">
+              {library.stock}
+            </span>
+          )}
           {library.stock === 0 && (
-            <span className="text-xs text-red-500 ml-2">(Out of Stock)</span>
+            <span className="ml-1 text-xs text-red-500">(Out of Stock)</span>
           )}
         </span>
       </div>
 
       {expanded && (
-        <>
+        <div>
           {allSets.map((set) => (
             <SetRow key={set.id} set={set} stockFilter={stockFilter} />
           ))}
 
           {isLoading && (
-            <div
-              className="flex items-center justify-center py-3 text-muted-foreground"
-              style={{ paddingLeft: `${16 + 1 * 24}px` }}
-            >
+            <div className="flex items-center justify-center py-3 text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 border-2 border-muted border-t-primary rounded-full animate-spin"></div>
+                <div className="w-3 h-3 border-2 border-muted border-t-foreground rounded-full animate-spin"></div>
                 <span className="text-xs">Loading more sets...</span>
               </div>
             </div>
           )}
 
           {hasMore && !isLoading && allSets.length > 0 && (
-            <div
-              ref={scrollObserverRef}
-              className="h-1"
-              style={{ paddingLeft: `${16 + 1 * 24}px` }}
-            />
+            <div ref={scrollObserverRef} className="h-1" />
           )}
 
           {!hasMore && allSets.length > SETS_PER_BATCH && (
-            <div
-              className="text-center py-2 text-xs text-muted-foreground bg-muted/20"
-              style={{ paddingLeft: `${16 + 1 * 24}px` }}
-            >
+            <div className="text-center py-2 text-xs text-muted-foreground">
               All {allSets.length} sets loaded
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

@@ -69,7 +69,7 @@ export function StockEditForm({
           type="number"
           step={0.01}
           min={0}
-          value={editData.cogs || ""}
+          value={editData.cogs || 0}
           onChange={(e) =>
             onFieldChange("cogs", parseFloat(e.target.value) || 0)
           }

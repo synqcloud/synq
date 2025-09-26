@@ -61,7 +61,9 @@ export default function InventoryTableSearchResults({
               id: card.id,
               name: nameWithContext,
               tcgplayer_id: card.tcgplayer_id,
-              stock: card.stock ?? 0,
+              stock: card.stock,
+              rarity: card.rarity,
+              image_url: card.image_url,
             }}
             hasAlert={false}
           />

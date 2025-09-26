@@ -217,15 +217,17 @@ function CardSearch({
                 </div>
               )}
               {cards && cards.length > 0
-                ? cards.map((card) => (
-                    <TransactionCardRow
-                      key={card.id}
-                      card={card}
-                      onAddToTransactionAction={() =>
-                        onAddToTransaction(card.id, card.name)
-                      }
-                    />
-                  ))
+                ? cards
+                    .filter((card) => card.stock && card.stock > 0)
+                    .map((card) => (
+                      <TransactionCardRow
+                        key={card.id}
+                        card={card}
+                        onAddToTransactionAction={() =>
+                          onAddToTransaction(card.id, card.name)
+                        }
+                      />
+                    ))
                 : searchTerm &&
                   !isLoading && (
                     <div className="flex items-center justify-center h-40">
@@ -234,6 +236,7 @@ function CardSearch({
                       </div>
                     </div>
                   )}
+
               {!searchTerm && !isLoading && (
                 <div className="flex items-center justify-center h-40">
                   <div className="text-sm text-muted-foreground">

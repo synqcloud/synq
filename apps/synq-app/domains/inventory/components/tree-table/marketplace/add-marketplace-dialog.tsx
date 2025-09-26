@@ -18,6 +18,7 @@ import { MarketplaceIcon } from "@/features/transactions/components";
 import { InventoryService } from "@synq/supabase/services";
 import { Search, Check, Plus, X } from "lucide-react";
 import { cn } from "@synq/ui/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AddMarketplaceDialogProps {
   open: boolean;
@@ -36,6 +37,8 @@ export function AddMarketplaceDialog({
   onMarketplaceAddedAction,
   onMarketplaceRemovedAction,
 }: AddMarketplaceDialogProps) {
+  const queryClient = useQueryClient();
+
   const [availableMarketplaces, setAvailableMarketplaces] = useState<string[]>(
     [],
   );
@@ -116,6 +119,8 @@ export function AddMarketplaceDialog({
       setSelectedMarketplaces([]);
       setMarketplacesToRemove([]);
       setSearchQuery("");
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+
       onOpenChangeAction(false);
     } catch (error) {
       console.error("Failed to update marketplaces:", error);
