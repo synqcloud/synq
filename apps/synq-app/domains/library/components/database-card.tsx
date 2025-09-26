@@ -30,6 +30,10 @@ export function DatabaseCard({
   const isInstalled = database.user_library_access?.length > 0;
 
   const getButtonContent = () => {
+    if (isDisabled) {
+      return "Coming Soon";
+    }
+
     if (isInstalled) {
       return (
         <>
@@ -38,6 +42,7 @@ export function DatabaseCard({
         </>
       );
     }
+
     if (isLoading) {
       return (
         <>
@@ -46,6 +51,7 @@ export function DatabaseCard({
         </>
       );
     }
+
     return (
       <>
         <Plus className="w-4 h-4 mr-2" />
