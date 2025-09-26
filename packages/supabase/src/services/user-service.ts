@@ -546,4 +546,60 @@ export class UserService extends ServiceBase {
       },
     );
   }
+
+  /**
+   * Check if user's trial has expired
+   */
+  static async isTrialExpired(
+    context: "client" | "server" = "client",
+  ): Promise<boolean> {
+    const userId = await this.getCurrentUserId(context);
+    if (!userId) {
+      return false; // No user means no trial to expire
+    }
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data: subscription, error } = await client
+          .from("user_subscriptions")
+          .select("status, trial_ends_at")
+          .eq("user_id", userId)
+          .single();
+
+        if (error) {
+          // If no subscription record exists, consider trial as expired
+          if (error.code === "PGRST116") {
+            return true;
+          }
+          throw error;
+        }
+
+        // If user has active subscription, trial is not relevant
+        if (subscription?.status === "active") {
+          return false;
+        }
+
+        // If user is on trial, check if it has expired
+        if (subscription?.status === "trialing") {
+          if (!subscription.trial_ends_at) {
+            return false; // No trial end date means trial is still active
+          }
+
+          const now = new Date();
+          const trialEndsAt = new Date(subscription.trial_ends_at);
+          return trialEndsAt <= now; // Trial expired if end date is in the past
+        }
+
+        // For any other status (canceled, past_due), consider trial expired
+        return true;
+      },
+      {
+        service: "UserService",
+        method: "isTrialExpired",
+        userId,
+      },
+    );
+  }
 }

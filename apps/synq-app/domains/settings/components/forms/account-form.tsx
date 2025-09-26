@@ -1,7 +1,7 @@
 "use client";
 
 // REACT
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 // FORM
@@ -47,7 +47,10 @@ type AccountFormProps = {
 export function AccountForm({ initialData }: AccountFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showManageSubscription, setShowManageSubscription] = useState(false);
+  const [isLoadingTrialStatus, setIsLoadingTrialStatus] = useState(true);
   const queryClient = useQueryClient();
+
   const {
     file: avatarFile,
     preview: avatarPreview,
@@ -66,6 +69,24 @@ export function AccountForm({ initialData }: AccountFormProps) {
       email: initialData?.email || "",
     },
   });
+
+  // Check if trial is expired on component mount
+  useEffect(() => {
+    const checkTrialStatus = async () => {
+      try {
+        const trialExpired = await UserService.isTrialExpired("client");
+        setShowManageSubscription(trialExpired);
+      } catch (error) {
+        console.error("Failed to check trial status:", error);
+        // On error, show the button to be safe
+        setShowManageSubscription(true);
+      } finally {
+        setIsLoadingTrialStatus(false);
+      }
+    };
+
+    checkTrialStatus();
+  }, []);
 
   const onSubmit = useCallback(
     async (data: AccountFormValues) => {
@@ -158,22 +179,26 @@ export function AccountForm({ initialData }: AccountFormProps) {
         </div>
 
         <HStack justify="end" gap={4} className="pt-4 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              const portalUrl = process.env.NEXT_PUBLIC_STRIPE_PORTAL_URL;
-              if (portalUrl) {
-                window.location.href = portalUrl;
-              } else {
-                console.error("Stripe portal URL is not defined");
-              }
-            }}
-            className="min-w-[120px] gap-2"
-          >
-            <Settings />
-            Manage Subscription
-          </Button>
+          {/* Show manage subscription button only if trial is expired */}
+          {!isLoadingTrialStatus && showManageSubscription && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const portalUrl = process.env.NEXT_PUBLIC_STRIPE_PORTAL_URL;
+                if (portalUrl) {
+                  window.location.href = portalUrl;
+                } else {
+                  console.error("Stripe portal URL is not defined");
+                }
+              }}
+              className="min-w-[120px] gap-2"
+            >
+              <Settings />
+              Manage Subscription
+            </Button>
+          )}
+
           <Button
             type="submit"
             disabled={isSubmitting}
