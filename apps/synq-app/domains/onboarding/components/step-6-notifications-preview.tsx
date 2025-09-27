@@ -82,18 +82,20 @@ export default function Step6NotificationsPreview() {
     setSending(true);
     setError(null);
     try {
-      const res = await fetch("/api/mail/send-test-notification-email", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        let detail = "";
-        try {
-          const data = await res.json();
-          detail = data?.error || JSON.stringify(data);
-        } catch {}
-        throw new Error(`Request failed: ${res.status} ${detail}`);
+      if (process.env.NODE_ENV === "production") {
+        const res = await fetch("/api/mail/send-test-notification-email", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) {
+          let detail = "";
+          try {
+            const data = await res.json();
+            detail = data?.error || JSON.stringify(data);
+          } catch {}
+          throw new Error(`Request failed: ${res.status} ${detail}`);
+        }
       }
       setSent(true);
     } catch (e: any) {
@@ -101,11 +103,6 @@ export default function Step6NotificationsPreview() {
     } finally {
       setSending(false);
     }
-  }
-
-  function handleSkip() {
-    completeCurrentStep();
-    next();
   }
 
   return (

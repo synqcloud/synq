@@ -472,32 +472,6 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
-   * Get list of available marketplaces
-   */
-  static async getAvailableMarketplaces(
-    context: "client" | "server" = "client",
-  ): Promise<string[]> {
-    return this.execute(
-      async () => {
-        const client = await this.getClient(context);
-
-        const { data, error } = await client
-          .from("marketplaces")
-          .select("name")
-          .order("name", { ascending: true });
-
-        if (error) throw error;
-
-        return (data || []).map((marketplace) => marketplace.name);
-      },
-      {
-        service: "InventoryService",
-        method: "getAvailableMarketplaces",
-      },
-    );
-  }
-
-  /**
    * Add marketplace to stock item
    */
   static async addMarketplaceToStock(
@@ -579,53 +553,20 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
-   * Get available conditions (hardcoded)
+   * Get available marketplaces (hardcoded instead of DB)
    */
-  static async getAvailableConditions(
+  static async getAvailableMarketplaces(
     context: "client" | "server" = "client",
   ): Promise<string[]> {
-    // Flatten all conditions into a single array
-    const tcgplayer = [
-      "Near Mint",
-      "Lightly Played",
-      "Moderately Played",
-      "Heavily Played",
-      "Damaged",
-    ];
-    const cardmarket = [
-      "Mint",
-      "Near Mint",
-      "Excellent",
-      "Good",
-      "Light Played",
-      "Played",
-      "Poor",
-    ];
-
-    // Merge and remove duplicates
-    const allConditions = Array.from(new Set([...tcgplayer, ...cardmarket]));
-
-    return allConditions;
-  }
-
-  /**
-   * Get available languages (hardcoded)
-   */
-  static async getAvailableLanguages(
-    context: "client" | "server" = "client",
-  ): Promise<string[]> {
-    return [
-      "en", // English
-      "fr", // French
-      "de", // German
-      "it", // Italian
-      "pt", // Portuguese
-      "es", // Spanish
-      "ru", // Russian
-      "ja", // Japanese
-      "ko", // Korean
-      "zh-CN", // Chinese (Simplified)
-      "zh-TW", // Chinese (Traditional)
-    ];
+    return this.execute(
+      async () => {
+        // Could be static for consistency with conditions/languages
+        return ["TCGplayer", "Cardmarket", "eBay", "Amazon", "Shopify"];
+      },
+      {
+        service: "InventoryService",
+        method: "getAvailableMarketplaces",
+      },
+    );
   }
 }

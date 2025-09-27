@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { UserStockWithListings } from "@synq/supabase/services";
+import { createInitialEditData } from "../utils/stock-helpers";
 
 export type EditData = {
   quantity: number;
@@ -15,39 +16,19 @@ export function useStockEdit(stock: UserStockWithListings) {
   const [marketplaces, setMarketplaces] = useState<string[]>(
     stock.marketplaces || [],
   );
-
-  const [editData, setEditData] = useState<EditData>({
-    quantity: stock.quantity || 1,
-    condition: stock.condition || "",
-    cogs: stock.cogs || 0,
-    sku: stock.sku || "",
-    location: stock.location || "",
-    language: stock.language || "",
-  });
+  const [editData, setEditData] = useState<EditData>(() =>
+    createInitialEditData(stock),
+  );
 
   useEffect(() => {
-    setEditData({
-      quantity: stock.quantity || 1,
-      condition: stock.condition || "",
-      cogs: stock.cogs || 0,
-      sku: stock.sku || "",
-      location: stock.location || "",
-      language: stock.language || "",
-    });
+    setEditData(createInitialEditData(stock));
     setMarketplaces(stock.marketplaces || []);
   }, [stock]);
 
   const startEdit = () => setIsEditing(true);
 
   const cancelEdit = () => {
-    setEditData({
-      quantity: stock.quantity || 1,
-      condition: stock.condition || "",
-      cogs: stock.cogs || 0,
-      sku: stock.sku || "",
-      location: stock.location || "",
-      language: stock.language || "",
-    });
+    setEditData(createInitialEditData(stock));
     setIsEditing(false);
   };
 
@@ -63,14 +44,6 @@ export function useStockEdit(stock: UserStockWithListings) {
     setMarketplaces((prev) => prev.filter((m) => m !== marketplace));
   };
 
-  const getCurrentConditionValue = () => {
-    return editData.condition || "";
-  };
-
-  const handleConditionChange = (value: string) => {
-    updateField("condition", value);
-  };
-
   return {
     isEditing,
     editData,
@@ -80,7 +53,5 @@ export function useStockEdit(stock: UserStockWithListings) {
     updateField,
     addMarketplace,
     removeMarketplace,
-    getCurrentConditionValue,
-    handleConditionChange,
   };
 }

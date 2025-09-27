@@ -3,7 +3,7 @@ import React from "react";
 import { StepWrapper } from "@/domains/onboarding/components/step-wrapper";
 import { Button, Card } from "@synq/ui/component";
 import { useOnboarding } from "@/domains/onboarding/hooks/use-onboarding";
-import { StockDisplay } from "@/domains/inventory/components/tree-table/stock/stock-display";
+import { StockDisplay } from "@/domains/inventory/components/tree-table/stock-row/stock-display";
 import type { UserStockWithListings } from "@synq/supabase/services";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
@@ -151,7 +151,7 @@ export default function Step4InventoryPreview() {
                 )}
               </motion.div>
               <span className="flex-1 font-light tracking-[-0.01em] text-left">
-                Pikachu (6)
+                Black Lotus (6)
               </span>
               <div
                 className="flex items-center gap-2"

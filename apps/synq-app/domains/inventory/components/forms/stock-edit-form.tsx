@@ -9,10 +9,12 @@ import {
   SelectItem,
   Button,
   HStack,
+  VStack,
+  Label,
 } from "@synq/ui/component";
-import { Check, X } from "lucide-react";
+import { Check, X, Plus } from "lucide-react";
 import { EditData } from "@/features/inventory/hooks/use-stock-edit";
-import { MarketplaceSection } from "./marketplace/marketplace-section";
+import { MarketplaceDisplay } from "../tree-table/stock-row/marketplace/marketplace-display";
 
 type StockEditFormProps = {
   editData: EditData;
@@ -23,6 +25,7 @@ type StockEditFormProps = {
   onOpenDialog: () => void;
   onSave: () => void;
   onCancel: () => void;
+  hasChanges: boolean;
 };
 
 export function StockEditForm({
@@ -34,6 +37,7 @@ export function StockEditForm({
   onOpenDialog,
   onSave,
   onCancel,
+  hasChanges,
 }: StockEditFormProps) {
   return (
     <>
@@ -101,13 +105,18 @@ export function StockEditForm({
           </SelectContent>
         </Select>
         {/* Marketplaces */}
-        <MarketplaceSection
+        <MarketplaceDisplay
           marketplaces={marketplaces}
           onOpenDialog={onOpenDialog}
         />
         {/* Actions */}
         <HStack gap={1}>
-          <Button size="icon" variant="outline" onClick={onSave}>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={onSave}
+            disabled={!hasChanges}
+          >
             <Check className="w-4 h-4" />
           </Button>
           <Button size="icon" variant="outline" onClick={onCancel}>
@@ -117,13 +126,13 @@ export function StockEditForm({
       </div>
 
       {/* Mobile View - Stacked Layout */}
-      <div className="block md:hidden space-y-4">
+      <VStack className="block md:hidden" gap={4}>
         {/* First row: Quantity, Condition, Cost */}
         <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
+          <VStack gap={1}>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide">
               Qty
-            </label>
+            </Label>
             <Input
               type="number"
               min={1}
@@ -133,11 +142,11 @@ export function StockEditForm({
               }
               className="text-sm"
             />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
+          </VStack>
+          <VStack gap={1}>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide">
               Condition
-            </label>
+            </Label>
             <Select
               value={editData.condition || ""}
               onValueChange={(val) => onFieldChange("condition", val)}
@@ -153,11 +162,11 @@ export function StockEditForm({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
+          </VStack>
+          <VStack gap={1}>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide">
               Cost
-            </label>
+            </Label>
             <Input
               type="number"
               step={0.01}
@@ -168,38 +177,38 @@ export function StockEditForm({
               }
               className="text-sm"
             />
-          </div>
+          </VStack>
         </div>
 
         {/* Second row: SKU, Location */}
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
+          <VStack gap={1}>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide">
               SKU
-            </label>
+            </Label>
             <Input
               value={editData.sku || ""}
               onChange={(e) => onFieldChange("sku", e.target.value)}
               className="text-sm"
             />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
+          </VStack>
+          <VStack gap={1}>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide">
               Location
-            </label>
+            </Label>
             <Input
               value={editData.location || ""}
               onChange={(e) => onFieldChange("location", e.target.value)}
               className="text-sm"
             />
-          </div>
+          </VStack>
         </div>
 
         {/* Third row: Language (full width) */}
-        <div>
-          <label className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
+        <VStack gap={1}>
+          <Label className="text-xs text-muted-foreground uppercase tracking-wide">
             Language
-          </label>
+          </Label>
           <Select
             value={editData.language || ""}
             onValueChange={(val) => onFieldChange("language", val)}
@@ -215,16 +224,16 @@ export function StockEditForm({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </VStack>
 
         {/* Fourth row: Marketplaces */}
-        <div>
-          <label className="text-xs text-muted-foreground uppercase tracking-wide block mb-2">
+        <VStack gap={2}>
+          <Label className="text-xs text-muted-foreground uppercase tracking-wide">
             Marketplaces
-          </label>
-          <div className="flex items-center gap-2">
+          </Label>
+          <HStack gap={2} align="center">
             {marketplaces.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
+              <HStack gap={2} wrap="wrap">
                 {marketplaces.map((marketplace) => (
                   <span
                     key={marketplace}
@@ -233,7 +242,7 @@ export function StockEditForm({
                     {marketplace}
                   </span>
                 ))}
-              </div>
+              </HStack>
             ) : (
               <span className="text-muted-foreground text-sm">
                 No marketplaces
@@ -245,25 +254,13 @@ export function StockEditForm({
               onClick={onOpenDialog}
               className="flex-shrink-0"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="w-4 h-4" />
             </Button>
-          </div>
-        </div>
+          </HStack>
+        </VStack>
 
         {/* Actions row */}
-        <div className="flex justify-end gap-2 pt-2 border-t">
+        <HStack justify="end" gap={2} className="pt-2 border-t">
           <Button
             variant="outline"
             onClick={onCancel}
@@ -272,12 +269,16 @@ export function StockEditForm({
             <X className="w-4 h-4 mr-2" />
             Cancel
           </Button>
-          <Button onClick={onSave} className="flex-1 sm:flex-none">
+          <Button
+            onClick={onSave}
+            className="flex-1 sm:flex-none"
+            disabled={!hasChanges}
+          >
             <Check className="w-4 h-4 mr-2" />
             Save
           </Button>
-        </div>
-      </div>
+        </HStack>
+      </VStack>
     </>
   );
 }

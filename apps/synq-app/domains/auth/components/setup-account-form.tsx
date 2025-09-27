@@ -54,9 +54,11 @@ export function SetupAccountForm() {
       }
 
       // 3. Call your welcome email API
-      await fetch("/api/mail/send-welcome", {
-        method: "POST",
-      });
+      if (process.env.NODE_ENV === "production") {
+        await fetch("/api/mail/send-welcome", {
+          method: "POST",
+        });
+      }
 
       // Let the middleware handle the redirect based on whether the user has a provider profile
       router.refresh();

@@ -1,34 +1,68 @@
-import { useState, useEffect } from "react";
-import { InventoryService } from "@synq/supabase/services";
+const tcgplayerConditions = [
+  "Near Mint",
+  "Lightly Played",
+  "Moderately Played",
+  "Heavily Played",
+  "Damaged",
+];
+
+const cardmarketConditions = [
+  "Mint",
+  "Near Mint",
+  "Excellent",
+  "Good",
+  "Light Played",
+  "Played",
+  "Poor",
+];
+
+export const STOCK_CONDITIONS = Array.from(
+  new Set([...tcgplayerConditions, ...cardmarketConditions]),
+);
+
+export const STOCK_LANGUAGES = [
+  "en", // English
+  "fr", // French
+  "de", // German
+  "it", // Italian
+  "pt", // Portuguese
+  "es", // Spanish
+  "ru", // Russian
+  "ja", // Japanese
+  "ko", // Korean
+  "zh-CN", // Chinese (Simplified)
+  "zh-TW", // Chinese (Traditional)
+];
+
+export const STOCK_MARKETPLACES = [
+  "TCGplayer",
+  "Cardmarket",
+  "eBay",
+  "Amazon",
+  "Shopify",
+];
+
+export const STOCK_SOURCES = [
+  // Online marketplaces
+  "TCGplayer",
+  "Cardmarket",
+  "eBay",
+  "Amazon",
+  "Shopify",
+  // Physical/direct sources
+  "in-store",
+  "person",
+  "trade",
+  "manual",
+];
 
 export function useStockData() {
-  const [conditions, setConditions] = useState<string[]>([]);
-  const [languages, setLanguages] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-
-    Promise.all([
-      InventoryService.getAvailableConditions("client"),
-      InventoryService.getAvailableLanguages("client"),
-    ])
-      .then(([conditionsData, languagesData]) => {
-        if (!active) return;
-        setConditions(conditionsData);
-        setLanguages(languagesData);
-      })
-      .catch((err) => {
-        console.error("Failed to load stock data:", err);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return { conditions, languages, loading };
+  return {
+    conditions: STOCK_CONDITIONS,
+    languages: STOCK_LANGUAGES,
+    marketplaces: STOCK_MARKETPLACES, // For listings
+    sources: STOCK_SOURCES, // For purchases/acquisitions
+    loading: false,
+    error: null,
+  };
 }

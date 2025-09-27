@@ -8,24 +8,17 @@ import {
   HStack,
 } from "@synq/ui/component";
 import { Plus } from "lucide-react";
-import { UserStockWithListings } from "@synq/supabase/services";
 import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 
-type MarketplaceSectionProps = {
+type MarketplaceDisplayProps = {
   marketplaces: string[];
   onOpenDialog: () => void;
-  stock?: UserStockWithListings;
-  cardId?: string;
 };
 
-export function MarketplaceSection({
+export function MarketplaceDisplay({
   marketplaces,
   onOpenDialog,
-  stock,
-  cardId,
-}: MarketplaceSectionProps) {
-  const marketplacePrices = stock?.marketplace_prices || {};
-
+}: MarketplaceDisplayProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <HStack gap={2} align="center" wrap="wrap">
