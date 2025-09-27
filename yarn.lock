@@ -2625,26 +2625,6 @@ acorn@^8.11.0, acorn@^8.14.0:
   resolved "https://registry.npmjs.org/acorn/-/acorn-8.14.1.tgz"
   integrity sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==
 
-ag-charts-types@12.0.2:
-  version "12.0.2"
-  resolved "https://registry.npmjs.org/ag-charts-types/-/ag-charts-types-12.0.2.tgz"
-  integrity sha512-AWM1Y+XW+9VMmV3AbzdVEnreh/I2C9Pmqpc2iLmtId3Xbvmv7O56DqnuDb9EXjK5uPxmyUerTP+utL13UGcztw==
-
-ag-grid-community@34.0.2, ag-grid-community@^34.0.2:
-  version "34.0.2"
-  resolved "https://registry.npmjs.org/ag-grid-community/-/ag-grid-community-34.0.2.tgz"
-  integrity sha512-hVJp5vrmwHRB10YjfSOVni5YJkO/v+asLjT72S4YnIFSx8lAgyPmByNJgtojk1aJ5h6Up93jTEmGDJeuKiWWLA==
-  dependencies:
-    ag-charts-types "12.0.2"
-
-ag-grid-react@^34.0.2:
-  version "34.0.2"
-  resolved "https://registry.npmjs.org/ag-grid-react/-/ag-grid-react-34.0.2.tgz"
-  integrity sha512-1KBXkTvwtZiYVlSuDzBkiqfHjZgsATOmpLZdAtdmsCSOOOEWai0F9zHHgBuHfyciAE4nrbQWfojkx8IdnwsKFw==
-  dependencies:
-    ag-grid-community "34.0.2"
-    prop-types "^15.8.1"
-
 agent-base@^7.0.2:
   version "7.1.4"
   resolved "https://registry.npmjs.org/agent-base/-/agent-base-7.1.4.tgz"
