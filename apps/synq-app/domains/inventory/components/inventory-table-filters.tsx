@@ -1,7 +1,7 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { Button, HStack, Input } from "@synq/ui/component";
+import { X } from "lucide-react";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 
 export type StockFilterType = "all" | "in-stock" | "out-of-stock";
@@ -46,6 +46,10 @@ export default function InventoryTableFilters({
     onChange(v);
   };
 
+  const clearSearch = () => {
+    setSearch("");
+  };
+
   const buttons: StockFilterType[] = ["all", "in-stock", "out-of-stock"];
   const colors = {
     all: "bg-primary",
@@ -55,13 +59,23 @@ export default function InventoryTableFilters({
 
   return (
     <div className="flex items-center gap-2 justify-between">
-      <div className="w-80 max-w-[60%]">
+      <div className="w-80 max-w-[60%] relative">
         <Input
           placeholder="Search cards..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           disabled={isLoading}
+          className="pr-8"
         />
+        {isSearchActive && (
+          <button
+            onClick={clearSearch}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-sm hover:bg-muted"
+            type="button"
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
       <HStack gap={1}>
         {buttons.map((b) => (

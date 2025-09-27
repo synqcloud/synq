@@ -7,14 +7,21 @@ import CardRow from "./tree-table/card-row";
 
 export default function InventoryTableSearchResults({
   query,
+  options,
 }: {
   query: string;
+  options?: {
+    offset?: number;
+    limit?: number;
+    stockFilter?: "all" | "in-stock" | "out-of-stock";
+  };
 }) {
   const normalized = useMemo(() => query.trim(), [query]);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["inventory-search", normalized],
-    queryFn: () => InventoryService.searchCardsByName("client", normalized),
+    queryFn: () =>
+      InventoryService.searchCardsByName("client", normalized, options),
     enabled: normalized.length > 0,
     staleTime: 30_000,
   });
@@ -72,4 +79,3 @@ export default function InventoryTableSearchResults({
     </div>
   );
 }
-

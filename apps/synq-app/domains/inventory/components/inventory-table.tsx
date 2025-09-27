@@ -46,7 +46,10 @@ export default function InventoryTable() {
 
       <div className="flex-1 overflow-auto">
         {searchQuery ? (
-          <InventoryTableSearchResults query={searchQuery} />
+          <InventoryTableSearchResults
+            query={searchQuery}
+            options={{ stockFilter }}
+          />
         ) : allLibraries.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
             <p>No items in your inventory.</p>
