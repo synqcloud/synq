@@ -42,14 +42,6 @@ export function Footer() {
             >
               Terms
             </a>
-            {/*<a
-              href="https://github.com/synqcloud/synq"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Github className="w-4 h-4" />
-            </a>*/}
           </div>
         </div>
 
@@ -87,14 +79,6 @@ export function Footer() {
               className="text-sm font-light tracking-[-0.01em] text-muted-foreground hover:text-foreground transition-colors"
             >
               Terms
-            </a>
-            <a
-              href="https://github.com/synqcloud/synq"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Github className="w-4 h-4" />
             </a>
           </div>
         </div>
