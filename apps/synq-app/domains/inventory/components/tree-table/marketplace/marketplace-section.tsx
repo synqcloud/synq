@@ -9,7 +9,7 @@ import {
 } from "@synq/ui/component";
 import { Plus } from "lucide-react";
 import { UserStockWithListings } from "@synq/supabase/services";
-import { MarketplaceIcon } from "@/features/transactions/components";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 
 type MarketplaceSectionProps = {
   marketplaces: string[];

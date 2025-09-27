@@ -3,7 +3,7 @@ import React from "react";
 import { StepWrapper } from "@/domains/onboarding/components/step-wrapper";
 import { Button } from "@synq/ui/component";
 import { useOnboarding } from "@/domains/onboarding/hooks/use-onboarding";
-import { MarketplaceIcon } from "@/domains/transactions/components/marketplace-icon";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 import { motion, AnimatePresence } from "framer-motion";
 
 function MockNotification({

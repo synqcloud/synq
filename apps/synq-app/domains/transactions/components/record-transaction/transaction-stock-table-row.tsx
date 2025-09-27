@@ -15,7 +15,7 @@ import {
 
 // Services
 import { UserStockWithListings } from "@synq/supabase/services";
-import { MarketplaceIcon } from "../marketplace-icon";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 import { useCurrency } from "@/shared/contexts/currency-context";
 
 type StockTableRowProps = {

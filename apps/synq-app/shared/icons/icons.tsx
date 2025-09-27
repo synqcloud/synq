@@ -29,28 +29,6 @@ export const Icon = ({
 
 Icon.displayName = "Icon";
 
-export const AvatarPlaceholderIcon = ({
-  className,
-  width = 42,
-  height = 42,
-}: {
-  className?: string;
-  width?: number;
-  height?: number;
-}) => {
-  return (
-    <Image
-      className={className}
-      src="/user/avatar_placeholder.png"
-      alt="Avatar placeholder"
-      width={width}
-      height={height}
-    />
-  );
-};
-
-AvatarPlaceholderIcon.displayName = "AvatarPlaceholderIcon";
-
 export const SynqIcon = ({
   className,
   width = 42,

@@ -7,8 +7,8 @@ import {
 } from "@synq/supabase/services";
 import { toast } from "sonner";
 import { Button } from "@synq/ui/component";
-import { ExternalLink, CheckCircle, RefreshCw } from "lucide-react";
-import { MarketplaceIcon } from "@/features/transactions/components";
+import { CheckCircle, RefreshCw } from "lucide-react";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function NotificationsPage() {

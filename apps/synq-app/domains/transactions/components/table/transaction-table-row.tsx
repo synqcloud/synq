@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { HStack, TableCell, TableRow } from "@synq/ui/component";
 import { Clock, Package } from "lucide-react";
 import { TransactionTableSheet } from "./transaction-table-sheet";
-import { MarketplaceIcon } from "../marketplace-icon";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 
 // Utils
 import { formatCurrency } from "@/shared/utils/format-currency";

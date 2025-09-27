@@ -14,7 +14,7 @@ import {
   VStack,
   Input,
 } from "@synq/ui/component";
-import { MarketplaceIcon } from "@/features/transactions/components";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 import { InventoryService } from "@synq/supabase/services";
 import { Search, Check, Plus, X } from "lucide-react";
 import { cn } from "@synq/ui/utils";

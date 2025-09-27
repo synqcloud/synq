@@ -11,7 +11,7 @@ import {
 } from "@synq/ui/component";
 import { ChevronLeft } from "lucide-react";
 import { TransactionItemsDisplay } from "./transaction-items-display";
-import { MarketplaceIcon } from "../marketplace-icon";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 // Hooks
 import { useIsMobile } from "@synq/ui/hooks";
