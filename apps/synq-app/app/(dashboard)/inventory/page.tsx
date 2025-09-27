@@ -2,7 +2,7 @@
 import { Metadata } from "next";
 
 // UI
-import InventoryTable from "@/domains/inventory/components/inventory-table";
+import InventoryTable from "@/features/inventory/components/tree-table/inventory-table";
 
 export const dynamic = "force-dynamic";
 

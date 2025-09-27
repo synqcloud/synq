@@ -1,7 +1,7 @@
 // Core
 import React, { useState } from "react";
 
-import { AddMarketplaceDialog } from "./marketplace/add-marketplace-dialog";
+import { AddMarketplaceDialog } from "../../dialogs/add-marketplace-dialog";
 
 // Services
 import {
@@ -11,11 +11,11 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 // Hooks and utilities
-import { useStockData } from "../../hooks/use-stock-data";
-import { useStockEdit, EditData } from "../../hooks/use-stock-edit";
-import { validateStock } from "../../utils/stock-validation";
-import { StockDisplay } from "./stock/stock-display";
-import { StockEditForm } from "./stock/stock-edit-form";
+import { useStockData } from "../../../hooks/use-stock-data";
+import { useStockEdit, EditData } from "../../../hooks/use-stock-edit";
+import { validateStock } from "../../../utils/stock-validation";
+import { StockDisplay } from "./stock-display";
+import { StockEditForm } from "./stock-edit-form";
 
 // Providers
 import { useCurrency } from "@/shared/contexts/currency-context";

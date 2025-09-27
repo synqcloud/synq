@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { InventoryService } from "@synq/supabase/services";
-import CardRow from "./tree-table/card-row";
+import CardRow from "./card-row/card-row";
 
 export default function InventoryTableSearchResults({
   query,

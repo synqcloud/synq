@@ -1,8 +1,8 @@
 // Core
 import { useState } from "react";
 // Components
-import StockTable from "./stock-table";
-import PriceAlertButton from "./card/price-alerts-button";
+import StockTable from "../stock-row/stock-table";
+import PriceAlertButton from "./price-alerts-button";
 import {
   ChevronDown,
   ChevronRight,
@@ -15,7 +15,7 @@ import {
 import { CoreCard } from "@synq/supabase/services";
 import { Button, HStack } from "@synq/ui/component";
 import { Popover, PopoverContent, PopoverTrigger } from "@synq/ui/component";
-import { AddStockDialog } from "../add-stock-dialog";
+import { AddStockDialog } from "../../dialogs/add-stock-dialog";
 import { cn } from "@synq/ui/utils";
 
 export default function CardRow({

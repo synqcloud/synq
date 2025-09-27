@@ -1,7 +1,7 @@
 import React from "react";
 import { UserStockWithListings } from "@synq/supabase/services";
-import { StockTableActions } from "../stock-table-actions";
-import { MarketplaceSection } from "../marketplace/marketplace-section";
+import { StockTableActions } from "./stock-table-actions";
+import { MarketplaceSection } from "./marketplace/marketplace-section";
 import { useCurrency } from "@/shared/contexts/currency-context";
 import { formatCurrency } from "@/shared/utils/format-currency";
 

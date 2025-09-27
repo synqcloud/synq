@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 // Components
 import StockTableRow from "./stock-table-row";
-import { AddStockDialog } from "../add-stock-dialog";
+import { AddStockDialog } from "../../dialogs/add-stock-dialog";
 import { Plus } from "lucide-react";
 // Services
 import {

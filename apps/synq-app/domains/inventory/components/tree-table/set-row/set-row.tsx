@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import CardRow from "./card-row";
+import CardRow from "../card-row/card-row";
 import { ChevronDown, ChevronRight, Clock } from "lucide-react";
 import {
   CoreCard,

@@ -12,7 +12,7 @@ import {
 } from "@synq/ui/component";
 import { Check, X } from "lucide-react";
 import { EditData } from "@/features/inventory/hooks/use-stock-edit";
-import { MarketplaceSection } from "../marketplace/marketplace-section";
+import { MarketplaceSection } from "./marketplace/marketplace-section";
 
 type StockEditFormProps = {
   editData: EditData;

@@ -9,7 +9,7 @@
 import { useState } from "react";
 // Components
 import InventoryTableSkeleton from "./inventory-table-skeleton";
-import { LibraryRow } from "./tree-table/library-row";
+import { LibraryRow } from "./library-row/library-row";
 import InventoryTableFilters, {
   StockFilterType,
 } from "./inventory-table-filters";

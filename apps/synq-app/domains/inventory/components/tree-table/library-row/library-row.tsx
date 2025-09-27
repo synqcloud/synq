@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import SetRow from "./set-row";
+import SetRow from "../set-row/set-row";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { CoreLibrary, InventoryService } from "@synq/supabase/services";
 import { StockFilterType } from "../inventory-table-filters";
