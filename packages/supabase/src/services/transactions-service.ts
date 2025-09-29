@@ -34,6 +34,7 @@ export type TransactionWithQuantity = UserTransaction & {
 
 interface TransactionFilters {
   statuses?: TransactionStatus[];
+  types?: TransactionType[];
   sources?: string[];
   integrationOnly?: boolean;
   startDate?: Date;
@@ -295,40 +296,6 @@ export class TransactionService extends ServiceBase {
   }
 
   /**
-   * Fetch user transactions with filters
-   */
-  static async fetchUserTransactions(
-    context: "server" | "client" = "server",
-    filters?: TransactionFilters,
-  ): Promise<Array<TransactionWithQuantity>> {
-    const userId = await this.getCurrentUserId(context);
-    return this.execute(
-      async () => {
-        // TODO: Implement type filtering
-        const client = await this.getClient(context);
-        const { data, error } = await client.rpc("get_user_transactions", {
-          p_user_id: userId,
-          p_start_date: filters?.startDate?.toISOString() ?? null,
-          p_end_date: filters?.endDate?.toISOString() ?? null,
-          p_statuses: filters?.statuses ?? null,
-          p_types: null, // No longer needed since all transactions are sales
-          p_sources: filters?.sources ?? null,
-          p_offset: 0,
-          p_limit: null,
-        });
-
-        if (error) throw error;
-        return data ?? [];
-      },
-      {
-        service: "TransactionService",
-        method: "fetchUserTransactions",
-        userId: userId || undefined,
-      },
-    );
-  }
-
-  /**
    * Fetch user transactions page (paginated)
    */
   static async fetchUserTransactionsPage(
@@ -340,6 +307,7 @@ export class TransactionService extends ServiceBase {
     },
   ): Promise<Array<TransactionWithQuantity>> {
     const userId = await this.getCurrentUserId(context);
+    console.log(params?.filters);
     return this.execute(
       async () => {
         const client = await this.getClient(context);
@@ -348,7 +316,7 @@ export class TransactionService extends ServiceBase {
           p_start_date: params?.filters?.startDate?.toISOString() ?? null,
           p_end_date: params?.filters?.endDate?.toISOString() ?? null,
           p_statuses: params?.filters?.statuses ?? null,
-          p_types: null,
+          p_types: params?.filters?.types ?? null,
           p_sources: params?.filters?.sources ?? null,
           p_offset: params?.offset ?? 0,
           p_limit: params?.limit ?? null,

@@ -77,6 +77,7 @@ export default function TransactionsPage() {
         limit: PAGE_SIZE,
         filters: {
           statuses: filters.statuses,
+          types: filters.types,
           sources:
             filters.sources && filters.sources.length > 0
               ? filters.sources
