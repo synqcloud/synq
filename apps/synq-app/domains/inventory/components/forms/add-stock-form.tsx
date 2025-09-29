@@ -13,6 +13,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  Checkbox,
 } from "@synq/ui/component";
 import { Plus } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
@@ -37,6 +38,14 @@ export function AddStockForm({
 }: AddStockFormProps) {
   const { conditions, languages, sources } = useStockData();
   const { isValid } = form.formState;
+  const [createTransaction, setCreateTransaction] = React.useState(true);
+
+  // Update the form value when createTransaction changes and trigger validation
+  React.useEffect(() => {
+    form.setValue("createTransaction", createTransaction, {
+      shouldValidate: true, // This triggers validation when the value changes
+    });
+  }, [createTransaction, form]);
 
   return (
     <Form {...form}>
@@ -174,100 +183,125 @@ export function AddStockForm({
           />
         </div>
 
-        {/* Row 4: Source, Shipping & Tax */}
-        <div className="grid grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="source"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-caption">Source *</FormLabel>
-                <FormControl>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Select Source">
-                        {field.value && (
-                          <div className="flex items-center gap-2">
-                            <MarketplaceIcon
-                              marketplace={field.value}
-                              showTooltip={false}
-                              className="w-4 h-4"
-                            />
-                            <span className="text-sm">{field.value}</span>
-                          </div>
-                        )}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sources.map((source) => (
-                        <SelectItem key={source} value={source}>
-                          <div className="flex items-center gap-2">
-                            <MarketplaceIcon
-                              marketplace={source}
-                              showTooltip={false}
-                              className="w-4 h-4"
-                            />
-                            <span>{source}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Row 4: Transaction Toggle and Fields */}
+        <div className="space-y-4">
+          {/* Transaction Toggle */}
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="create-transaction"
+              checked={createTransaction}
+              onCheckedChange={(checked) =>
+                setCreateTransaction(checked === true)
+              }
+            />
+            <label
+              htmlFor="create-transaction"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Create purchase transaction record
+            </label>
+          </div>
 
-          <FormField
-            control={form.control}
-            name="shipping_amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-caption">Shipping</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    {...field}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      field.onChange(isNaN(val) ? 0 : val);
-                    }}
-                    className="h-9"
-                    placeholder="0.00"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Transaction Fields - Only show if toggle is checked */}
+          {createTransaction && (
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="source"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-caption">Source *</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select Source">
+                            {field.value && (
+                              <div className="flex items-center gap-2">
+                                <MarketplaceIcon
+                                  marketplace={field.value}
+                                  showTooltip={false}
+                                  className="w-4 h-4"
+                                />
+                                <span className="text-sm">{field.value}</span>
+                              </div>
+                            )}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sources.map((source) => (
+                            <SelectItem key={source} value={source}>
+                              <div className="flex items-center gap-2">
+                                <MarketplaceIcon
+                                  marketplace={source}
+                                  showTooltip={false}
+                                  className="w-4 h-4"
+                                />
+                                <span>{source}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="tax_amount"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-caption">Tax</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    {...field}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      field.onChange(isNaN(val) ? 0 : val);
-                    }}
-                    className="h-9"
-                    placeholder="0.00"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="shipping_amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-caption">Shipping</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        {...field}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          field.onChange(isNaN(val) ? 0 : val);
+                        }}
+                        className="h-9"
+                        placeholder="0.00"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="tax_amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-caption">Tax</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        {...field}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          field.onChange(isNaN(val) ? 0 : val);
+                        }}
+                        className="h-9"
+                        placeholder="0.00"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}

@@ -37,7 +37,6 @@ export function AddStockDialog({
   cardName,
 }: AddStockDialogProps) {
   const queryClient = useQueryClient();
-
   const form = useForm<AddStockFormData>({
     resolver: zodResolver(addStockFormSchema),
     defaultValues: {
@@ -50,12 +49,24 @@ export function AddStockDialog({
       source: "",
       shipping_amount: 0,
       tax_amount: 0,
+      createTransaction: true,
     },
   });
 
   React.useEffect(() => {
     if (open) {
-      form.reset();
+      form.reset({
+        quantity: 1,
+        condition: "",
+        cogs: 0,
+        sku: "",
+        location: "",
+        language: "",
+        source: "",
+        shipping_amount: 0,
+        tax_amount: 0,
+        createTransaction: true,
+      });
     }
   }, [open, form]);
 
@@ -64,6 +75,7 @@ export function AddStockDialog({
       const { stockData, transactionData } =
         convertFormDataToStockData(formData);
 
+      // Pass null for transactionData if no transaction should be created
       return InventoryService.addStockEntry(
         "client",
         cardId,
@@ -105,7 +117,6 @@ export function AddStockDialog({
             <span className="font-medium text-foreground">{cardName}</span>
           </DialogDescription>
         </DialogHeader>
-
         <AddStockForm
           form={form}
           onSubmit={handleSubmit}

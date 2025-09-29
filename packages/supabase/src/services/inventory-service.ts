@@ -249,9 +249,7 @@ export class InventoryService extends ServiceBase {
 
   /**
    * Add new stock entry for a card
-   */
-  /**
-   * Add new stock entry for a card
+   * @param createTransaction - If false, skip transaction creation
    */
   static async addStockEntry(
     context: "client" | "server" = "client",
@@ -261,7 +259,7 @@ export class InventoryService extends ServiceBase {
       tax_amount?: number;
       shipping_amount?: number;
       performed_by?: string;
-    },
+    } | null,
     stockData: {
       quantity: number;
       condition?: string;
@@ -294,47 +292,50 @@ export class InventoryService extends ServiceBase {
 
         if (error) throw error;
 
-        // Calculate amounts
-        const subtotalAmount = stockData.quantity * (stockData.cost || 0);
-        const taxAmount = transaction.tax_amount || 0;
-        const shippingAmount = transaction.shipping_amount || 0;
-        const netAmount = subtotalAmount + taxAmount + shippingAmount; // Should be + not -
+        // Only create transaction if transaction data is provided
+        if (transaction !== null) {
+          // Calculate amounts
+          const subtotalAmount = stockData.quantity * (stockData.cost || 0);
+          const taxAmount = transaction.tax_amount || 0;
+          const shippingAmount = transaction.shipping_amount || 0;
+          const netAmount = subtotalAmount + taxAmount + shippingAmount;
 
-        // Use "manual" as default source if none provided
-        const source = transaction.source || "manual";
+          // Use "manual" as default source if none provided
+          const source = transaction.source || "manual";
 
-        // Insert transaction
-        const { data: transactionData, error: transError } = await client
-          .from("user_transaction")
-          .insert({
-            user_id: userId,
-            transaction_status: "COMPLETED",
-            transaction_type: "purchase",
-            performed_by: userId,
-            source: source,
-            is_integration: false,
-            subtotal_amount: subtotalAmount,
-            tax_amount: taxAmount,
-            shipping_amount: shippingAmount,
-            net_amount: netAmount,
-          })
-          .select()
-          .single();
+          // Insert transaction
+          const { data: transactionData, error: transError } = await client
+            .from("user_transaction")
+            .insert({
+              user_id: userId,
+              transaction_status: "COMPLETED",
+              transaction_type: "purchase",
+              performed_by: userId,
+              source: source,
+              is_integration: false,
+              subtotal_amount: subtotalAmount,
+              tax_amount: taxAmount,
+              shipping_amount: shippingAmount,
+              net_amount: netAmount,
+            })
+            .select()
+            .single();
 
-        if (transError) throw transError; // Fixed: was throwing 'error' instead of 'transError'
+          if (transError) throw transError;
 
-        // Insert transaction items
-        const { data: insertedItems, error: itemsError } = await client
-          .from("user_transaction_items")
-          .insert({
-            transaction_id: transactionData.id,
-            stock_id: data.id,
-            quantity: stockData.quantity,
-            unit_price: stockData.cost || 0,
-          })
-          .select();
+          // Insert transaction items
+          const { data: insertedItems, error: itemsError } = await client
+            .from("user_transaction_items")
+            .insert({
+              transaction_id: transactionData.id,
+              stock_id: data.id,
+              quantity: stockData.quantity,
+              unit_price: stockData.cost || 0,
+            })
+            .select();
 
-        if (itemsError) throw itemsError; // Fixed: was throwing 'error' instead of 'itemsError'
+          if (itemsError) throw itemsError;
+        }
 
         return data.id;
       },
