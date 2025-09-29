@@ -560,8 +560,14 @@ export class InventoryService extends ServiceBase {
   ): Promise<string[]> {
     return this.execute(
       async () => {
-        // Could be static for consistency with conditions/languages
-        return ["TCGplayer", "Cardmarket", "eBay", "Amazon", "Shopify"];
+        const client = await this.getClient(context);
+
+        // First, get the marketplace ID by name
+        const { data: marketplaceData, error: marketplaceError } = await client
+          .from("marketplaces")
+          .select("name");
+
+        return marketplaceData?.map((m) => m.name) || [];
       },
       {
         service: "InventoryService",

@@ -74,7 +74,10 @@ export function AddMarketplaceDialog({
     const matchesSearch = marketplace
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const notAlreadyAdded = !currentMarketplaces.includes(marketplace);
+    // Case-insensitive check for already added marketplaces
+    const notAlreadyAdded = !currentMarketplaces.some(
+      (current) => current.toLowerCase() === marketplace.toLowerCase(),
+    );
     return matchesSearch && notAlreadyAdded;
   });
 
@@ -102,18 +105,18 @@ export function AddMarketplaceDialog({
         await InventoryService.addMarketplaceToStock(
           "client",
           stockId,
-          marketplace,
+          marketplace.toLowerCase(),
         );
-        onMarketplaceAddedAction(marketplace);
+        onMarketplaceAddedAction(marketplace.toLowerCase());
       }
 
       for (const marketplace of marketplacesToRemove) {
         await InventoryService.removeMarketplaceFromStock(
           "client",
           stockId,
-          marketplace,
+          marketplace.toLowerCase(),
         );
-        onMarketplaceRemovedAction(marketplace);
+        onMarketplaceRemovedAction(marketplace.toLowerCase());
       }
 
       setSelectedMarketplaces([]);
