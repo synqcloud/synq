@@ -167,7 +167,12 @@ export class InventoryService extends ServiceBase {
     Array<
       Pick<
         CoreCard,
-        "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+        | "id"
+        | "name"
+        | "tcgplayer_id"
+        | "image_url"
+        | "rarity"
+        | "collector_number"
       > & {
         stock: number | null;
         tcgplayer_price: number;
@@ -189,6 +194,7 @@ export class InventoryService extends ServiceBase {
             p_offset: offset,
             p_limit: limit ?? undefined, // avoid passing null
             p_stock_filter: stockFilter,
+            p_sort_by: "collector_number",
           },
         );
 
@@ -196,7 +202,12 @@ export class InventoryService extends ServiceBase {
         return (cards ?? []) as Array<
           Pick<
             CoreCard,
-            "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+            | "id"
+            | "name"
+            | "tcgplayer_id"
+            | "image_url"
+            | "rarity"
+            | "collector_number"
           > & {
             stock: number | null;
             tcgplayer_price: number;
@@ -422,7 +433,12 @@ export class InventoryService extends ServiceBase {
     Array<
       Pick<
         CoreCard,
-        "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+        | "id"
+        | "name"
+        | "tcgplayer_id"
+        | "image_url"
+        | "rarity"
+        | "collector_number"
       > & {
         stock: number | null;
         tcgplayer_price: number | null;
@@ -455,7 +471,12 @@ export class InventoryService extends ServiceBase {
         return (cards ?? []) as Array<
           Pick<
             CoreCard,
-            "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+            | "id"
+            | "name"
+            | "tcgplayer_id"
+            | "image_url"
+            | "rarity"
+            | "collector_number"
           > & {
             stock: number | null;
             tcgplayer_price: number | null;

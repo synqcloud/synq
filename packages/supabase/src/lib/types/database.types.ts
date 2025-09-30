@@ -62,6 +62,7 @@ export type Database = {
       }
       core_cards: {
         Row: {
+          collector_number: string | null
           core_library_id: string
           core_set_id: string
           created_at: string | null
@@ -76,6 +77,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          collector_number?: string | null
           core_library_id: string
           core_set_id: string
           created_at?: string | null
@@ -90,6 +92,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          collector_number?: string | null
           core_library_id?: string
           core_set_id?: string
           created_at?: string | null
@@ -678,6 +681,7 @@ export type Database = {
           marketplaces: string[]
           quantity: number
           set_name: string
+          sku: string
           stock_id: string
         }[]
       }
@@ -687,10 +691,12 @@ export type Database = {
           p_offset?: number
           p_search_query?: string
           p_set_id?: string
+          p_sort_by?: string
           p_stock_filter?: string
           p_user_id: string
         }
         Returns: {
+          collector_number: string
           core_library_name: string
           core_set_name: string
           id: string

@@ -24,7 +24,7 @@ export default function CardRow({
 }: {
   card: Pick<
     CoreCard,
-    "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+    "id" | "name" | "tcgplayer_id" | "image_url" | "rarity" | "collector_number"
   > & {
     stock: number | null;
   };
@@ -50,15 +50,14 @@ export default function CardRow({
   const handleExternalLinkClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    window.open(
-      `https://www.tcgplayer.com/product/${card.tcgplayer_id}`,
-      "_blank",
-    );
+    const url = card.tcgplayer_id
+      ? `https://www.tcgplayer.com/product/${card.tcgplayer_id}`
+      : `https://www.tcgplayer.com/search/all/product?q=${encodeURIComponent(card.name)}`;
+    window.open(url, "_blank");
   };
 
   return (
     <div key={card.id} className="group">
-      {/* Overlay to block interactions when popover is open */}
       {imagePopoverOpen && (
         <div
           className="fixed inset-0 bg-background/20 z-40"
@@ -66,7 +65,6 @@ export default function CardRow({
         />
       )}
 
-      {/* CARD ROW - Minimal with subtle structure */}
       <div
         className={`
           flex items-center px-4 py-2 cursor-pointer hover:bg-muted/15
@@ -88,14 +86,18 @@ export default function CardRow({
           <ChevronRight className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
         )}
 
-        {/* Card Name and Inline Actions */}
         <div className="flex items-center flex-1 min-w-0">
           <span
-            className={cn("font-light text-sm text-muted-foreground", {
+            className={cn("font-light text-sm", {
               "text-foreground": !outOfStock,
               "text-muted-foreground": outOfStock || card.stock === null,
             })}
           >
+            {card.collector_number && (
+              <span className="inline-block mr-1.5 px-1 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium rounded">
+                #{card.collector_number}
+              </span>
+            )}
             {card.name}
             {card.stock !== null && (
               <span className="ml-2 text-xs text-muted-foreground">
@@ -107,9 +109,7 @@ export default function CardRow({
             )}
           </span>
 
-          {/* Action Buttons Container - grouped together */}
           <div className="flex items-center gap-1 ml-2">
-            {/* Image Preview Button */}
             {card.image_url && (
               <Popover
                 open={imagePopoverOpen}
@@ -159,7 +159,6 @@ export default function CardRow({
               </Popover>
             )}
 
-            {/* Add Stock Button */}
             <Button
               size="icon"
               variant="ghost"
@@ -170,24 +169,21 @@ export default function CardRow({
               <Plus className="w-3.5 h-3.5 text-muted-foreground" />
             </Button>
 
-            {/* External Link Button */}
-            {card.tcgplayer_id && (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={handleExternalLinkClick}
-                className="h-6 w-6 p-0 hover:bg-muted/50 rounded transition-colors opacity-0 group-hover:opacity-100"
-                title="View on TCGPlayer"
-              >
-                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
-            )}
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={handleExternalLinkClick}
+              className="h-6 w-6 p-0 hover:bg-muted/50 rounded transition-colors opacity-0 group-hover:opacity-100"
+              title={
+                card.tcgplayer_id ? "View on TCGPlayer" : "Search on TCGPlayer"
+              }
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
           </div>
         </div>
 
         <HStack gap={4}>
-          {" "}
-          {/* Price Alert Button */}
           {card.stock != null && (
             <div
               className={`${hasAlert ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}
@@ -202,7 +198,6 @@ export default function CardRow({
         </HStack>
       </div>
 
-      {/* Expanded Stock Table */}
       {expanded && (
         <div
           className="border-l border-border/50"
@@ -212,7 +207,6 @@ export default function CardRow({
         </div>
       )}
 
-      {/* Add Stock Dialog */}
       <AddStockDialog
         open={addStockDialogOpen}
         onOpenChangeAction={setAddStockDialogOpen}

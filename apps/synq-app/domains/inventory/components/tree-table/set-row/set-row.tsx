@@ -27,7 +27,12 @@ export default function SetRow({
     Array<
       Pick<
         CoreCard,
-        "id" | "name" | "tcgplayer_id" | "image_url" | "rarity"
+        | "id"
+        | "name"
+        | "tcgplayer_id"
+        | "image_url"
+        | "rarity"
+        | "collector_number"
       > & {
         stock: number | null;
         tcgplayer_price: number | null;
