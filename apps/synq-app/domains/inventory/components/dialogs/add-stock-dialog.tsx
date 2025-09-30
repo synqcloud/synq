@@ -89,6 +89,7 @@ export function AddStockDialog({
       queryClient.invalidateQueries({ queryKey: ["sets"] });
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       queryClient.invalidateQueries({ queryKey: ["userTransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-search"] });
       toast.success("Stock added successfully!");
       form.reset();
       onOpenChangeAction(false);

@@ -49,6 +49,7 @@ export default function PriceAlertButton({
       queryClient.invalidateQueries({
         queryKey: ["price-alerts", "batch"],
       });
+      queryClient.invalidateQueries({ queryKey: ["inventory-search"] });
     },
     onError: (error) => {
       console.error("Failed to toggle price alert:", error);

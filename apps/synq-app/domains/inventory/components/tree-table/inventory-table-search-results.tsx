@@ -1,8 +1,7 @@
 "use client";
-
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { InventoryService } from "@synq/supabase/services";
+import { InventoryService, PriceService } from "@synq/supabase/services";
 import CardRow from "./card-row/card-row";
 
 export default function InventoryTableSearchResults({
@@ -24,6 +23,15 @@ export default function InventoryTableSearchResults({
       InventoryService.searchCardsByName("client", normalized, options),
     enabled: normalized.length > 0,
     staleTime: 30_000,
+  });
+
+  // Add alert fetching
+  const cardIds = useMemo(() => data.map((c) => c.id), [data]);
+  const { data: alertCardIds = new Set() } = useQuery({
+    queryKey: ["price-alerts", "batch", "search", cardIds],
+    queryFn: () => PriceService.getUserPriceAlerts(cardIds, "client"),
+    enabled: cardIds.length > 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   if (!normalized) return null;
@@ -72,7 +80,7 @@ export default function InventoryTableSearchResults({
               rarity: card.rarity,
               image_url: card.image_url,
             }}
-            hasAlert={false}
+            hasAlert={alertCardIds.has(card.id)}
           />
         );
       })}
