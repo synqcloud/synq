@@ -1,54 +1,52 @@
-// app/sitemap.ts - For App Router
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://www.trysynq.com";
+  const currentDate = new Date();
 
   return [
     {
       url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 1,
+      lastModified: currentDate,
+      changeFrequency: "daily", // ✅ Good for homepage
+      priority: 1.0,
+    },
+    // Add key sections as separate entries
+    {
+      url: `${baseUrl}/#features`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/#about-us`,
+      lastModified: currentDate,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/#early-access`,
+      lastModified: currentDate,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/#contact`,
+      lastModified: currentDate,
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
+      lastModified: currentDate,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
       url: `${baseUrl}/terms`,
-      lastModified: new Date(),
+      lastModified: currentDate,
       changeFrequency: "yearly",
       priority: 0.3,
     },
   ];
-}
-
-// Alternative for Pages Router - pages/api/sitemap.xml.ts
-export function generateSitemapXML() {
-  const baseUrl = "https://www.trysynq.com";
-  const pages = [
-    { url: "", priority: "1.0", changefreq: "daily" },
-    { url: "/privacy", priority: "0.3", changefreq: "yearly" },
-    { url: "/terms", priority: "0.3", changefreq: "yearly" },
-  ];
-
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${pages
-    .map(
-      (page) => `
-  <url>
-    <loc>${baseUrl}${page.url}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`,
-    )
-    .join("")}
-</urlset>`;
-
-  return sitemap;
 }
