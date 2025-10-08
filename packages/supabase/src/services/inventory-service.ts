@@ -63,7 +63,14 @@ export class InventoryService extends ServiceBase {
       limit?: number;
       stockFilter?: "all" | "in-stock" | "out-of-stock";
     },
-  ): Promise<Array<{ id: string; name: string; stock: number | null }>> {
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+      stock: number | null;
+      total_value: number | null;
+    }>
+  > {
     const userId = await this.getCurrentUserId(context);
     const { offset = 0, limit, stockFilter = "all" } = options || {};
 
@@ -88,6 +95,7 @@ export class InventoryService extends ServiceBase {
           id: string;
           name: string;
           stock: number | null;
+          total_value: number | null;
         }>;
       },
       {
@@ -115,6 +123,7 @@ export class InventoryService extends ServiceBase {
       name: string;
       stock: number | null;
       is_upcoming: boolean;
+      total_value: number | null;
     }>
   > {
     const userId = await this.getCurrentUserId(context);
@@ -136,13 +145,13 @@ export class InventoryService extends ServiceBase {
         );
 
         if (error) throw error;
-        return (sets ?? []) as Array<
-          {
-            id: string;
-            name: string;
-            stock: number | null;
-          } & { is_upcoming: boolean }
-        >;
+        return (sets ?? []) as Array<{
+          id: string;
+          name: string;
+          stock: number | null;
+          total_value: number | null;
+          is_upcoming: boolean;
+        }>;
       },
       {
         service: "InventoryService",
@@ -253,6 +262,40 @@ export class InventoryService extends ServiceBase {
       {
         service: "InventoryService",
         method: "fetchStockByCard",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Get stock entries for a specific card with marketplace listings
+   */
+  static async fetchInventoryTableSummary(
+    context: "client" | "server" = "client",
+  ): Promise<{
+    total_items: number | null;
+    total_stock: number | null;
+    total_inventory_value: number | null;
+  }> {
+    const userId = await this.getCurrentUserId(context);
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        // Add explicit error handling for empty results
+        const { data, error } = await client.rpc("get_user_inventory_summary", {
+          p_user_id: userId,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        return data[0];
+      },
+      {
+        service: "InventoryService",
+        method: "fetchInventoryTableSummary",
         userId: userId || undefined,
       },
     );
@@ -458,7 +501,7 @@ export class InventoryService extends ServiceBase {
           "get_user_cards_with_stock",
           {
             p_user_id: userId,
-            p_set_id: null, // ✅ no specific set
+            p_set_id: null, // no specific set
             p_search_query: searchQuery,
             p_offset: offset,
             p_limit: limit ?? null,

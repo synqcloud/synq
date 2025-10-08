@@ -4,6 +4,9 @@ import SetRow from "../set-row/set-row";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { CoreLibrary, InventoryService } from "@synq/supabase/services";
 import { StockFilterType } from "../inventory-table-filters";
+import { HStack } from "@synq/ui/component";
+import { formatCurrency } from "@/shared/utils/format-currency";
+import { useCurrency } from "@/shared/contexts/currency-context";
 
 const SETS_PER_BATCH = 44;
 
@@ -11,7 +14,10 @@ export function LibraryRow({
   library,
   stockFilter,
 }: {
-  library: Pick<CoreLibrary, "id" | "name"> & { stock: number | null };
+  library: Pick<CoreLibrary, "id" | "name"> & {
+    stock: number | null;
+    total_value: number | null;
+  };
   stockFilter: StockFilterType;
 }) {
   const [expanded, setExpanded] = useState(true);
@@ -21,12 +27,15 @@ export function LibraryRow({
       name: string;
       stock: number | null;
       is_upcoming: boolean;
+      total_value: number | null;
     }>
   >([]);
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
+
+  const { currency } = useCurrency();
 
   const queryKey = expanded
     ? ["sets", library.id, expanded, stockFilter]
@@ -104,25 +113,58 @@ export function LibraryRow({
   return (
     <div key={library.id}>
       <div
-        className="flex items-center px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+        className="group flex items-center px-4 py-2 cursor-pointer
+          transition-all duration-200 ease-out
+          hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent
+          hover:pl-5 hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]
+          active:scale-[0.99] rounded-sm"
         onClick={() => setExpanded((prev) => !prev)}
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 mr-2 text-muted-foreground" />
+          <ChevronDown
+            className="w-4 h-4 mr-2 text-muted-foreground
+            transition-all duration-200
+            group-hover:text-primary group-hover:scale-110"
+          />
         ) : (
-          <ChevronRight className="w-4 h-4 mr-2 text-muted-foreground" />
+          <ChevronRight
+            className="w-4 h-4 mr-2 text-muted-foreground
+            transition-all duration-200
+            group-hover:text-primary group-hover:translate-x-1"
+          />
         )}
-        <span className="flex-1 font-light text-lg text-foreground">
+        <span
+          className="flex-1 font-light text-lg text-foreground
+          transition-colors duration-200
+          group-hover:text-primary"
+        >
           {library.name}
           {library.stock !== null && (
-            <span className="ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded">
+            <span
+              className="ml-2 px-2 py-0.5 bg-muted text-muted-foreground
+              text-xs font-medium rounded
+              transition-all duration-200
+              group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105
+              inline-block"
+            >
               {library.stock}
             </span>
           )}
           {library.stock === 0 && (
-            <span className="ml-1 text-xs text-red-500">(Out of Stock)</span>
+            <span
+              className="ml-1 text-xs text-red-500
+              transition-opacity duration-200
+              group-hover:opacity-80"
+            >
+              (Out of Stock)
+            </span>
           )}
         </span>
+        <HStack gap={4}>
+          <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
+            {formatCurrency(library.total_value || 0, currency)}
+          </span>
+        </HStack>
       </div>
 
       {expanded && (

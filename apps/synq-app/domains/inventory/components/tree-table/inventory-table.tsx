@@ -17,6 +17,7 @@ import InventoryTableSearchResults from "./inventory-table-search-results";
 // Services
 import { InventoryService } from "@synq/supabase/services";
 import { useQuery } from "@tanstack/react-query";
+import { InventoryTableSummary } from "./inventory-table-summary";
 
 export default function InventoryTable() {
   const [stockFilter, setStockFilter] = useState<StockFilterType>("all");
@@ -60,6 +61,8 @@ export default function InventoryTable() {
           ))
         )}
       </div>
+
+      <InventoryTableSummary />
     </div>
   );
 }

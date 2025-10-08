@@ -74,61 +74,58 @@ serve(async (req) => {
           .update({ status: "processing" })
           .eq("id", item.id);
 
-        const { data: card } = await supabase
+        // Fetch card name
+        const { data: cardData, error: cardError } = await supabase
           .from("core_cards")
-          .select(
-            "id, external_source, external_id, price_key, tcgplayer_id, name",
-          )
+          .select("name")
           .eq("id", item.core_card_id)
           .single();
 
-        if (!card) {
-          console.warn(`Card not found for id ${item.core_card_id}`);
-          await supabase
-            .from("daily_processing_queue")
-            .update({ status: "failed" })
-            .eq("id", item.id);
-          continue;
+        if (cardError) {
+          console.error(
+            `Error fetching card data for ${item.core_card_id}:`,
+            cardError,
+          );
+          throw cardError;
         }
 
-        const { data: existingPrice } = await supabase
+        const cardName = cardData?.name || "Unknown Card";
+
+        // Fetch existing prices
+        const { data: existingPrice, error: priceError } = await supabase
           .from("core_card_prices")
-          .select("tcgplayer_price, cardmarket_price")
+          .select(
+            "tcgplayer_price, cardmarket_price, previous_tcgplayer_price, previous_cardmarket_price",
+          )
           .eq("core_card_id", item.core_card_id)
           .single();
 
-        const newPriceData = await fetchPriceData(card);
-        if (!newPriceData) {
-          console.warn(`No price data for ${card.name}`);
-          await supabase
-            .from("daily_processing_queue")
-            .update({ status: "failed" })
-            .eq("id", item.id);
-          continue;
+        if (priceError) {
+          console.error(
+            `Error fetching prices for ${item.core_card_id}:`,
+            priceError,
+          );
+          throw priceError;
         }
 
-        const priceChanges = calculatePriceChanges(existingPrice, newPriceData);
-
-        await supabase.from("core_card_prices").upsert(
+        const priceChanges = calculatePriceChanges(
           {
-            core_card_id: item.core_card_id,
-            tcgplayer_price: newPriceData.tcgplayer_price,
-            cardmarket_price: newPriceData.cardmarket_price,
+            tcgplayer_price: existingPrice?.previous_tcgplayer_price,
+            cardmarket_price: existingPrice?.previous_cardmarket_price,
           },
-          { onConflict: "core_card_id" },
+          {
+            tcgplayer_price: existingPrice?.tcgplayer_price,
+            cardmarket_price: existingPrice?.cardmarket_price,
+          },
         );
 
-        if (
-          existingPrice &&
-          (priceChanges.tcgplayer_change || priceChanges.cardmarket_change)
-        ) {
+        if (priceChanges.tcgplayer_change || priceChanges.cardmarket_change) {
           await createPriceChangeNotifications(
             supabase,
             item.core_card_id,
-            card.name,
+            cardName,
             priceChanges,
             existingPrice,
-            newPriceData,
           );
         }
 
@@ -142,7 +139,7 @@ serve(async (req) => {
 
         const itemEnd = Date.now();
         console.log(
-          `Processed card ${item.core_card_id} in ${itemEnd - itemStart} ms`,
+          `Processed card ${item.core_card_id} (${cardName}) in ${itemEnd - itemStart} ms`,
         );
       } catch (err) {
         console.error(`Error processing card ${item.core_card_id}:`, err);
@@ -232,124 +229,6 @@ serve(async (req) => {
   }
 });
 
-// Helper function to convert USD price key to EUR equivalent
-function convertUsdToEurPriceKey(usdPriceKey) {
-  const conversionMap = {
-    usd: "eur",
-    usd_foil: "eur_foil",
-    usd_etched: "eur_etched",
-  };
-  return conversionMap[usdPriceKey] || "eur"; // fallback to 'eur' if no match
-}
-
-async function fetchPriceData(card) {
-  try {
-    console.log(`Fetching price data for ${card.external_source}`);
-    switch (card.external_source) {
-      case "scryfall":
-        return await fetchScryfallPrice(card.external_id, card.price_key);
-      case "tcgplayer":
-        return await fetchTCGPlayerPrice(card.tcgplayer_id || card.external_id);
-      case "cardmarket":
-        return await fetchCardMarketPrice(card.external_id);
-      default:
-        console.error(`Unsupported external source: ${card.external_source}`);
-        return null;
-    }
-  } catch (error) {
-    console.error("Error fetching price data:", error);
-    return null;
-  }
-}
-
-async function fetchScryfallPrice(cardId, priceKey) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s
-
-  try {
-    const response = await fetch(`https://api.scryfall.com/cards/${cardId}`, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": "CardPriceTracker/1.0",
-        Accept: "application/json",
-      },
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Scryfall API error: ${response.status} - ${errorText}`);
-      throw new Error(`Failed to fetch card data: ${response.statusText}`);
-    }
-
-    const cardData = await response.json();
-
-    if (!cardData.prices) {
-      return { tcgplayer_price: null, cardmarket_price: null };
-    }
-
-    const result = { tcgplayer_price: null, cardmarket_price: null };
-
-    // Get USD price for TCGPlayer
-    let usdPrice = null;
-    const usdPriceValue = cardData.prices[priceKey];
-    if (usdPriceValue !== null && usdPriceValue !== undefined) {
-      usdPrice =
-        typeof usdPriceValue === "string"
-          ? parseFloat(usdPriceValue)
-          : typeof usdPriceValue === "number"
-            ? usdPriceValue
-            : null;
-      if (usdPrice !== null && isNaN(usdPrice)) usdPrice = null;
-    }
-
-    // Get EUR price for CardMarket (convert USD price key to EUR equivalent)
-    const eurPriceKey = convertUsdToEurPriceKey(priceKey);
-    let eurPrice = null;
-    const eurPriceValue = cardData.prices[eurPriceKey];
-    if (eurPriceValue !== null && eurPriceValue !== undefined) {
-      eurPrice =
-        typeof eurPriceValue === "string"
-          ? parseFloat(eurPriceValue)
-          : typeof eurPriceValue === "number"
-            ? eurPriceValue
-            : null;
-      if (eurPrice !== null && isNaN(eurPrice)) eurPrice = null;
-    }
-
-    // Assign prices based on the original price key type
-    if (["usd", "usd_foil", "usd_etched"].includes(priceKey)) {
-      result.tcgplayer_price = usdPrice;
-      result.cardmarket_price = eurPrice;
-    } else if (priceKey === "tix") {
-      result.tcgplayer_price = usdPrice;
-      // No EUR equivalent for tix, keep cardmarket_price as null
-    } else {
-      // fallback - assume it's a USD price key
-      result.tcgplayer_price = usdPrice;
-      result.cardmarket_price = eurPrice;
-    }
-
-    console.log(
-      `Price data for card ${cardId}: TCG=${result.tcgplayer_price}, CM=${result.cardmarket_price} (keys: ${priceKey}/${eurPriceKey})`,
-    );
-    return result;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    console.error("Error fetching Scryfall price:", error);
-    return { tcgplayer_price: null, cardmarket_price: null };
-  }
-}
-
-async function fetchTCGPlayerPrice(productId) {
-  throw new Error("TCGPlayer API not implemented yet");
-}
-
-async function fetchCardMarketPrice(productId) {
-  throw new Error("CardMarket API not implemented yet");
-}
-
 function calculatePriceChanges(existingPrice, newPrice) {
   const changes = {
     tcgplayer_change: null,
@@ -395,7 +274,6 @@ async function createPriceChangeNotifications(
   cardName,
   priceChanges,
   existingPrice,
-  newPrice,
 ) {
   const { data: alertUsers, error } = await supabaseClient
     .from("user_card_price_alerts")
@@ -411,49 +289,75 @@ async function createPriceChangeNotifications(
     const priceChangeDetails = {};
 
     // TCGPlayer
-    const oldTCG = existingPrice?.tcgplayer_price ?? null;
-    const newTCG = newPrice.tcgplayer_price ?? null;
+    const oldTCG = existingPrice?.previous_tcgplayer_price ?? null;
+    const newTCG = existingPrice?.tcgplayer_price ?? null;
     if (oldTCG !== newTCG) {
+      const oldPriceText =
+        oldTCG !== null ? `${oldTCG.toFixed(2)}` : "(no listing)";
+      const newPriceText =
+        newTCG !== null ? `${newTCG.toFixed(2)}` : "(no listing)";
+
       const direction =
         oldTCG != null && newTCG != null
           ? newTCG > oldTCG
             ? "increased"
             : "decreased"
           : "changed";
+
+      const changePercent =
+        oldTCG != null && newTCG != null && oldTCG !== 0
+          ? ((newTCG - oldTCG) / oldTCG) * 100
+          : null;
+
+      const changeText =
+        changePercent !== null
+          ? ` (${changePercent > 0 ? "+" : ""}${changePercent.toFixed(1)}%)`
+          : "";
+
       changesMessages.push(
-        `TCGPlayer price ${newTCG === null ? "unavailable" : direction}`,
+        `TCGPlayer: ${oldPriceText} → ${newPriceText}${changeText}`,
       );
       priceChangeDetails.tcgplayer = {
         old_price: oldTCG,
         new_price: newTCG,
-        change_percent:
-          oldTCG != null && newTCG != null && oldTCG !== 0
-            ? ((newTCG - oldTCG) / oldTCG) * 100
-            : null,
+        change_percent: changePercent,
         direction,
       };
     }
 
     // CardMarket
-    const oldCM = existingPrice?.cardmarket_price ?? null;
-    const newCM = newPrice.cardmarket_price ?? null;
+    const oldCM = existingPrice?.previous_cardmarket_price ?? null;
+    const newCM = existingPrice?.cardmarket_price ?? null;
     if (oldCM !== newCM) {
+      const oldPriceText =
+        oldCM !== null ? `€${oldCM.toFixed(2)}` : "(no listing)";
+      const newPriceText =
+        newCM !== null ? `€${newCM.toFixed(2)}` : "(no listing)";
+
       const direction =
         oldCM != null && newCM != null
           ? newCM > oldCM
             ? "increased"
             : "decreased"
           : "changed";
+
+      const changePercent =
+        oldCM != null && newCM != null && oldCM !== 0
+          ? ((newCM - oldCM) / oldCM) * 100
+          : null;
+
+      const changeText =
+        changePercent !== null
+          ? ` (${changePercent > 0 ? "+" : ""}${changePercent.toFixed(1)}%)`
+          : "";
+
       changesMessages.push(
-        `CardMarket price ${newCM === null ? "unavailable" : direction}`,
+        `CardMarket: ${oldPriceText} → ${newPriceText}${changeText}`,
       );
       priceChangeDetails.cardmarket = {
         old_price: oldCM,
         new_price: newCM,
-        change_percent:
-          oldCM != null && newCM != null && oldCM !== 0
-            ? ((newCM - oldCM) / oldCM) * 100
-            : null,
+        change_percent: changePercent,
         direction,
       };
     }

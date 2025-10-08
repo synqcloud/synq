@@ -54,27 +54,12 @@ interface NavItem {
 }
 
 // NAV ITEMS
-const navItems: NavItem[] = [
-  { title: "Home", url: "/home", icon: Home },
-  {
-    title: "Stock Updates",
-    url: "/stock-updates",
-    icon: ClockFading,
-    disabled: true,
-  },
-];
+const navItems: NavItem[] = [{ title: "Home", url: "/home", icon: Home }];
 
 // FEATURE ITEMS
 const featureItems: NavItem[] = [
   { title: "Inventory", url: "/inventory", icon: Package },
   { title: "Transactions", url: "/transactions", icon: ArrowRightLeft },
-  {
-    title: "Alerts & Automation",
-    url: "/alerts",
-    icon: Siren,
-    disabled: true,
-  },
-  { title: "Reports", url: "/reports", icon: ScrollText, disabled: true },
 ];
 
 // SETTINGS ITEMS

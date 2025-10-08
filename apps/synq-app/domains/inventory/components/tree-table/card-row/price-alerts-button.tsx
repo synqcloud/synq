@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Siren } from "lucide-react";
+import { Bell } from "lucide-react"; // Changed from Siren to Bell
 import { Button } from "@synq/ui/component";
 import {
   Tooltip,
@@ -45,7 +45,6 @@ export default function PriceAlertButton({
             "You'll be notified daily when this card's price changes.",
         });
       }
-
       queryClient.invalidateQueries({
         queryKey: ["price-alerts", "batch"],
       });
@@ -53,13 +52,11 @@ export default function PriceAlertButton({
     },
     onError: (error) => {
       console.error("Failed to toggle price alert:", error);
-
       // Show error toast
       toast.error("Failed to update price alert", {
         description:
           "Please try again. If the problem persists, contact support.",
       });
-
       queryClient.invalidateQueries({
         queryKey: ["price-alerts", "batch"],
       });
@@ -78,17 +75,17 @@ export default function PriceAlertButton({
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
-            size="sm"
-            className={`h-8 w-8 p-0 hover:bg-accent/70 transition-colors ${className}`}
+            size="icon"
+            className={`h-6 w-6 p-0 rounded hover:bg-amber-500/10 transition-all ${className}`}
             onClick={handleToggleAlert}
             disabled={toggleAlertMutation.isPending}
           >
-            <Siren
-              className={`h-4 w-4 transition-colors ${
+            <Bell
+              className={`h-3.5 w-3.5 transition-all ${
                 hasAlert
                   ? "text-amber-500 fill-amber-500"
                   : "text-muted-foreground hover:text-amber-400"
-              } ${toggleAlertMutation.isPending ? "opacity-50" : ""}`}
+              } ${toggleAlertMutation.isPending ? "opacity-50 animate-pulse" : ""}`}
             />
           </Button>
         </TooltipTrigger>

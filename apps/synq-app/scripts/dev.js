@@ -155,7 +155,7 @@ async function main() {
     sectionHeader("STARTING DEVELOPMENT SERVER");
     log("\x1b[32m", "🚀", "Launching Next.js with Turbopack...");
 
-    const devProcess = spawn("next", ["dev", "--turbopack"], {
+    const devProcess = spawn("next", ["dev", "--turbopack", "-p 3000"], {
       stdio: "inherit",
       shell: true,
     });

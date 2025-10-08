@@ -38,16 +38,22 @@ export type Database = {
         Row: {
           cardmarket_price: number | null
           core_card_id: string
+          previous_cardmarket_price: number | null
+          previous_tcgplayer_price: number | null
           tcgplayer_price: number | null
         }
         Insert: {
           cardmarket_price?: number | null
           core_card_id: string
+          previous_cardmarket_price?: number | null
+          previous_tcgplayer_price?: number | null
           tcgplayer_price?: number | null
         }
         Update: {
           cardmarket_price?: number | null
           core_card_id?: string
+          previous_cardmarket_price?: number | null
+          previous_tcgplayer_price?: number | null
           tcgplayer_price?: number | null
         }
         Relationships: [
@@ -708,6 +714,14 @@ export type Database = {
           tcgplayer_price: number
         }[]
       }
+      get_user_inventory_summary: {
+        Args: { p_user_id: string }
+        Returns: {
+          total_inventory_value: number
+          total_items: number
+          total_stock: number
+        }[]
+      }
       get_user_libraries_with_stock: {
         Args: {
           p_library_ids: string[]
@@ -720,6 +734,7 @@ export type Database = {
           id: string
           name: string
           stock: number
+          total_value: number
         }[]
       }
       get_user_marketplaces: {
@@ -752,6 +767,7 @@ export type Database = {
           is_upcoming: boolean
           name: string
           stock: number
+          total_value: number
         }[]
       }
       get_user_transactions: {
