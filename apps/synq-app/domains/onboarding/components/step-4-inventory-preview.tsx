@@ -1,48 +1,52 @@
 "use client";
 import React from "react";
 import { StepWrapper } from "@/domains/onboarding/components/step-wrapper";
-import { Button, Card } from "@synq/ui/component";
+import { Button, Card, Label, HStack, VStack } from "@synq/ui/component";
 import { useOnboarding } from "@/domains/onboarding/hooks/use-onboarding";
-import { StockDisplay } from "@/domains/inventory/components/tree-table/stock-row/stock-display";
 import type { UserStockWithListings } from "@synq/supabase/services";
-import { Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, Bell, BellRing } from "lucide-react";
 import { toast } from "sonner";
-import { Bell, BellRing } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
+import { getConditionColor } from "@/features/inventory/utils/condition-colors";
+import { formatCurrency } from "@/shared/utils/format-currency";
 
-// Simple mocked stock item compatible with StockDisplay
-const mockStocks: UserStockWithListings[] = [
+// Mock stocks for Magic: The Gathering cards
+const mockStocks: Array<UserStockWithListings & { marketplaces: string[] }> = [
   {
     stock_id: "mock-1",
-    card_id: "card-xyz",
-    quantity: 3,
+    card_id: "card-lotus",
+    quantity: 2,
     condition: "Near Mint",
-    cogs: 2.5,
-    sku: "ABC-123",
-    location: "Binder A",
+    cogs: 15000.0,
+    sku: "MTG-LOT-001",
+    location: "Vault A",
     language: "EN",
+    marketplaces: ["TCGplayer", "cardtrader"],
   },
   {
     stock_id: "mock-2",
-    card_id: "card-xyz",
+    card_id: "card-lotus",
     quantity: 1,
     condition: "Lightly Played",
-    cogs: 1.75,
-    sku: "DEF-456",
-    location: "Box 2",
+    cogs: 12500.0,
+    sku: "MTG-LOT-002",
+    location: "Safe Box 1",
     language: "EN",
+    marketplaces: ["cardmarket"],
   },
   {
     stock_id: "mock-3",
-    card_id: "card-xyz",
-    quantity: 2,
+    card_id: "card-lotus",
+    quantity: 3,
     condition: "Near Mint",
-    cogs: 3.1,
-    sku: "GHI-789",
-    location: "Shelf C",
+    cogs: 16200.0,
+    sku: "MTG-LOT-003",
+    location: "Display Case",
     language: "JP",
+    marketplaces: ["TCGplayer", "cardtrader", "cardmarket"],
   },
-] as UserStockWithListings[];
+] as Array<UserStockWithListings & { marketplaces: string[] }>;
 
 export default function Step4InventoryPreview() {
   const { completeCurrentStep, next } = useOnboarding();
@@ -121,7 +125,7 @@ export default function Step4InventoryPreview() {
           }}
         >
           Add stock for each card and choose where it's listed. Set price alerts
-          with the siren icon.
+          with the bell icon.
         </motion.p>
 
         <motion.div
@@ -173,7 +177,7 @@ export default function Step4InventoryPreview() {
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                 >
-                  {/* Header */}
+                  {/* Desktop Header */}
                   <motion.div
                     className="hidden md:block px-4 py-2 bg-muted text-sm font-medium text-muted-foreground border-b"
                     style={{ paddingLeft: `${64 + 3 * 24}px` }}
@@ -215,10 +219,8 @@ export default function Step4InventoryPreview() {
                     </div>
                   </motion.div>
 
-                  {/* Rows (mocked) */}
+                  {/* Stock Rows */}
                   <motion.div
-                    className="p-4"
-                    style={{ paddingLeft: `${64 + 3 * 24}px` }}
                     initial="hidden"
                     animate="show"
                     variants={{
@@ -232,30 +234,171 @@ export default function Step4InventoryPreview() {
                       },
                     }}
                   >
-                    {mockStocks.map((s, index) => (
+                    {mockStocks.map((stock) => (
                       <motion.div
-                        key={s.stock_id}
-                        className="border-b border-border last:border-b-0"
+                        key={stock.stock_id}
                         variants={{
                           hidden: { opacity: 0, x: -10 },
                           show: { opacity: 1, x: 0 },
                         }}
                         transition={{ duration: 0.2 }}
                       >
-                        <div
-                          className="grid gap-2 text-sm items-center w-full py-3"
-                          style={{
-                            gridTemplateColumns:
-                              "minmax(40px,1fr) minmax(80px,1.5fr) minmax(80px,1.5fr) minmax(60px,1fr) minmax(80px,1.5fr) minmax(80px,1.5fr) minmax(120px,2fr) minmax(70px,1fr)",
-                          }}
-                        >
-                          <StockDisplay
-                            stock={s}
-                            marketplaces={["TCGplayer", "cardtrader"]}
-                            cardId={s.card_id}
-                            onEdit={() => {}}
-                            onOpenDialog={() => {}}
-                          />
+                        {/* Desktop View */}
+                        <div className="hidden md:block">
+                          <div
+                            className="px-4 py-2 border-b border-border w-full"
+                            style={{ paddingLeft: `${64 + 3 * 24}px` }}
+                          >
+                            <div
+                              className="grid gap-2 text-sm items-center w-full"
+                              style={{
+                                gridTemplateColumns:
+                                  "minmax(40px, 1fr) minmax(80px, 1.5fr) minmax(80px, 1.5fr) minmax(60px, 1fr) minmax(80px, 1.5fr) minmax(80px, 1.5fr) minmax(120px, 2fr) minmax(70px, 1fr)",
+                              }}
+                            >
+                              {/* Quantity */}
+                              <span className="font-medium">
+                                {stock.quantity || "-"}
+                              </span>
+
+                              {/* Condition */}
+                              <span
+                                className={getConditionColor(stock.condition)}
+                              >
+                                {stock.condition || "-"}
+                              </span>
+
+                              {/* Cost (COGS) */}
+                              <span className="text-accent-foreground">
+                                {stock.cogs != null
+                                  ? formatCurrency(stock.cogs, "usd")
+                                  : "-"}
+                              </span>
+
+                              {/* SKU */}
+                              <span className="text-foreground">
+                                {stock.sku || "-"}
+                              </span>
+
+                              {/* Location */}
+                              <span className="text-foreground">
+                                {stock.location || "-"}
+                              </span>
+
+                              {/* Language */}
+                              <span className="text-foreground">
+                                {stock.language || "-"}
+                              </span>
+
+                              {/* Marketplaces */}
+                              <HStack gap={2} align="center" wrap="wrap">
+                                {stock.marketplaces.map((mp: string) => (
+                                  <MarketplaceIcon
+                                    key={mp}
+                                    marketplace={mp}
+                                    showTooltip={false}
+                                  />
+                                ))}
+                              </HStack>
+
+                              {/* Actions (disabled) */}
+                              <span className="text-muted-foreground text-xs">
+                                -
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Mobile View */}
+                        <div className="block md:hidden">
+                          <div
+                            className="px-4 py-3 border-b border-border"
+                            style={{ paddingLeft: `${64 + 3 * 24}px` }}
+                          >
+                            <VStack gap={3}>
+                              {/* First row: Quantity, Condition, Cost */}
+                              <HStack justify="between" align="center">
+                                <HStack gap={4} align="center">
+                                  <VStack gap={1}>
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                      Qty
+                                    </Label>
+                                    <span className="font-medium">
+                                      {stock.quantity || "-"}
+                                    </span>
+                                  </VStack>
+                                  <VStack gap={1}>
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                      Condition
+                                    </Label>
+                                    <span
+                                      className={getConditionColor(
+                                        stock.condition,
+                                      )}
+                                    >
+                                      {stock.condition || "-"}
+                                    </span>
+                                  </VStack>
+                                  <VStack gap={1}>
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                      Cost
+                                    </Label>
+                                    <span className="text-accent-foreground">
+                                      {stock.cogs != null
+                                        ? formatCurrency(stock.cogs, "usd")
+                                        : "-"}
+                                    </span>
+                                  </VStack>
+                                </HStack>
+                              </HStack>
+
+                              {/* Second row: SKU, Location, Language */}
+                              <HStack justify="between" align="center">
+                                <HStack gap={4} align="center">
+                                  <VStack gap={1}>
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                      SKU
+                                    </Label>
+                                    <span className="text-sm">
+                                      {stock.sku || "-"}
+                                    </span>
+                                  </VStack>
+                                  <VStack gap={1}>
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                      Location
+                                    </Label>
+                                    <span className="text-sm">
+                                      {stock.location || "-"}
+                                    </span>
+                                  </VStack>
+                                  <VStack gap={1}>
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                      Language
+                                    </Label>
+                                    <span className="text-sm">
+                                      {stock.language || "-"}
+                                    </span>
+                                  </VStack>
+                                </HStack>
+                              </HStack>
+
+                              {/* Third row: Marketplaces */}
+                              <VStack gap={2}>
+                                <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                  Marketplaces
+                                </Label>
+                                <HStack gap={2} align="center" wrap="wrap">
+                                  {stock.marketplaces.map((mp: string) => (
+                                    <MarketplaceIcon
+                                      key={mp}
+                                      marketplace={mp}
+                                      showTooltip={false}
+                                    />
+                                  ))}
+                                </HStack>
+                              </VStack>
+                            </VStack>
+                          </div>
                         </div>
                       </motion.div>
                     ))}

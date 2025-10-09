@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 // Services
 import { CoreCard } from "@synq/supabase/services";
-import { Button, HStack } from "@synq/ui/component";
+import { Button } from "@synq/ui/component";
 import { Popover, PopoverContent, PopoverTrigger } from "@synq/ui/component";
 import { AddStockDialog } from "../../dialogs/add-stock-dialog";
 import { cn } from "@synq/ui/utils";

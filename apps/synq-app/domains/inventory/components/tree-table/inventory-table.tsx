@@ -35,7 +35,7 @@ export default function InventoryTable() {
   });
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full relative">
       <div className="p-4 bg-muted border-b">
         <InventoryTableFilters
           onChange={setStockFilter}

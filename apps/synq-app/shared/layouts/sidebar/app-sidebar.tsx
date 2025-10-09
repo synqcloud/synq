@@ -38,6 +38,7 @@ import {
   Siren,
   ClockFading,
   Plus,
+  ChartSpline,
 } from "lucide-react";
 
 // SHARED COMPONENTS
@@ -54,7 +55,9 @@ interface NavItem {
 }
 
 // NAV ITEMS
-const navItems: NavItem[] = [{ title: "Home", url: "/home", icon: Home }];
+const navItems: NavItem[] = [
+  { title: "Analytics", url: "/home", icon: ChartSpline },
+];
 
 // FEATURE ITEMS
 const featureItems: NavItem[] = [
@@ -101,18 +104,6 @@ const NavItem = ({
           <span className="flex-1 min-w-0 text-sm font-light tracking-[-0.01em]">
             {item.title}
           </span>
-          {item.title === "Transactions" && (
-            <div
-              className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 inline-flex items-center justify-center cursor-pointer hover:bg-gray-100 rounded"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                router.push("/transactions/new");
-              }}
-            >
-              <Plus />
-            </div>
-          )}
         </>
       )}
       {item.title === "View Page" && !isCollapsed && (
