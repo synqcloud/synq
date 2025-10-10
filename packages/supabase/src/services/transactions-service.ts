@@ -322,7 +322,7 @@ export class TransactionService extends ServiceBase {
     },
   ): Promise<Array<TransactionWithQuantity>> {
     const userId = await this.getCurrentUserId(context);
-    console.log(params?.filters);
+
     return this.execute(
       async () => {
         const client = await this.getClient(context);

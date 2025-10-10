@@ -49,7 +49,7 @@ export default function InventoryTable() {
         {searchQuery ? (
           <InventoryTableSearchResults
             query={searchQuery}
-            options={{ stockFilter }}
+            options={{ stockFilter: "all" }}
           />
         ) : allLibraries.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">

@@ -5,6 +5,7 @@ import { useCurrency } from "@/shared/contexts/currency-context";
 import { formatCurrency } from "@/shared/utils/format-currency";
 import { useQuery } from "@tanstack/react-query";
 import { InventoryService } from "@synq/supabase/services";
+import { TcgplayerIcon } from "@/shared/icons/icons";
 
 export function InventoryTableSummary() {
   const { currency } = useCurrency();
@@ -49,19 +50,26 @@ export function InventoryTableSummary() {
 
   return (
     <div className="p-4 bg-muted border-t text-sm font-light tracking-[-0.01em]">
-      <VStack gap={4} className="sm:flex-row sm:justify-between">
+      <VStack gap={4} className="sm:flex-row sm:justify-between" align="center">
         <HStack gap={4} className="flex-col sm:flex-row ml-4">
           <span className="text-primary">
             Total: {summaryData.total_items} items
           </span>
         </HStack>
 
-        <HStack gap={4}>
+        <HStack gap={4} align="center">
           <span>Total stock: {summaryData.total_stock}</span>
-          <span className="font-medium">
-            Value:{" "}
-            {formatCurrency(summaryData.total_inventory_value || 0, currency)}
-          </span>
+          <HStack
+            align="center"
+            gap={1.5}
+            className="border rounded-md px-1.5 py-1"
+          >
+            <TcgplayerIcon className="h-4 w-4" />
+            <span className="font-medium">
+              Total Value:{" "}
+              {formatCurrency(summaryData.total_inventory_value || 0, currency)}
+            </span>
+          </HStack>
         </HStack>
       </VStack>
     </div>

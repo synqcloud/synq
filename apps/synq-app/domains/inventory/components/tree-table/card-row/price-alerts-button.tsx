@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell } from "lucide-react"; // Changed from Siren to Bell
+import { Bell } from "lucide-react";
 import { Button } from "@synq/ui/component";
 import {
   Tooltip,
@@ -76,12 +76,12 @@ export default function PriceAlertButton({
           <Button
             variant="ghost"
             size="icon"
-            className={`h-6 w-6 p-0 rounded hover:bg-amber-500/10 transition-all ${className}`}
+            className={`h-5 w-5 p-0 rounded hover:bg-amber-500/10 transition-all ${className}`}
             onClick={handleToggleAlert}
             disabled={toggleAlertMutation.isPending}
           >
             <Bell
-              className={`h-3.5 w-3.5 transition-all ${
+              className={`h-3 w-3 transition-all ${
                 hasAlert
                   ? "text-amber-500 fill-amber-500"
                   : "text-muted-foreground hover:text-amber-400"

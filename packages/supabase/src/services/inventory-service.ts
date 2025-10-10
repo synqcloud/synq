@@ -237,18 +237,18 @@ export class InventoryService extends ServiceBase {
   static async fetchStockByCard(
     context: "client" | "server" = "client",
     cardId: string,
+    isActive: boolean = true,
   ): Promise<UserStockWithListings[]> {
     const userId = await this.getCurrentUserId(context);
     return this.execute(
       async () => {
         const client = await this.getClient(context);
-
         // Add explicit error handling for empty results
         const { data, error, count } = await client.rpc("get_card_stock", {
           p_user_id: userId,
           p_core_card_id: cardId,
+          p_is_active: isActive,
         });
-
         if (error) {
           // Handle the specific PGRST116 error
           if (error.code === "PGRST116") {
@@ -256,7 +256,6 @@ export class InventoryService extends ServiceBase {
           }
           throw error;
         }
-
         return data || [];
       },
       {

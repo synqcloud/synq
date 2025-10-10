@@ -241,7 +241,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="px-0">
-        <FeedbackButton isCollapsed={isCollapsed} />
         <NavUser isCollapsed={isCollapsed} />
       </SidebarFooter>
     </Sidebar>

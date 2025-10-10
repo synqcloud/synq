@@ -159,7 +159,7 @@ export default function StockTableRow({ stock, cardId }: StockTableRowProps) {
       <div className="hidden md:block">
         <div
           className="px-4 py-2 border-b border-border w-full"
-          style={{ paddingLeft: `${64 + 3 * 24}px` }}
+          style={{ paddingLeft: `${64 + 1.5 * 24}px` }}
         >
           <div
             className="grid gap-2 text-sm items-center w-full"

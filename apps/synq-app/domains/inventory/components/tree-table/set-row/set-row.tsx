@@ -12,6 +12,7 @@ import { StockFilterType } from "../inventory-table-filters";
 import { HStack } from "@synq/ui/component";
 import { formatCurrency } from "@/shared/utils/format-currency";
 import { useCurrency } from "@/shared/contexts/currency-context";
+import { TcgplayerIcon } from "@/shared/icons/icons";
 
 const CARDS_PER_BATCH = 44;
 
@@ -194,18 +195,16 @@ export default function SetRow({
           {/* Upcoming Badge */}
           {set.is_upcoming && (
             <div
-              className="flex items-center gap-1 px-2.5 py-1
-              bg-blue-50 dark:bg-blue-950/30
-              border border-blue-200 dark:border-blue-800
+              className="flex items-center gap-1 px-2 py-0.5
+              bg-primary/5 dark:bg-primary/10
+              border border-primary/20 dark:border-primary/30
               rounded-full
-              group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40
-              group-hover:border-blue-300 dark:group-hover:border-blue-700
+              group-hover:bg-primary/10 dark:group-hover:bg-primary/15
+              group-hover:border-primary/30 dark:group-hover:border-primary/40
              "
             >
-              <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                Upcoming
-              </span>
+              <Clock className="w-3 h-3 text-primary" />
+              <span className="text-xs font-medium text-primary">Upcoming</span>
             </div>
           )}
 
@@ -238,11 +237,18 @@ export default function SetRow({
             </span>
           )}
         </div>
-        <HStack gap={4}>
-          <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
-            {formatCurrency(set.total_value || 0, currency)}
-          </span>
-        </HStack>
+        {set?.total_value !== 0 && (
+          <HStack
+            align="center"
+            gap={1.5}
+            className="border rounded-md px-1.5 py-1"
+          >
+            <TcgplayerIcon className="h-4 w-4" />
+            <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
+              {formatCurrency(set.total_value || 0, currency)}
+            </span>
+          </HStack>
+        )}
       </div>
 
       {expanded && (

@@ -3,22 +3,16 @@ import { useState } from "react";
 // Components
 import StockTable from "../stock-row/stock-table";
 import PriceAlertButton from "./price-alerts-button";
-import {
-  ChevronDown,
-  ChevronRight,
-  CreditCard,
-  ExternalLink,
-  Eye,
-  Plus,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, Plus } from "lucide-react";
 // Services
 import { CoreCard } from "@synq/supabase/services";
-import { Button } from "@synq/ui/component";
+import { Button, HStack } from "@synq/ui/component";
 import { Popover, PopoverContent, PopoverTrigger } from "@synq/ui/component";
 import { AddStockDialog } from "../../dialogs/add-stock-dialog";
 import { cn } from "@synq/ui/utils";
 import { formatCurrency } from "@/shared/utils/format-currency";
 import { useCurrency } from "@/shared/contexts/currency-context";
+import { TcgplayerIcon } from "@/shared/icons/icons";
 
 export default function CardRow({
   card,
@@ -87,17 +81,55 @@ export default function CardRow({
         }}
         onClick={handleRowClick}
       >
-        {/* 💳 CreditCard icon */}
-        <CreditCard
-          className="w-3.5 h-3.5 mr-2.5 text-muted-foreground/70 flex-shrink-0
-          transition-all duration-200 group-hover:text-primary group-hover:scale-110"
-        />
-
         {/* Expand/Collapse Icons */}
         {expanded ? (
           <ChevronDown className="w-3.5 h-3.5 mr-2 text-muted-foreground transition-all duration-200 group-hover:scale-110" />
         ) : (
-          <ChevronRight className="w-3.5 h-3.5 mr-2 text-muted-foreground transition-all duration-200 group-hover:translate-x-1" />
+          <ChevronRight className="w-3.5 h-3.5 mr-2  text-muted-foreground transition-all duration-200 group-hover:translate-x-1" />
+        )}
+
+        {card.image_url && (
+          <Popover open={imagePopoverOpen} onOpenChange={setImagePopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleImageClick}
+                className="h-6 w-6 p-0 mr-2 rounded hover:bg-primary/10 hover:scale-110 transition-all duration-200"
+                title="View card image"
+              >
+                <Eye className="w-3.5 h-3.5 text-muted-foreground hover:text-primary transition-colors" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto p-2 max-w-sm z-50"
+              side="left"
+              align="center"
+              sideOffset={10}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-2">
+                <div className="relative overflow-hidden rounded-lg border bg-background shadow-lg">
+                  <img
+                    src={card.image_url}
+                    alt={`${card.name} card image`}
+                    className="h-80 w-auto object-contain max-w-none"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/placeholder-card.png";
+                    }}
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium truncate">{card.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Click outside to close
+                  </p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
 
         {/* Name and stock info */}
@@ -111,9 +143,9 @@ export default function CardRow({
           >
             {card.collector_number && (
               <span
-                className="inline-block mr-1.5 px-1.5 py-0.5
-                  bg-muted text-muted-foreground text-[10px] font-medium rounded
-                  transition-all duration-200 group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105"
+                className={cn(
+                  "inline-block mr-1.5 px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium rounded transition-all duration-200 group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105",
+                )}
               >
                 #{card.collector_number}
               </span>
@@ -133,55 +165,6 @@ export default function CardRow({
 
           {/* Action Icons */}
           <div className="flex items-center gap-1 ml-2">
-            {card.image_url && (
-              <Popover
-                open={imagePopoverOpen}
-                onOpenChange={setImagePopoverOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleImageClick}
-                    className="h-6 w-6 p-0 rounded opacity-0 group-hover:opacity-100 hover:bg-primary/10 hover:scale-110 transition-all duration-200"
-                    title="View card image"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-muted-foreground hover:text-primary transition-colors" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-2 max-w-sm z-50"
-                  side="left"
-                  align="center"
-                  sideOffset={10}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="space-y-2">
-                    <div className="relative overflow-hidden rounded-lg border bg-background shadow-lg">
-                      <img
-                        src={card.image_url}
-                        alt={`${card.name} card image`}
-                        className="h-80 w-auto object-contain max-w-none"
-                        loading="lazy"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder-card.png";
-                        }}
-                      />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium truncate">
-                        {card.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Click outside to close
-                      </p>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-
             <Button
               size="icon"
               variant="ghost"
@@ -191,30 +174,34 @@ export default function CardRow({
             >
               <Plus className="w-3.5 h-3.5 text-muted-foreground hover:text-primary transition-colors" />
             </Button>
-
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleExternalLinkClick}
-              className="h-6 w-6 p-0 rounded opacity-0 group-hover:opacity-100 hover:bg-primary/10 hover:scale-110 transition-all duration-200"
-              title={
-                card.tcgplayer_id ? "View on TCGPlayer" : "Search on TCGPlayer"
-              }
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary transition-colors" />
-            </Button>
           </div>
         </div>
 
         {/* Price with Alert Button - Fixed width container for alignment */}
-        <div className="flex items-center gap-2 min-w-[100px] justify-end">
+        <HStack
+          align="center"
+          gap={1.5}
+          className={cn(" ", {
+            " rounded-md px-1.5 py-1 border border-amber-500 hover:border-amber-400":
+              hasAlert,
+          })}
+        >
+          <button
+            onClick={handleExternalLinkClick}
+            className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
+            title={
+              card.tcgplayer_id ? "View on TCGPlayer" : "Search on TCGPlayer"
+            }
+          >
+            <TcgplayerIcon className="h-4 w-4" />
+            <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
+              {card?.tcgplayer_price != null
+                ? formatCurrency(card.tcgplayer_price || 0, currency)
+                : ""}
+            </span>
+          </button>
           <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
-          <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary w-[60px] text-center">
-            {card?.tcgplayer_price != null
-              ? formatCurrency(card.tcgplayer_price || 0, currency)
-              : "-"}
-          </span>
-        </div>
+        </HStack>
       </div>
 
       {expanded && (

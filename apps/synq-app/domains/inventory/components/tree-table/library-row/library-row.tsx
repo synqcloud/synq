@@ -7,6 +7,7 @@ import { StockFilterType } from "../inventory-table-filters";
 import { HStack } from "@synq/ui/component";
 import { formatCurrency } from "@/shared/utils/format-currency";
 import { useCurrency } from "@/shared/contexts/currency-context";
+import { TcgplayerIcon } from "@/shared/icons/icons";
 
 const SETS_PER_BATCH = 44;
 
@@ -20,7 +21,7 @@ export function LibraryRow({
   };
   stockFilter: StockFilterType;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [allSets, setAllSets] = useState<
     Array<{
       id: string;
@@ -160,7 +161,12 @@ export function LibraryRow({
             </span>
           )}
         </span>
-        <HStack gap={4}>
+        <HStack
+          align="center"
+          gap={1.5}
+          className="border rounded-md px-1.5 py-1"
+        >
+          <TcgplayerIcon className="h-4 w-4" />
           <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
             {formatCurrency(library.total_value || 0, currency)}
           </span>

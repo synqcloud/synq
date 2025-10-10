@@ -19,7 +19,7 @@ import {
   Separator,
   ScrollArea,
 } from "@synq/ui/component";
-import { X, ShoppingCart, Receipt, Loader2 } from "lucide-react";
+import { X, ShoppingCart, Receipt, Loader2, ShoppingBag } from "lucide-react";
 import { useQuickTransaction } from "@/shared/contexts/quick-transaction-context";
 import { useCurrency } from "@/shared/contexts/currency-context";
 import { formatCurrency } from "@/shared/utils/format-currency";
@@ -30,6 +30,8 @@ import {
   CreateTransactionItemData,
 } from "@synq/supabase/services";
 import { toast } from "sonner";
+import { STOCK_SOURCES } from "@/features/inventory/hooks/use-stock-data";
+import { useQueryClient } from "@tanstack/react-query";
 
 type TransactionFormData = {
   source: string;
@@ -47,9 +49,11 @@ export function QuickTransactionSheet() {
     useQuickTransaction();
   const { currency } = useCurrency();
 
+  const queryClient = useQueryClient();
+
   // Transaction-level form data
   const [transactionForm, setTransactionForm] = useState<TransactionFormData>({
-    source: "manual",
+    source: "in-store",
     shipping_amount: 0,
     tax_amount: 0,
   });
@@ -140,10 +144,42 @@ export function QuickTransactionSheet() {
         description: `Successfully created transaction with ${items.length} item${items.length !== 1 ? "s" : ""} for ${formatCurrency(total, currency)}`,
       });
 
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["stock"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["libraries"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["sets"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["cards"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["userTransactions"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["inventory-search"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["inventory-table-summary"],
+          exact: false,
+        }),
+        // …other invalidations
+      ]);
+
       // Clear all items and reset form after successful transaction
       clearAll();
       setTransactionForm({
-        source: "manual",
+        source: "in-store",
         shipping_amount: 0,
         tax_amount: 0,
       });
@@ -181,18 +217,18 @@ export function QuickTransactionSheet() {
 
   return (
     <Sheet open={isOpen} onOpenChange={closeSheet}>
-      <SheetContent side="right" className="w-full sm:max-w-lg p-8">
+      <SheetContent side="right" className="w-full sm:max-w-lg ">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingBag className="h-4 w-4" />
             Quick Transaction
           </SheetTitle>
-          <SheetDescription>
+          <SheetDescription className="text-xs">
             Create a quick sale transaction with selected items
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6 py-4">
+        <ScrollArea className="flex-1 px-8">
           <VStack gap={6}>
             {/* Items List */}
             <VStack gap={3}>
@@ -219,7 +255,7 @@ export function QuickTransactionSheet() {
                 </div>
               ) : items.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <ShoppingBag className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No items added yet</p>
                   <p className="text-xs mt-1">
                     Add items from the inventory page
@@ -251,7 +287,14 @@ export function QuickTransactionSheet() {
                               {item.card_name}
                             </h4>
                             <p className="text-xs text-muted-foreground">
-                              {item.set_name} • #{item.collector_number}
+                              {item.set_name} •{" "}
+                              <span
+                                className="inline-block mr-1.5 px-1.5 py-0.5
+                                  bg-muted text-muted-foreground text-[10px] font-medium rounded
+                                  transition-all duration-200 group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105"
+                              >
+                                #{item.collector_number}
+                              </span>
                             </p>
                             <HStack gap={2} className="mt-1">
                               <span
@@ -361,10 +404,11 @@ export function QuickTransactionSheet() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="manual">Manual</SelectItem>
-                        <SelectItem value="ebay">eBay</SelectItem>
-                        <SelectItem value="tcgplayer">TCGPlayer</SelectItem>
-                        <SelectItem value="cardmarket">Cardmarket</SelectItem>
+                        {STOCK_SOURCES.map((source) => (
+                          <SelectItem key={source} value={source}>
+                            {source}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </VStack>
