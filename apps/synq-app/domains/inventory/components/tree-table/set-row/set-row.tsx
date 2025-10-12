@@ -135,7 +135,7 @@ export default function SetRow({
     <div>
       <div
         className={`
-          group flex items-center px-4 py-2 cursor-pointer
+          group flex items-center px-4 py-2 cursor-pointer bg-accent/60
           transition-all duration-200 ease-out
           hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent
           hover:pl-5 hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]
@@ -237,7 +237,7 @@ export default function SetRow({
             </span>
           )}
         </div>
-        {set?.total_value !== 0 && (
+        {/*{set?.total_value !== 0 && (
           <HStack
             align="center"
             gap={1.5}
@@ -248,7 +248,7 @@ export default function SetRow({
               {formatCurrency(set.total_value || 0, currency)}
             </span>
           </HStack>
-        )}
+        )}*/}
       </div>
 
       {expanded && (

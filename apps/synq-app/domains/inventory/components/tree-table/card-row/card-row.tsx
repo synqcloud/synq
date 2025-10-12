@@ -59,33 +59,27 @@ export default function CardRow({
     <div key={card.id} className="group">
       {imagePopoverOpen && (
         <div
-          className="fixed inset-0 bg-background/20 z-40"
+          className="fixed inset-0 z-40"
           onClick={() => setImagePopoverOpen(false)}
         />
       )}
 
       <div
         className={cn(
-          `group flex items-center px-4 py-2 cursor-pointer
-           border-l transition-all duration-200 ease-out
-           rounded-sm`,
-          outOfStock ? "opacity-50 hover:opacity-70" : "",
+          `group flex items-center px-4 py-2 bg-accent/40  cursor-pointer hover:bg-accent transition-colors`,
+          outOfStock ? "opacity-60" : "",
           imagePopoverOpen ? "pointer-events-none" : "",
-          hasAlert
-            ? " border-amber-500 hover:border-amber-400"
-            : "hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent border-border hover:border-primary/40",
         )}
         style={{
           paddingLeft: `${16 + 2 * 24}px`,
-          marginLeft: `${16 + 1 * 24}px`,
         }}
         onClick={handleRowClick}
       >
         {/* Expand/Collapse Icons */}
         {expanded ? (
-          <ChevronDown className="w-3.5 h-3.5 mr-2 text-muted-foreground transition-all duration-200 group-hover:scale-110" />
+          <ChevronDown className="w-4 h-4 mr-2 text-muted-foreground" />
         ) : (
-          <ChevronRight className="w-3.5 h-3.5 mr-2  text-muted-foreground transition-all duration-200 group-hover:translate-x-1" />
+          <ChevronRight className="w-4 h-4 mr-2 text-muted-foreground" />
         )}
 
         {card.image_url && (
@@ -95,10 +89,10 @@ export default function CardRow({
                 size="icon"
                 variant="ghost"
                 onClick={handleImageClick}
-                className="h-6 w-6 p-0 mr-2 rounded hover:bg-primary/10 hover:scale-110 transition-all duration-200"
+                className="h-6 w-6 p-0 mr-2 rounded hover:bg-accent transition-colors"
                 title="View card image"
               >
-                <Eye className="w-3.5 h-3.5 text-muted-foreground hover:text-primary transition-colors" />
+                <Eye className="w-4 h-4 text-muted-foreground" />
               </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -135,31 +129,24 @@ export default function CardRow({
         {/* Name and stock info */}
         <div className="flex items-center flex-1 min-w-0">
           <span
-            className={cn("font-light text-sm transition-colors duration-200", {
-              "text-foreground group-hover:text-primary": !outOfStock,
-              "text-muted-foreground group-hover:text-foreground":
-                outOfStock || card.stock === null,
+            className={cn("font-light text-sm", {
+              "text-foreground": !outOfStock,
+              "text-muted-foreground": outOfStock || card.stock === null,
             })}
           >
             {card.collector_number && (
-              <span
-                className={cn(
-                  "inline-block mr-1.5 px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium rounded transition-all duration-200 group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105",
-                )}
-              >
+              <span className="inline-block mr-1.5 px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium rounded">
                 #{card.collector_number}
               </span>
             )}
             {card.name}
             {card.stock !== null && (
-              <span className="ml-2 text-xs text-muted-foreground transition-colors duration-200 group-hover:text-foreground group-hover:font-medium">
+              <span className="ml-2 text-xs text-muted-foreground">
                 ({card.stock})
               </span>
             )}
             {outOfStock && (
-              <span className="ml-1 text-xs text-red-500 transition-opacity duration-200 group-hover:opacity-80">
-                (Out of Stock)
-              </span>
+              <span className="ml-1 text-xs text-red-500">(Out of Stock)</span>
             )}
           </span>
 
@@ -169,21 +156,20 @@ export default function CardRow({
               size="icon"
               variant="ghost"
               onClick={handleAddStockClick}
-              className="h-6 w-6 p-0 rounded opacity-0 group-hover:opacity-100 hover:bg-primary/10 hover:scale-110 transition-all duration-200"
+              className="h-6 w-6 p-0 rounded opacity-0 group-hover:opacity-100 hover:bg-accent transition-all"
               title="Add stock"
             >
-              <Plus className="w-3.5 h-3.5 text-muted-foreground hover:text-primary transition-colors" />
+              <Plus className="w-4 h-4 text-muted-foreground" />
             </Button>
           </div>
         </div>
 
         {/* Price with Alert Button - Fixed width container for alignment */}
-        <HStack
+        {/*<HStack
           align="center"
           gap={1.5}
-          className={cn(" ", {
-            " rounded-md px-1.5 py-1 border border-amber-500 hover:border-amber-400":
-              hasAlert,
+          className={cn("border rounded-md px-1.5 py-1", {
+            "border-amber-500 hover:border-amber-400": hasAlert,
           })}
         >
           <button
@@ -200,15 +186,13 @@ export default function CardRow({
                 : ""}
             </span>
           </button>
-          <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
-        </HStack>
+        </HStack>*/}
+
+        <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
       </div>
 
       {expanded && (
-        <div
-          className="border-l border-border/50"
-          style={{ marginLeft: `${16 + 2 * 24}px` }}
-        >
+        <div>
           <StockTable cardId={card.id} cardName={card.name} />
         </div>
       )}

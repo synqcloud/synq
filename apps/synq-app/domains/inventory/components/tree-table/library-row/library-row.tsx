@@ -115,7 +115,7 @@ export function LibraryRow({
     <div key={library.id}>
       <div
         className="group flex items-center px-4 py-2 cursor-pointer
-          transition-all duration-200 ease-out
+          transition-all duration-200 ease-out bg-muted
           hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent
           hover:pl-5 hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]
           active:scale-[0.99] rounded-sm"
@@ -161,7 +161,7 @@ export function LibraryRow({
             </span>
           )}
         </span>
-        <HStack
+        {/*<HStack
           align="center"
           gap={1.5}
           className="border rounded-md px-1.5 py-1"
@@ -170,7 +170,7 @@ export function LibraryRow({
           <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
             {formatCurrency(library.total_value || 0, currency)}
           </span>
-        </HStack>
+        </HStack>*/}
       </div>
 
       {expanded && (
