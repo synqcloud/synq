@@ -83,15 +83,13 @@ export default function InventoryTableFilters({
             key={b}
             onClick={() => handleChange(b)}
             size="sm"
-            variant={selected === b ? "default" : "outline"}
             disabled={isLoading || isSearchActive}
-            className="text-xs font-light tracking-[-0.01em]"
+            className={
+              selected === b
+                ? "px-3 py-2 bg-primary/10 rounded border border-primary/20 text-xs text-primary font-light h-9"
+                : "px-3 py-2 bg-muted/30 rounded border border-border/50 text-xs text-muted-foreground font-light h-9"
+            }
           >
-            <div
-              className={`w-2 h-2 rounded-full ${
-                selected === b ? "bg-primary-foreground" : colors[b]
-              }`}
-            />
             {b === "all"
               ? "All"
               : b === "in-stock"
