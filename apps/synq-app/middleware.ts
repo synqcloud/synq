@@ -17,6 +17,10 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
+    if (pathname.startsWith("/api/integrations")) {
+      return response;
+    }
+
     if (pathname.startsWith("/api/account/delete")) {
       return response;
     }

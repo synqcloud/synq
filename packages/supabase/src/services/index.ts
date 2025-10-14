@@ -34,3 +34,4 @@ export {
   type NotificationRow,
 } from "./notifications-service";
 export { PriceService } from "./prices-service";
+export { IntegrationsService } from "./integrations-service";
