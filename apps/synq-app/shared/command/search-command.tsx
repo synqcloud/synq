@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
 import {
   CommandDialog,
   CommandInput,
@@ -10,13 +11,15 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
+  Button,
+  VStack,
+  HStack,
 } from "@synq/ui/component";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useDebounce } from "@/hooks/use-debounce";
-// import { UserService } from "@synq/supabase/services";
-// import { createClient } from "@synq/supabase/client";
-// import { CollectionItem, Collection } from "@synq/supabase/types";
-import { FileSearch, Loader2, AlertCircle } from "lucide-react";
+import { InventoryService } from "@synq/supabase/services";
+import { Loader2, AlertCircle, Plus } from "lucide-react";
+import { AddStockDialog } from "@/domains/inventory/components/dialogs/add-stock-dialog";
 
 interface SearchCommandProps {
   open: boolean;
@@ -26,214 +29,266 @@ interface SearchCommandProps {
 type SearchResultItem = {
   id: string;
   name: string;
-  image_url?: string;
-  collection_id: string;
-  collection: {
-    id: string;
-    name: string;
-    parent_collection_id?: string;
-  } | null;
+  tcgplayer_id: string;
+  image_url: string | null;
+  rarity: string | null;
+  collector_number: string;
+  stock: number | null;
+  tcgplayer_price: number | null;
+  core_set_name: string;
+  core_library_name: string;
 };
 
-interface GroupedResults {
-  [collectionId: string]: {
-    collectionName: string;
-    items: SearchResultItem[];
-  };
+interface AddStockState {
+  open: boolean;
+  cardId: string;
+  cardName: string;
 }
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResultItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [addStockState, setAddStockState] = useState<AddStockState>({
+    open: false,
+    cardId: "",
+    cardName: "",
+  });
   const debouncedQuery = useDebounce(query, 300);
   const router = useRouter();
-  // const supabase = createClient();
+
+  const {
+    data: results = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["search-cards", debouncedQuery],
+    queryFn: async () => {
+      if (!debouncedQuery) return [];
+      return InventoryService.searchCardsByName("client", debouncedQuery, {
+        limit: 12,
+      });
+    },
+    enabled: !!debouncedQuery,
+  });
 
   useEffect(() => {
-    setError(null);
-    if (!debouncedQuery) {
-      setResults([]);
-      setLoading(false);
-      return;
-    }
-
-    async function fetchResults() {
-      setLoading(true);
-      setError(null);
-      try {
-        // TODO: Implement backend search logic
-        // const user = await UserService.getCurrentUser('client');
-        // if (!user) {
-        //   setError("You must be logged in to search");
-        //   setResults([]);
-        //   return;
-        // }
-
-        // const { data, error: dbError } = await supabase
-        //   .from("user_collection_items")
-        //   .select(
-        //     `
-        //     id,
-        //     name,
-        //     image_url,
-        //     collection_id,
-        //     collection:user_collections (
-        //       id,
-        //       name,
-        //       parent_collection_id
-        //     )
-        //   `,
-        //   )
-        //   .eq("user_id", user.id)
-        //   .ilike("name", `%${debouncedQuery}%`)
-        //   .limit(10);
-
-        // Mock data for development
-        const mockResults: SearchResultItem[] = [
-          {
-            id: "item-1",
-            name: "Charizard VMAX",
-            image_url:
-              "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=600&fit=crop",
-            collection_id: "collection-1",
-            collection: {
-              id: "collection-1",
-              name: "Pokemon TCG",
-              parent_collection_id: undefined,
-            },
-          },
-          {
-            id: "item-2",
-            name: "Black Lotus",
-            image_url:
-              "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=600&fit=crop",
-            collection_id: "collection-2",
-            collection: {
-              id: "collection-2",
-              name: "Magic: The Gathering",
-              parent_collection_id: undefined,
-            },
-          },
-        ].filter((item) =>
-          item.name.toLowerCase().includes(debouncedQuery.toLowerCase()),
-        );
-
-        setResults(mockResults);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "An unexpected error occurred";
-        console.error("Search fetch failed:", message);
-        setError(message);
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchResults();
+    setSelectedIndex(0);
   }, [debouncedQuery]);
 
-  const groupedResults = useMemo(() => {
-    return results.reduce<GroupedResults>((acc, item) => {
-      if (!item.collection) return acc;
-      const collectionId = item.collection.id;
-      if (!acc[collectionId]) {
-        acc[collectionId] = {
-          collectionName: item.collection.name,
-          items: [],
-        };
-      }
-      acc[collectionId].items.push(item);
-      return acc;
-    }, {});
-  }, [results]);
+  const selectedCard = results[selectedIndex];
 
-  const runCommand = useCallback(
-    (command: () => unknown) => {
-      onOpenChange(false);
-      command();
-    },
-    [onOpenChange],
-  );
+  const handleSelectCard = (item: SearchResultItem) => {
+    setSelectedIndex(results.indexOf(item));
+  };
 
-  const handleSelect = (item: SearchResultItem) => {
-    runCommand(() => {
-      const collectionId =
-        item.collection?.parent_collection_id || item.collection_id;
-      router.push(`/collection/${collectionId}/item/${item.id}`);
+  const handleAddStock = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    item: SearchResultItem,
+  ) => {
+    e.stopPropagation();
+    setAddStockState({
+      open: true,
+      cardId: item.id,
+      cardName: item.name,
     });
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <VisuallyHidden>
-        <h2>Search Collection Items</h2>
-      </VisuallyHidden>
-      <CommandInput
-        placeholder="Search for a card..."
-        value={query}
-        onValueChange={setQuery}
-      />
-      <CommandList>
-        {loading && (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
-            Searching...
-          </div>
-        )}
-        {error && (
-          <div className="p-4 text-center text-sm text-destructive">
-            <AlertCircle className="h-4 w-4 inline-block mr-2" />
-            {error}
-          </div>
-        )}
-        {!loading && !error && results.length === 0 && debouncedQuery && (
-          <CommandEmpty>No results found.</CommandEmpty>
-        )}
-        {!loading &&
-          !error &&
-          Object.keys(groupedResults).length > 0 &&
-          Object.entries(groupedResults).map(([collectionId, group]) => (
-            <CommandGroup
-              key={collectionId}
-              heading={group.collectionName}
-              className="[&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-foreground [&_[cmdk-group-heading]]:text-sm border-b border-border/40"
-            >
-              {group.items.map((item) => (
-                <CommandItem
-                  key={item.id}
-                  value={`${group.collectionName} ${item.name}`}
-                  onSelect={() => handleSelect(item)}
-                  className="flex items-center gap-2 cursor-pointer pl-6 pr-2 py-2 hover:bg-accent/50 data-[selected=true]:bg-accent/50"
+    <>
+      <CommandDialog
+        open={open}
+        onOpenChange={onOpenChange}
+
+      >
+        <VisuallyHidden>
+          <h2>Search Cards</h2>
+        </VisuallyHidden>
+
+        <HStack gap={0} className="h-[700px]">
+          {/* Left: Search Results List */}
+          <VStack gap={0} className="flex-1 border-r border-border/40 min-w-0">
+            <CommandInput
+              placeholder="Search for a card..."
+              value={query}
+              onValueChange={setQuery}
+              className="border-b border-border/40"
+            />
+            <CommandList className="flex-1 overflow-y-auto">
+              {isLoading && (
+                <VStack
+                  gap={2}
+                  justify="center"
+                  align="center"
+                  className="h-full py-8"
                 >
-                  {item.image_url ? (
-                    <Image
-                      src={item.image_url}
-                      alt={item.name}
-                      width={32}
-                      height={32}
-                      className="rounded object-cover h-8 w-8 border flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 flex items-center justify-center bg-muted rounded border flex-shrink-0">
-                      <FileSearch className="h-4 w-4 text-muted-foreground" />
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Searching...
+                  </span>
+                </VStack>
+              )}
+              {error && (
+                <VStack
+                  gap={2}
+                  justify="center"
+                  align="center"
+                  className="h-full py-8"
+                >
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  <span className="text-sm text-destructive">
+                    {error instanceof Error ? error.message : "Search failed"}
+                  </span>
+                </VStack>
+              )}
+              {!isLoading &&
+                !error &&
+                results.length === 0 &&
+                debouncedQuery && (
+                  <CommandEmpty className="py-8 text-center">
+                    <span className="text-sm text-muted-foreground">
+                      No cards found
+                    </span>
+                  </CommandEmpty>
+                )}
+              {!isLoading && !error && results.length > 0 && (
+                <div className="overflow-hidden">
+                  {results.map((item, index) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleSelectCard(item)}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                      className={`px-3 py-3 cursor-pointer transition-colors ${
+                        index === selectedIndex
+                          ? "bg-accent"
+                          : "hover:bg-accent/50"
+                      }`}
+                    >
+                      <VStack gap={1} align="start" className="w-full">
+                        <div className="text-sm font-semibold">{item.name}</div>
+                        <HStack
+                          gap={2}
+                          className="text-xs text-muted-foreground"
+                        >
+                          <span>{item.core_set_name}</span>
+                          <span>•</span>
+                          <span className="font-mono">
+                            #{item.collector_number}
+                          </span>
+                          {item.stock !== null && (
+                            <>
+                              <span>•</span>
+                              <span>{item.stock} stock</span>
+                            </>
+                          )}
+                        </HStack>
+                      </VStack>
                     </div>
-                  )}
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{item.name}</span>
-                    {item.collection && (
-                      <span className="text-xs text-muted-foreground">
-                        {item.collection.name}
-                      </span>
+                  ))}
+                </div>
+              )}
+            </CommandList>
+          </VStack>
+
+          {/* Right: Card Preview */}
+          {selectedCard && !isLoading && (
+            <VStack
+              gap={4}
+              className="w-72 bg-muted/30 p-4 overflow-y-auto flex-shrink-0"
+            >
+              {/* Card Image */}
+              {selectedCard.image_url ? (
+                <div className="relative w-full flex-shrink-0 group rounded-lg overflow-hidden border border-border bg-muted">
+                  <Image
+                    src={selectedCard.image_url}
+                    alt={selectedCard.name}
+                    width={176}
+                    height={248}
+                    className="w-full h-auto object-cover"
+                  />
+                  <button
+                    onClick={(e) => handleAddStock(e, selectedCard)}
+                    className="absolute inset-0 opacity-0 hover:opacity-100 bg-black/50 flex items-center justify-center transition-opacity"
+                    aria-label={`Add stock for ${selectedCard.name}`}
+                  >
+                    <Plus className="h-5 w-5 text-white" />
+                  </button>
+                </div>
+              ) : (
+                <VStack
+                  justify="center"
+                  align="center"
+                  className="w-full aspect-[63/88] rounded-lg border border-border bg-muted"
+                >
+                  <span className="text-xs text-muted-foreground">
+                    No image
+                  </span>
+                </VStack>
+              )}
+
+              {/* Card Details */}
+              <VStack gap={3} className="text-sm flex-1">
+                <h3 className="font-semibold text-foreground line-clamp-2">
+                  {selectedCard.name}
+                </h3>
+
+                <VStack gap={2} className="pt-2 border-t border-border/50">
+                  <HStack justify="between" align="start">
+                    <span className="text-muted-foreground">Set:</span>
+                    <span className="font-medium text-right text-xs">
+                      {selectedCard.core_set_name}
+                    </span>
+                  </HStack>
+                  <HStack justify="between" align="start">
+                    <span className="text-muted-foreground">Game:</span>
+                    <span className="font-medium text-right text-xs">
+                      {selectedCard.core_library_name}
+                    </span>
+                  </HStack>
+                  <HStack justify="between" align="start">
+                    <span className="text-muted-foreground">Number:</span>
+                    <span className="font-mono font-medium text-xs">
+                      #{selectedCard.collector_number}
+                    </span>
+                  </HStack>
+                </VStack>
+
+                {selectedCard.stock !== null && (
+                  <VStack gap={2} className="pt-2 border-t border-border/50">
+                    <HStack justify="between">
+                      <span className="text-muted-foreground">Stock:</span>
+                      <span className="font-medium">{selectedCard.stock}</span>
+                    </HStack>
+                    {selectedCard.tcgplayer_price && (
+                      <HStack justify="between">
+                        <span className="text-muted-foreground">Price:</span>
+                        <span className="font-medium">
+                          ${selectedCard.tcgplayer_price.toFixed(2)}
+                        </span>
+                      </HStack>
                     )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          ))}
-      </CommandList>
-    </CommandDialog>
+                  </VStack>
+                )}
+
+                <Button
+                  onClick={(e) => handleAddStock(e, selectedCard)}
+                  className="w-full mt-4"
+                >
+                  Add Stock
+                </Button>
+              </VStack>
+            </VStack>
+          )}
+        </HStack>
+      </CommandDialog>
+
+      <AddStockDialog
+        open={addStockState.open}
+        onOpenChangeAction={(open) =>
+          setAddStockState((prev) => ({ ...prev, open }))
+        }
+        cardId={addStockState.cardId}
+        cardName={addStockState.cardName}
+      />
+    </>
   );
 }

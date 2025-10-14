@@ -23,6 +23,10 @@ export {
   DashboardService,
   type MonthlyData,
   type TopStockData,
+  type MarketplacePerformanceData,
+  type SummaryStats, 
+  type CardPerformanceData,
+  type SetPerformanceData
 } from "./dashboard-service";
 export {
   NotificationsService,

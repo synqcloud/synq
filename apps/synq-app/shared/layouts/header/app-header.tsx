@@ -16,19 +16,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@synq/ui/component";
-import { Plus, ShoppingBag } from "lucide-react";
+import { Plus, ShoppingBag, Search } from "lucide-react";
 import NotificationBell from "@/features/notifications/components/notification-bell";
 import { QuickTransactionSheet } from "@/features/transactions/components/quick-transaction-sheet";
+
 import { UserService } from "@synq/supabase/services";
 import { useQuickTransaction } from "@/shared/contexts/quick-transaction-context";
+import { SearchCommand } from "@/shared/command/search-command";
 
 type Currency = "usd" | "eur";
 
 const AppHeader: React.FC = () => {
   const router = useRouter();
-  const [pageTitle, setPageTitle] = useState("");
   const [currency, setCurrency] = useState<"usd" | "eur">("usd");
   const [loading, setLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Quick Transaction context
   const { stockIds, toggleSheet } = useQuickTransaction();
@@ -50,17 +52,17 @@ const AppHeader: React.FC = () => {
     fetchCurrency();
   }, []);
 
-  // Page title observer
+  // Keyboard shortcut for search (Cmd+P or Ctrl+P)
   useEffect(() => {
-    const updateTitle = () => {
-      const title = document.title;
-      const cleanTitle = title.replace(/\s*\|\s*Synq$/, "");
-      setPageTitle(cleanTitle);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "p") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
     };
-    updateTitle();
-    const observer = new MutationObserver(updateTitle);
-    observer.observe(document.head, { childList: true, subtree: true });
-    return () => observer.disconnect();
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Handle currency change
@@ -81,14 +83,20 @@ const AppHeader: React.FC = () => {
       <header className="sticky top-0 z-50 flex shrink-0 items-center justify-between gap-2 p-4 border-b border-border/40">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="ml-1" />
-          <div className="flex items-center gap-3">
-            <div className="h-6 w-px bg-border" />
-            <div className="flex flex-col">
-              <h1 className="text-lg font-light tracking-[-0.01em] text-foreground">
-                {pageTitle}
-              </h1>
-            </div>
-          </div>
+          <div className="h-6 w-px bg-border" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSearchOpen(true)}
+            className="relative w-64 justify-start text-muted-foreground text-sm"
+          >
+            <Search className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline-flex">Search cards...</span>
+            <span className="inline-flex sm:hidden">Search...</span>
+            <kbd className="pointer-events-none ml-auto hidden h-6 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+              <span className="text-xs">⌘</span>P
+            </kbd>
+          </Button>
         </div>
 
         <HStack align="center" justify="end" gap={4}>
@@ -143,6 +151,9 @@ const AppHeader: React.FC = () => {
           <NotificationBell />
         </HStack>
       </header>
+
+      {/* Search Command */}
+      <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* Quick Transaction Sheet */}
       <QuickTransactionSheet />
