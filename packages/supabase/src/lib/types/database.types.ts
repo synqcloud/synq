@@ -438,38 +438,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_library_access: {
-        Row: {
-          core_library_id: string
-          created_at: string | null
-          id: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          core_library_id: string
-          created_at?: string | null
-          id?: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          core_library_id?: string
-          created_at?: string | null
-          id?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_library_access_core_library_id_fkey"
-            columns: ["core_library_id"]
-            isOneToOne: false
-            referencedRelation: "core_libraries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_preferences: {
         Row: {
           created_at: string | null
@@ -849,13 +817,20 @@ export type Database = {
         }[]
       }
       get_user_libraries_with_stock: {
-        Args: {
-          p_library_ids: string[]
-          p_limit?: number
-          p_offset?: number
-          p_stock_filter?: string
-          p_user_id: string
-        }
+        Args:
+          | {
+              p_library_ids: string[]
+              p_limit?: number
+              p_offset?: number
+              p_stock_filter?: string
+              p_user_id: string
+            }
+          | {
+              p_limit?: number
+              p_offset?: number
+              p_stock_filter?: string
+              p_user_id: string
+            }
         Returns: {
           id: string
           name: string

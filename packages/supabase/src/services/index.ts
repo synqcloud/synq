@@ -1,6 +1,6 @@
 export { ServiceBase, ServiceError } from "./base-service";
 export { UserService, type ProfileData } from "./user-service";
-export { LibraryService, type LibraryItemsWithStatus } from "./library-service";
+
 export {
   InventoryService,
   type PublicCard,
@@ -24,9 +24,9 @@ export {
   type MonthlyData,
   type TopStockData,
   type MarketplacePerformanceData,
-  type SummaryStats, 
+  type SummaryStats,
   type CardPerformanceData,
-  type SetPerformanceData
+  type SetPerformanceData,
 } from "./dashboard-service";
 export {
   NotificationsService,

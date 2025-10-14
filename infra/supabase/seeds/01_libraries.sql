@@ -151,28 +151,3 @@ INSERT INTO public.core_cards (id, core_library_id, core_set_id, name, rarity, i
     'Common',
     'https://example.com/pikachu.jpg'
 );
-
-
--- Grant test user access to Pokémon TCG library
-DO $$
-DECLARE
-    test_user_id UUID;
-BEGIN
-    -- Get the test user ID from the temp table (created in user seeding)
-    SELECT id INTO test_user_id FROM temp_users LIMIT 1;
-
-    -- If temp table doesn't exist, try to find the user by email
-    IF test_user_id IS NULL THEN
-        SELECT id INTO test_user_id FROM auth.users WHERE email = 'test@synq.com' LIMIT 1;
-    END IF;
-
-    -- Insert user library access if user found
-    IF test_user_id IS NOT NULL THEN
-        INSERT INTO public.user_library_access (user_id, core_library_id) VALUES
-        (test_user_id, '550e8400-e29b-41d4-a716-446655440002'); -- Pokémon TCG
-
-        RAISE NOTICE 'Granted test user access to Pokémon TCG library';
-    ELSE
-        RAISE WARNING 'Test user not found - could not grant library access';
-    END IF;
-END $$;

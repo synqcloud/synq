@@ -1,7 +1,5 @@
 import { Database } from "src/lib/types";
 import { ServiceBase } from "./base-service";
-import { LibraryService } from "./library-service";
-
 export type CoreLibrary = Database["public"]["Tables"]["core_libraries"]["Row"];
 export type CoreSet = Database["public"]["Tables"]["core_sets"]["Row"];
 export type CoreCard = Database["public"]["Tables"]["core_cards"]["Row"];
@@ -77,13 +75,11 @@ export class InventoryService extends ServiceBase {
     return this.execute(
       async () => {
         const client = await this.getClient(context);
-        const userLibraries = await LibraryService.getUserLibraries(context);
 
         const { data: libraries, error } = await client.rpc(
           "get_user_libraries_with_stock",
           {
             p_user_id: userId,
-            p_library_ids: userLibraries,
             p_offset: offset,
             p_limit: limit ?? undefined, // don't pass null
             p_stock_filter: stockFilter,
