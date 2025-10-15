@@ -12,25 +12,6 @@ interface SearchCommandProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type SearchResultItem = {
-  id: string;
-  name: string;
-  tcgplayer_id: string;
-  image_url: string | null;
-  rarity: string | null;
-  collector_number: string;
-  stock: number | null;
-  tcgplayer_price: number | null;
-  core_set_name: string;
-  core_library_name: string;
-};
-
-type GameLibrary = {
-  id: string;
-  name: string;
-  stock: number | null;
-};
-
 interface AddStockState {
   open: boolean;
   cardId: string;
@@ -55,12 +36,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const { data: libraries = [] } = useQuery({
     queryKey: ["user-libraries"],
     queryFn: async () => {
-      const librariesData = await InventoryService.getUserCoreLibrary(
-        "client",
-        {
-          limit: 100,
-        },
-      );
+      const librariesData = await InventoryService.getCoreLibraries("client");
       return librariesData;
     },
     enabled: open,
@@ -74,9 +50,14 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
     queryKey: ["search-cards", debouncedQuery, selectedLibraryId],
     queryFn: async () => {
       if (!debouncedQuery || !selectedLibraryId) return [];
-      return InventoryService.searchCardsByName("client", debouncedQuery, {
-        limit: 20,
-      });
+      return InventoryService.searchCardsByLibrary(
+        "client",
+        selectedLibraryId,
+        debouncedQuery,
+        {
+          limit: 20,
+        },
+      );
     },
     enabled: !!debouncedQuery && !!selectedLibraryId,
   });
@@ -293,21 +274,22 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                             </span>
                             {item.stock !== null && (
                               <>
-                                <span>•</span>
                                 <span className="text-primary font-medium">
-                                  {item.stock} in stock
+                                  {item.stock !== 0
+                                    ? `${item.stock} in stock`
+                                    : ""}
                                 </span>
                               </>
                             )}
                           </div>
                         </div>
-                        {item.tcgplayer_price && (
+                        {/*{item.tcgplayer_price && (
                           <div className="flex-shrink-0 text-right">
                             <div className="text-xs font-semibold text-muted-foreground">
                               ${item.tcgplayer_price.toFixed(2)}
                             </div>
                           </div>
-                        )}
+                        )}*/}
                       </div>
                     </button>
                   ))}
@@ -357,9 +339,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Game</span>
-                      <span className="font-medium text-foreground">
+                      {/*<span className="font-medium text-foreground">
                         {selectedCard.core_library_name}
-                      </span>
+                      </span>*/}
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Card #</span>
@@ -387,7 +369,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                           {selectedCard.stock}
                         </span>
                       </div>
-                      {selectedCard.tcgplayer_price && (
+                      {/*{selectedCard.tcgplayer_price && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">
                             TCGPlayer
@@ -396,7 +378,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                             ${selectedCard.tcgplayer_price.toFixed(2)}
                           </span>
                         </div>
-                      )}
+                      )}*/}
                     </div>
                   )}
                 </div>

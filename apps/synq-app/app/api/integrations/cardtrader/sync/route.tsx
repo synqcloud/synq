@@ -1,203 +1,146 @@
 import { NextRequest, NextResponse } from "next/server";
-import { UserService, IntegrationsService } from "@synq/supabase/services";
 import { createClient } from "@synq/supabase/server";
+import {
+  UserService,
+  IntegrationsService,
+  InventoryService,
+} from "@synq/supabase/services";
 
 const CARDTRADER_API_BASE = "https://api.cardtrader.com/api/v2";
 
-interface CardTraderProduct {
-  id: number;
-  blueprint_id: number;
+type InventoryItem = {
+  productId: number;
+  blueprintId: number;
   quantity: number;
-  price: number;
-  name_en?: string;
-  properties?: {
-    mtg_foil?: boolean;
-    condition?: string;
-    mtg_language?: string;
-    [key: string]: any;
-  };
-  expansion: {id: string};
-  price_cents?: number;
-  properties_hash?: {
-    mtg_foil?: boolean;
-    condition?: string;
-    [key: string]: any;
-  };
-  game_id?: number;
-}
+  price_cents: number;
+  foil: boolean;
+  condition: string | null;
+  language: string | null;
+  tcg_player_id?: number;
+  scryfall_id?: string;
+};
 
-interface Blueprint {
-  id: number;
-  tcg_player_id: number | null;
-  scryfall_id: string | null;
-}
-
-// Add type for CardTrader credentials
-interface CardTraderCredentials {
-  api_token?: string;
-  [key: string]: any;
-}
-
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    console.log("Starting CardTrader inventory sync...");
-
-    // 1. Authenticate user (server-side)
     const user = await UserService.getCurrentUser("server");
+
     if (!user) {
-      console.log("No user authenticated");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.log("Authenticated user:", user.id);
 
-    // 2. Get CardTrader integration info
+    console.log(`[CardTrader Sync] Starting sync for user: ${user.id}`);
+
     const integrations = await IntegrationsService.getIntegrations("server");
     const ct = integrations.find((i) => i.integration_type === "cardtrader");
-    if (!ct) {
-      console.log("CardTrader integration not found for user");
-      return NextResponse.json(
-        { error: "CardTrader not connected for this user" },
-        { status: 400 },
-      );
-    }
+    const apiToken = (ct?.credentials as { api_token?: string })?.api_token;
 
-    // Type assertion for credentials
-    const credentials = ct.credentials as CardTraderCredentials | null;
-    const apiToken = credentials?.api_token;
     if (!apiToken) {
-      console.log("No API token for CardTrader integration");
       return NextResponse.json(
-        { error: "No API token stored for CardTrader integration" },
+        { error: "Missing CardTrader token" },
         { status: 400 },
       );
     }
-    console.log("Using CardTrader API token");
 
-    // 3. Fetch products from CardTrader
-    const url = new URL(`${CARDTRADER_API_BASE}/products/export`);
-    url.searchParams.set("game_id", "1");
-
-    console.log("Fetching products from:", url.toString());
-    const resp = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!resp.ok) {
-      const text = await resp.text();
-      console.log("Failed to fetch products:", text);
-      return NextResponse.json(
-        {
-          error: "Failed to fetch CardTrader inventory",
-          detail: text,
-        },
-        { status: resp.status },
-      );
-    }
-
-    const products: CardTraderProduct[] = await resp.json();
-    console.log(`Fetched ${products.length} products`);
-
-    // 4. Get unique expansion IDs from products (non-null)
-    const expansionIds = Array.from(
-      new Set(products.map((p) => p.expansion.id).filter(Boolean)),
-    );
-    console.log(`Unique expansion IDs found: [${expansionIds.join(", ")}]`);
-
-    // 5. Fetch blueprints for each expansion, store per expansion
-    const blueprintMap: Record<number, Blueprint> = {};
-    const allBlueprints: Blueprint[] = [];
-
-    for (const expansionId of expansionIds) {
-      const blueprintUrl = new URL(`${CARDTRADER_API_BASE}/blueprints/export`);
-      blueprintUrl.searchParams.set("expansion_id", expansionId.toString());
-
-      console.log(
-        `Fetching blueprints for expansion ${expansionId} from: ${blueprintUrl.toString()}`,
-      );
-
-      const blueprintResp = await fetch(blueprintUrl.toString(), {
-        method: "GET",
+    console.log(`[CardTrader Sync] Fetching products from CardTrader...`);
+    const productResp = await fetch(
+      `${CARDTRADER_API_BASE}/products/export?game_id=1`,
+      {
         headers: {
           Authorization: `Bearer ${apiToken}`,
           "Content-Type": "application/json",
         },
-      });
+      },
+    );
 
-      if (blueprintResp.ok) {
-        const blueprints: Blueprint[] = await blueprintResp.json();
-        console.log(
-          `Fetched ${blueprints.length} blueprints for expansion ${expansionId}`,
-        );
+    if (!productResp.ok) {
+      const errorText = await productResp.text();
+      console.error(`[CardTrader Sync] Failed to fetch products:`, errorText);
+      return NextResponse.json(
+        { error: "Failed to fetch inventory", detail: errorText },
+        { status: 500 },
+      );
+    }
 
-        blueprints.forEach((bp) => {
+    const products = await productResp.json();
+    console.log(`[CardTrader Sync] Fetched ${products.length} products`);
+
+    // Get blueprints for all expansions
+    const expansionIds = [
+      ...new Set(products.map((p: any) => p.expansion.id).filter(Boolean)),
+    ];
+    console.log(
+      `[CardTrader Sync] Fetching blueprints for ${expansionIds.length} expansions...`,
+    );
+
+    const blueprintMap: Record<number, any> = {};
+    const allBlueprints: any[] = [];
+
+    for (const expansionId of expansionIds) {
+      const bpResp = await fetch(
+        `${CARDTRADER_API_BASE}/blueprints/export?expansion_id=${expansionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (bpResp.ok) {
+        const blueprints = await bpResp.json();
+        blueprints.forEach((bp: any) => {
           blueprintMap[bp.id] = bp;
           allBlueprints.push(bp);
         });
-      } else {
-        const text = await blueprintResp.text();
-        console.error(
-          `Failed to fetch blueprints for expansion ${expansionId}:`,
-          text,
-        );
       }
     }
+    console.log(`[CardTrader Sync] Loaded ${allBlueprints.length} blueprints`);
 
-    console.log(`Total blueprints collected: ${allBlueprints.length}`);
-
-    // 6. For products missing expansion_id, fallback search blueprints globally
-    const findBlueprint = (
-      product: CardTraderProduct,
-    ): Blueprint | undefined => {
-      if (product.expansion.id && blueprintMap[product.blueprint_id]) {
-        return blueprintMap[product.blueprint_id];
-      }
-      // fallback: search allBlueprints for blueprint_id match
-      const bp = allBlueprints.find((bp) => bp.id === product.blueprint_id);
-      if (!bp) {
-        console.warn(
-          `Blueprint not found for product blueprint_id ${product.blueprint_id}`,
-        );
-      }
-      return bp;
-    };
-
-    // 7. Map products with blueprint info added
-    const inventory = products.map((p) => {
-      const blueprint = findBlueprint(p);
+    const inventory: InventoryItem[] = products.map((p: any) => {
+      const blueprint =
+        blueprintMap[p.blueprint_id] ??
+        allBlueprints.find((b) => b.id === p.blueprint_id);
       return {
-        collector_number: p.properties_hash?.collector_number ?? null,
         productId: p.id,
         blueprintId: p.blueprint_id,
-        expansion_id: p.expansion.id?? null,
         quantity: p.quantity,
         price_cents: p.price_cents,
         foil: Boolean(p.properties_hash?.mtg_foil),
         condition: p.properties_hash?.condition ?? null,
-        game_id: p.game_id ?? null,
-        name_en: p.name_en ?? null,
-        tcg_player_id: blueprint?.tcg_player_id ?? null,
-        scryfall_id: blueprint?.scryfall_id ?? null,
+        language: p.properties_hash?.mtg_language ?? null,
+        tcg_player_id: blueprint?.tcg_player_id,
+        scryfall_id: blueprint?.scryfall_id,
       };
     });
 
-    // Step 1: Prepare your IDs with proper handling
-    // Convert tcg_player_id (numbers) to strings for the query
-    const tcgplayerIds = inventory
+    // Deduplicate by card + condition + language
+    const dedupeKey = (item: InventoryItem) =>
+      `${item.blueprintId}|${item.condition}|${item.language}`;
+
+    const beforeDedupeCount = inventory.length;
+    const dedupedInventory = Array.from(
+      new Map(inventory.map((item) => [dedupeKey(item), item])).values(),
+    );
+    const removedDupes = beforeDedupeCount - dedupedInventory.length;
+
+    console.log(
+      `[CardTrader Sync] Deduplication: ${beforeDedupeCount} → ${dedupedInventory.length} (removed ${removedDupes} duplicates)`,
+    );
+
+    const tcgplayerIds = dedupedInventory
       .map((item) => item.tcg_player_id)
-      .filter((id): id is number => id !== null && typeof id === 'number')
+      .filter((id): id is number => typeof id === "number")
       .map((id) => `"${id}"`);
-
-    const scryfallIds = inventory
+    const scryfallIds = dedupedInventory
       .map((item) => item.scryfall_id)
-      .filter((id): id is string => id !== null && typeof id === 'string')
+      .filter((id): id is string => typeof id === "string")
       .map((id) => `"${id}"`);
 
-    // Step 2: Run the query using `or` filter in Supabase
+    console.log(
+      `[CardTrader Sync] Looking up ${tcgplayerIds.length} TCGPlayer IDs and ${scryfallIds.length} Scryfall IDs...`,
+    );
+
     const { data: coreCards, error } = await supabase
       .from("core_cards")
       .select("id, tcgplayer_id, external_id, external_source")
@@ -208,48 +151,109 @@ export async function GET(request: NextRequest) {
         ].join(","),
       );
 
-    if (error) {
-      console.error("Error fetching core_cards:", error);
-      throw error;
-    }
+    if (error) throw error;
 
-    // Step 3: Create lookup maps for matching
-    const coreCardByTcgId = new Map(
-      coreCards.map((card) => [card.tcgplayer_id, card]),
+    console.log(
+      `[CardTrader Sync] Found ${coreCards.length} matching core cards`,
     );
+
+    const coreCardByTcgId = new Map(coreCards.map((c) => [c.tcgplayer_id, c]));
     const coreCardByScryfallId = new Map(
       coreCards
-        .filter((card) => card.external_source === "scryfall")
-        .map((card) => [card.external_id, card]),
+        .filter((c) => c.external_source === "scryfall")
+        .map((c) => [c.external_id, c]),
     );
 
-    // Step 4: Enhance inventory with matched coreCardId
-    const inventoryWithMatches = inventory.map((item) => {
-      let matchedCard = null;
+    let createdCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
 
-      if (item.tcg_player_id && coreCardByTcgId.has(item.tcg_player_id)) {
-        matchedCard = coreCardByTcgId.get(item.tcg_player_id);
-      } else if (
-        item.scryfall_id &&
-        coreCardByScryfallId.has(item.scryfall_id)
-      ) {
-        matchedCard = coreCardByScryfallId.get(item.scryfall_id);
+    for (const item of dedupedInventory) {
+      const coreCard =
+        (item.tcg_player_id && coreCardByTcgId.get(item.tcg_player_id)) ||
+        (item.scryfall_id && coreCardByScryfallId.get(item.scryfall_id));
+
+      if (!coreCard) {
+        console.log(
+          `[CardTrader Sync] ⚠️  Skipped: No core card found for blueprint ${item.blueprintId}`,
+        );
+        skippedCount++;
+        continue;
       }
 
-      return {
-        ...item,
-        coreCardId: matchedCard ? matchedCard.id : null,
-      };
-    });
+      const existingStock = await InventoryService.fetchStockByCard(
+        "server",
+        coreCard.id,
+      );
 
-    console.log("Final mapped inventory:", inventoryWithMatches);
+      const matchedStock = existingStock.find((s) => {
+        return (
+          s.condition === item.condition &&
+          s.language === item.language &&
+          s.is_active
+        );
+      });
 
-    return NextResponse.json({ inventory: inventoryWithMatches });
-  } catch (err) {
-    console.error("Error in CardTrader inventory route:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
+      if (matchedStock) {
+        console.log(
+          `[CardTrader Sync] ✏️  Updating stock ${matchedStock.stock_id}: ${item.condition} ${item.language} qty=${item.quantity}`,
+        );
+
+        await InventoryService.updateStockViaEdge("server", matchedStock.id, {
+          change_type: "inventory_adjustment",
+          quantity_new: item.quantity,
+        });
+
+        await InventoryService.addMarketplaceToStock(
+          "server",
+          matchedStock.id,
+          "cardtrader",
+        );
+
+        updatedCount++;
+      } else {
+        console.log(
+          `[CardTrader Sync] ➕ Creating new stock: card=${coreCard.id} ${item.condition} ${item.language} qty=${item.quantity}`,
+        );
+
+        const stockId = await InventoryService.addStockEntry(
+          "server",
+          coreCard.id,
+          null,
+          {
+            quantity: item.quantity,
+            condition: item.condition ?? undefined,
+            language: item.language ?? undefined,
+          },
+        );
+
+        await InventoryService.addMarketplaceToStock(
+          "server",
+          stockId,
+          "cardtrader",
+        );
+
+        createdCount++;
+      }
+    }
+
+    console.log(
+      `[CardTrader Sync] ✅ Complete: ${createdCount} created, ${updatedCount} updated, ${skippedCount} skipped`,
     );
+
+    return NextResponse.json({
+      success: true,
+      stats: {
+        total_products: beforeDedupeCount,
+        after_dedup: dedupedInventory.length,
+        duplicates_removed: removedDupes,
+        created: createdCount,
+        updated: updatedCount,
+        skipped: skippedCount,
+      },
+    });
+  } catch (err) {
+    console.error("[CardTrader Sync] ❌ Error:", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

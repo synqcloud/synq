@@ -103,11 +103,46 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
+   * Get user's core libraries with stock totals
+   */
+  static async getCoreLibraries(
+    context: "client" | "server" = "client",
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+    }>
+  > {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data: libraries, error } = await client
+          .from("core_libraries")
+          .select(`id, name`);
+
+        if (error) throw error;
+        return (libraries ?? []) as Array<{
+          id: string;
+          name: string;
+        }>;
+      },
+      {
+        service: "InventoryService",
+        method: "getCoreLibrary",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
    * Get sets by library with stock totals
    */
   static async fetchSetsByLibrary(
     context: "client" | "server" = "client",
-    libraryId: string,
+    libraryId: string | null,
     options?: {
       offset?: number;
       limit?: number;
@@ -162,7 +197,7 @@ export class InventoryService extends ServiceBase {
    */
   static async fetchCardsBySet(
     context: "client" | "server" = "client",
-    setId: string,
+    setId: string | null,
     options?: {
       offset?: number;
       limit?: number;
@@ -236,6 +271,7 @@ export class InventoryService extends ServiceBase {
     isActive: boolean = true,
   ): Promise<UserStockWithListings[]> {
     const userId = await this.getCurrentUserId(context);
+    console.log("Current user:", userId);
     return this.execute(
       async () => {
         const client = await this.getClient(context);
@@ -457,6 +493,70 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
+   * Search cards by library without stock filters.
+   */
+  static async searchCardsByLibrary(
+    context: "client" | "server" = "client",
+    libraryId: string,
+    searchQuery: string,
+    options?: {
+      offset?: number;
+      limit?: number;
+    },
+  ): Promise<
+    Array<
+      Pick<
+        CoreCard,
+        | "id"
+        | "name"
+        | "tcgplayer_id"
+        | "image_url"
+        | "rarity"
+        | "collector_number"
+      > & {
+        core_set_name: string;
+        stock: number | null;
+      }
+    >
+  > {
+    const { offset = 0, limit } = options || {};
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data, error } = await client.rpc("search_cards_by_library", {
+          p_library_id: libraryId,
+          p_search_query: searchQuery,
+          p_offset: offset,
+          p_limit: limit ?? 50,
+        });
+
+        if (error) throw error;
+
+        return (data ?? []) as Array<
+          Pick<
+            CoreCard,
+            | "id"
+            | "name"
+            | "tcgplayer_id"
+            | "image_url"
+            | "rarity"
+            | "collector_number"
+          > & {
+            core_set_name: string;
+            stock: number | null;
+          }
+        >;
+      },
+      {
+        service: "InventoryService",
+        method: "searchCardsByLibrary",
+      },
+    );
+  }
+
+  /**
    * Search cards with stock to create transactions
    */
   static async searchCardsByName(
@@ -466,6 +566,7 @@ export class InventoryService extends ServiceBase {
       offset?: number;
       limit?: number;
       stockFilter?: "all" | "in-stock" | "out-of-stock";
+      libraryId?: string;
     },
   ): Promise<
     Array<
@@ -496,6 +597,7 @@ export class InventoryService extends ServiceBase {
           "get_user_cards_with_stock",
           {
             p_user_id: userId,
+            p_library_id: options?.libraryId,
             p_set_id: null, // no specific set
             p_search_query: searchQuery,
             p_offset: offset,

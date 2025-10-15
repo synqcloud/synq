@@ -23,12 +23,12 @@ DROP TABLE IF EXISTS public.user_library_access;
 
 COMMIT;
 
-
 -- =============================================
--- Update get user lirbary funciton to return all libraries
+-- Update get_user_libraries_with_stock
 -- =============================================
 
 DROP FUNCTION IF EXISTS public.get_user_libraries_with_stock(UUID, UUID[], INT, INT, TEXT);
+DROP FUNCTION IF EXISTS public.get_user_libraries_with_stock(UUID, TEXT, INT, INT);
 
 CREATE OR REPLACE FUNCTION get_user_libraries_with_stock(
   p_user_id uuid,
@@ -62,23 +62,16 @@ BEGIN
         AND ucs.is_active    = TRUE
   LEFT JOIN core_card_prices ccp
          ON ccp.core_card_id = c.id
+  WHERE l.status = 'active'
   GROUP BY l.id, l.name
   HAVING
     CASE p_stock_filter
       WHEN 'in-stock' THEN
         SUM(COALESCE(ucs.quantity,0)) > 0
       WHEN 'out-of-stock' THEN
-        EXISTS (
-          SELECT 1
-          FROM core_cards c2
-          LEFT JOIN user_card_stock u2
-                 ON u2.core_card_id = c2.id
-                AND u2.user_id      = p_user_id
-                AND u2.is_active    = TRUE
-          WHERE c2.core_library_id = l.id
-          GROUP BY c2.id
-          HAVING COUNT(u2.id) > 0 AND SUM(COALESCE(u2.quantity, 0)) = 0
-        )
+        COUNT(ucs.id) > 0 AND SUM(COALESCE(ucs.quantity,0)) = 0
+      WHEN 'all' THEN
+        COUNT(ucs.id) > 0  -- Has stock records
       ELSE TRUE
     END
   ORDER BY l.name
@@ -88,11 +81,76 @@ END;
 $$;
 
 
---- Drop the existing function before recreating
+-- =============================================
+-- Update get_user_sets_with_stock (if exists)
+-- =============================================
+
+DROP FUNCTION IF EXISTS public.get_user_sets_with_stock(UUID, UUID, TEXT, INT, INT);
+
+CREATE OR REPLACE FUNCTION get_user_sets_with_stock(
+  p_user_id uuid,
+  p_library_id uuid DEFAULT NULL,
+  p_stock_filter text DEFAULT NULL,
+  p_offset integer DEFAULT 0,
+  p_limit integer DEFAULT NULL
+)
+RETURNS TABLE (
+  id uuid,
+  name character varying,
+  stock integer,
+  total_value numeric(10,2),
+  core_library_id uuid,
+  core_library_name text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+      s.id,
+      s.name,
+      CASE WHEN COUNT(ucs.id) = 0 THEN NULL
+           ELSE SUM(ucs.quantity)::INT
+      END AS stock,
+      SUM(COALESCE(ucs.quantity, 0) * COALESCE(ccp.tcgplayer_price, 0))::NUMERIC(10,2) AS total_value,
+      l.id AS core_library_id,
+      l.name::text AS core_library_name
+  FROM core_sets s
+  JOIN core_libraries l ON l.id = s.core_library_id
+  LEFT JOIN core_cards  c  ON c.core_set_id = s.id
+  LEFT JOIN user_card_stock ucs
+         ON ucs.core_card_id = c.id
+        AND ucs.user_id      = p_user_id
+        AND ucs.is_active    = TRUE
+  LEFT JOIN core_card_prices ccp
+         ON ccp.core_card_id = c.id
+  WHERE (p_library_id IS NULL OR s.core_library_id = p_library_id)
+    AND l.status = 'active'
+  GROUP BY s.id, s.name, l.id, l.name
+  HAVING
+    CASE p_stock_filter
+      WHEN 'in-stock' THEN
+        SUM(COALESCE(ucs.quantity,0)) > 0
+      WHEN 'out-of-stock' THEN
+        COUNT(ucs.id) > 0 AND SUM(COALESCE(ucs.quantity,0)) = 0
+      WHEN 'all' THEN
+        COUNT(ucs.id) > 0  -- Has stock records
+      ELSE TRUE
+    END
+  ORDER BY s.name
+  OFFSET p_offset
+  LIMIT  COALESCE(p_limit, NULL);
+END;
+$$;
+
+
+-- =============================================
+-- Update get_user_cards_with_stock
+-- =============================================
+
 DROP FUNCTION IF EXISTS public.get_user_cards_with_stock(UUID, UUID, TEXT, INT, INT, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.get_user_cards_with_stock(UUID, UUID, TEXT, INT, INT, TEXT);
 
--- Create function with collector_number in results, search, and ordering
 CREATE OR REPLACE FUNCTION public.get_user_cards_with_stock(
     p_user_id      UUID,
     p_set_id       UUID DEFAULT NULL,
@@ -152,6 +210,7 @@ BEGIN
     CASE p_stock_filter
       WHEN 'in-stock'     THEN SUM(COALESCE(ucs.quantity,0)) > 0
       WHEN 'out-of-stock' THEN COUNT(ucs.id) > 0 AND SUM(COALESCE(ucs.quantity,0)) = 0
+      WHEN 'all'          THEN COUNT(ucs.id) > 0  -- Has stock records
       ELSE TRUE
     END
   ORDER BY
@@ -163,5 +222,55 @@ BEGIN
     CASE WHEN p_sort_by = 'name' THEN c.name ELSE NULL END
   OFFSET p_offset
   LIMIT  COALESCE(p_limit, NULL);
+END;
+$$;
+
+
+DROP FUNCTION IF EXISTS public.search_cards_by_library(UUID, UUID, TEXT, INT, INT);
+CREATE OR REPLACE FUNCTION public.search_cards_by_library(
+    p_library_id UUID,
+    p_user_id UUID DEFAULT NULL,
+    p_search_query TEXT DEFAULT NULL,
+    p_offset INT DEFAULT 0,
+    p_limit INT DEFAULT 50
+)
+RETURNS TABLE (
+    id UUID,
+    name TEXT,
+    tcgplayer_id TEXT,
+    image_url TEXT,
+    rarity TEXT,
+    collector_number TEXT,
+    core_set_name TEXT,
+    stock INT
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+      c.id,
+      c.name::TEXT,
+      c.tcgplayer_id,
+      c.image_url,
+      c.rarity::TEXT,
+      c.collector_number::TEXT,
+      cs.name::TEXT AS core_set_name,
+      COALESCE(SUM(ucs.quantity), 0)::INT AS stock
+  FROM core_cards c
+  JOIN core_sets cs
+    ON cs.id = c.core_set_id
+  LEFT JOIN user_card_stock ucs
+         ON ucs.core_card_id = c.id
+        AND (p_user_id IS NULL OR ucs.user_id = p_user_id)
+        AND ucs.is_active = TRUE
+  WHERE c.core_library_id = p_library_id
+    AND (p_search_query IS NULL OR
+         c.name ILIKE '%' || p_search_query || '%' OR
+         c.collector_number ILIKE '%' || p_search_query || '%')
+  GROUP BY c.id, c.name, c.tcgplayer_id, c.image_url, c.rarity,
+           c.collector_number, cs.name
+  ORDER BY c.name
+  OFFSET p_offset
+  LIMIT COALESCE(p_limit, 50);
 END;
 $$;

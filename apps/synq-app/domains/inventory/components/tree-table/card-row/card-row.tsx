@@ -3,20 +3,27 @@ import { useState } from "react";
 // Components
 import StockTable from "../stock-row/stock-table";
 import PriceAlertButton from "./price-alerts-button";
-import { ChevronDown, ChevronRight, Eye, Plus } from "lucide-react";
+import {
+  ArrowUp,
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  Plus,
+  SquareArrowUp,
+  Zap,
+} from "lucide-react";
 // Services
 import { CoreCard } from "@synq/supabase/services";
-import { Button, HStack } from "@synq/ui/component";
+import { Button } from "@synq/ui/component";
 import { Popover, PopoverContent, PopoverTrigger } from "@synq/ui/component";
 import { AddStockDialog } from "../../dialogs/add-stock-dialog";
 import { cn } from "@synq/ui/utils";
-import { formatCurrency } from "@/shared/utils/format-currency";
-import { useCurrency } from "@/shared/contexts/currency-context";
-import { TcgplayerIcon } from "@/shared/icons/icons";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 
 export default function CardRow({
   card,
   hasAlert,
+  standalone = false, // Add this prop
 }: {
   card: Pick<
     CoreCard,
@@ -26,13 +33,12 @@ export default function CardRow({
     tcgplayer_price: number | null;
   };
   hasAlert: boolean;
+  standalone?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [imagePopoverOpen, setImagePopoverOpen] = useState(false);
   const [addStockDialogOpen, setAddStockDialogOpen] = useState(false);
   const outOfStock = card.stock === 0;
-
-  const { currency } = useCurrency();
 
   const handleRowClick = () => setExpanded(!expanded);
 
@@ -46,14 +52,11 @@ export default function CardRow({
     setAddStockDialogOpen(true);
   };
 
-  const handleExternalLinkClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const url = card.tcgplayer_id
-      ? `https://www.tcgplayer.com/product/${card.tcgplayer_id}`
-      : `https://www.tcgplayer.com/search/all/product?q=${encodeURIComponent(card.name)}`;
-    window.open(url, "_blank");
-  };
+  // Dynamic padding based on nesting level
+  // standalone (card grouping) = 16px
+  // inside set (set grouping) = 16 + 24px
+  // inside library->set (game grouping) = 16 + 2*24px
+  const paddingLeft = standalone ? 16 : 16 + 2 * 24;
 
   return (
     <div key={card.id} className="group">
@@ -66,12 +69,12 @@ export default function CardRow({
 
       <div
         className={cn(
-          `group flex items-center px-4 py-2 bg-accent/40  cursor-pointer hover:bg-accent transition-colors`,
+          `group flex items-center px-4 py-2 bg-accent/40 cursor-pointer hover:bg-accent transition-colors`,
           outOfStock ? "opacity-60" : "",
           imagePopoverOpen ? "pointer-events-none" : "",
         )}
         style={{
-          paddingLeft: `${16 + 2 * 24}px`,
+          paddingLeft: `${paddingLeft}px`,
         }}
         onClick={handleRowClick}
       >
@@ -151,7 +154,7 @@ export default function CardRow({
           </span>
 
           {/* Action Icons */}
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-4 ml-2">
             <Button
               size="icon"
               variant="ghost"
@@ -164,29 +167,7 @@ export default function CardRow({
           </div>
         </div>
 
-        {/* Price with Alert Button - Fixed width container for alignment */}
-        {/*<HStack
-          align="center"
-          gap={1.5}
-          className={cn("border rounded-md px-1.5 py-1", {
-            "border-amber-500 hover:border-amber-400": hasAlert,
-          })}
-        >
-          <button
-            onClick={handleExternalLinkClick}
-            className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
-            title={
-              card.tcgplayer_id ? "View on TCGPlayer" : "Search on TCGPlayer"
-            }
-          >
-            <TcgplayerIcon className="h-4 w-4" />
-            <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
-              {card?.tcgplayer_price != null
-                ? formatCurrency(card.tcgplayer_price || 0, currency)
-                : ""}
-            </span>
-          </button>
-        </HStack>*/}
+        <SquareArrowUp className="h-4 w-4 text-primary/70 mr-4" />
 
         <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
       </div>

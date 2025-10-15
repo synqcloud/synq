@@ -9,16 +9,13 @@ import {
   PriceService,
 } from "@synq/supabase/services";
 import { StockFilterType } from "../inventory-table-filters";
-import { HStack } from "@synq/ui/component";
-import { formatCurrency } from "@/shared/utils/format-currency";
-import { useCurrency } from "@/shared/contexts/currency-context";
-import { TcgplayerIcon } from "@/shared/icons/icons";
 
 const CARDS_PER_BATCH = 44;
 
 export default function SetRow({
   set,
   stockFilter,
+  standalone = false, // Add this prop to indicate if it's used without a parent library
 }: {
   set: Pick<CoreSet, "id" | "name"> & {
     stock: number | null;
@@ -26,6 +23,7 @@ export default function SetRow({
     total_value: number | null;
   };
   stockFilter: StockFilterType;
+  standalone?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [allCards, setAllCards] = useState<
@@ -48,7 +46,6 @@ export default function SetRow({
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
-  const { currency } = useCurrency();
 
   const { data: initialCards } = useQuery({
     queryKey: ["cards", set.id, stockFilter],
@@ -102,7 +99,7 @@ export default function SetRow({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, expanded, offset, set.id]);
+  }, [isLoading, hasMore, expanded, offset, set.id, stockFilter]);
 
   useEffect(() => {
     if (!expanded || !hasMore || isLoading || allCards.length === 0) return;
@@ -131,6 +128,9 @@ export default function SetRow({
     staleTime: 5 * 60 * 1000,
   });
 
+  // Dynamic padding based on whether it's standalone or nested
+  const paddingLeft = standalone ? 16 : 16 + 1 * 24;
+
   return (
     <div>
       <div
@@ -146,7 +146,7 @@ export default function SetRow({
               : ""
           }
         `}
-        style={{ paddingLeft: `${16 + 1 * 24}px` }}
+        style={{ paddingLeft: `${paddingLeft}px` }}
         onClick={() => setExpanded((e) => !e)}
       >
         {expanded ? (
@@ -237,18 +237,6 @@ export default function SetRow({
             </span>
           )}
         </div>
-        {/*{set?.total_value !== 0 && (
-          <HStack
-            align="center"
-            gap={1.5}
-            className="border rounded-md px-1.5 py-1"
-          >
-            <TcgplayerIcon className="h-4 w-4" />
-            <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
-              {formatCurrency(set.total_value || 0, currency)}
-            </span>
-          </HStack>
-        )}*/}
       </div>
 
       {expanded && (
@@ -258,6 +246,7 @@ export default function SetRow({
               key={card.id}
               card={card}
               hasAlert={alertCardIds.has(card.id)}
+              standalone={standalone}
             />
           ))}
 
