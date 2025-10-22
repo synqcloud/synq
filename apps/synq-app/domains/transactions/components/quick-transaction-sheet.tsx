@@ -11,19 +11,16 @@ import {
   HStack,
   Label,
   Input,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
   Separator,
   ScrollArea,
+  Spinner,
 } from "@synq/ui/component";
 import { X, ShoppingCart, Receipt, Loader2, ShoppingBag } from "lucide-react";
 import { useQuickTransaction } from "@/shared/contexts/quick-transaction-context";
 import { useCurrency } from "@/shared/contexts/currency-context";
 import { formatCurrency } from "@/shared/utils/format-currency";
 import { getConditionColor } from "@/features/inventory/utils/condition-colors";
+
 import {
   TransactionService,
   QuickTransactionItem,
@@ -32,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { STOCK_SOURCES } from "@/features/inventory/hooks/use-stock-data";
 import { useQueryClient } from "@tanstack/react-query";
+import { MarketplaceIcon } from "@/shared/icons/marketplace-icon";
 
 type TransactionFormData = {
   source: string;
@@ -250,7 +248,7 @@ export function QuickTransactionSheet() {
 
               {isLoading ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin" />
+                  <Spinner />
                   <p className="text-sm">Loading items...</p>
                 </div>
               ) : items.length === 0 ? (
@@ -393,24 +391,33 @@ export function QuickTransactionSheet() {
 
                   <VStack gap={2}>
                     <Label className="text-xs">Source</Label>
-                    <Select
-                      value={transactionForm.source}
-                      onValueChange={(val) =>
-                        updateTransactionForm("source", val)
-                      }
-                      disabled={isSubmitting}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STOCK_SOURCES.map((source) => (
-                          <SelectItem key={source} value={source}>
-                            {source}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex flex-wrap gap-2">
+                      {STOCK_SOURCES.map((source) => (
+                        <button
+                          key={source}
+                          type="button"
+                          onClick={() =>
+                            updateTransactionForm("source", source)
+                          }
+                          disabled={isSubmitting}
+                          className={`
+                            flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all
+                            ${
+                              transactionForm.source === source
+                                ? "border-primary bg-primary/10 shadow-sm"
+                                : "border-border bg-card hover:border-primary/50 hover:bg-muted/50"
+                            }
+                            ${isSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                          `}
+                        >
+                          <MarketplaceIcon
+                            marketplace={source}
+                            showLabel={false}
+                            showTooltip={true}
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </VStack>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -506,7 +513,7 @@ export function QuickTransactionSheet() {
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Spinner />
                 Creating...
               </>
             ) : (

@@ -2,7 +2,7 @@
 // Core
 import { useQuery } from "@tanstack/react-query";
 // Components
-import { HStack, VStack } from "@synq/ui/component";
+import { HStack, Spinner, VStack } from "@synq/ui/component";
 import { Package, Loader2 } from "lucide-react";
 // Utils
 import { cn } from "@synq/ui/utils";
@@ -34,7 +34,7 @@ export function TransactionItemsDisplay({
     return (
       <HStack justify="center" align="center" className="py-8">
         <HStack gap={2} align="center">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Spinner />
           <span className="text-sm text-muted-foreground">
             Loading items...
           </span>

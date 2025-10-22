@@ -1,4 +1,3 @@
-// Export all components from their individual files
 export * from "./accordion.js";
 export * from "./alert.js";
 export * from "./alert-dialog.js";
@@ -7,6 +6,7 @@ export * from "./avatar.js";
 export * from "./badge.js";
 export * from "./breadcrumb.js";
 export * from "./button.js";
+export * from "./button-group.js";
 export * from "./calendar.js";
 export * from "./card.js";
 export * from "./carousel.js";
@@ -22,7 +22,9 @@ export * from "./form.js";
 export * from "./hover-card.js";
 export * from "./input.js";
 export * from "./input-otp.js";
+export * from "./input-group.js";
 export * from "./label.js";
+export * from "./kbd.js";
 export * from "./popover.js";
 export * from "./progress.js";
 export * from "./radio-group.js";

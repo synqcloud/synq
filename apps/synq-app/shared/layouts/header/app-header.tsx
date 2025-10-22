@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import {
   SidebarTrigger,
   Button,
+  ButtonGroup,
   HStack,
   Select,
   SelectContent,
@@ -15,6 +16,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  Kbd,
 } from "@synq/ui/component";
 import { Plus, ShoppingBag, Search } from "lucide-react";
 import NotificationBell from "@/features/notifications/components/notification-bell";
@@ -93,15 +95,15 @@ const AppHeader: React.FC = () => {
             <Search className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline-flex">Search cards...</span>
             <span className="inline-flex sm:hidden">Search...</span>
-            <kbd className="pointer-events-none ml-auto hidden h-6 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-              <span className="text-xs">⌘</span>P
-            </kbd>
+            <div className="pointer-events-none ml-auto hidden select-none items-center gap-1 sm:flex">
+              <Kbd>⌘ + P</Kbd>
+            </div>
           </Button>
         </div>
 
         <HStack align="center" justify="end" gap={4}>
           {/* Currency Selector */}
-          <Select
+          {/*<Select
             value={currency}
             onValueChange={(val) => handleCurrencyChange(val as "usd" | "eur")}
             disabled={loading}
@@ -113,42 +115,45 @@ const AppHeader: React.FC = () => {
               <SelectItem value="usd">USD</SelectItem>
               <SelectItem value="eur">EUR</SelectItem>
             </SelectContent>
-          </Select>
+          </Select>*/}
 
-          {/* Quick Transaction Button */}
+          {/* Button Group for Quick Transaction and Notifications */}
           <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleSheet}
-                  aria-label="Quick transaction"
-                  className="relative"
-                >
-                  <ShoppingBag className="h-5 w-5" />
-                  {itemCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute top-0 right-0 h-4 w-4 flex items-center justify-center p-0 text-[10px] pointer-events-none rounded-full"
-                    >
-                      {itemCount}
-                    </Badge>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>
-                  Quick Transaction{" "}
-                  {itemCount > 0 &&
-                    `(${itemCount} item${itemCount !== 1 ? "s" : ""})`}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+            <ButtonGroup>
+              {/* Quick Transaction Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleSheet}
+                    aria-label="Quick transaction"
+                    className="relative"
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                    {itemCount > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="absolute top-0 right-0 h-4 w-4 flex items-center justify-center p-0 text-[10px] pointer-events-none rounded-full"
+                      >
+                        {itemCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>
+                    Quick Transaction{" "}
+                    {itemCount > 0 &&
+                      `(${itemCount} item${itemCount !== 1 ? "s" : ""})`}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
 
-          {/* Notification Bell */}
-          <NotificationBell />
+              {/* Notification Bell */}
+              <NotificationBell />
+            </ButtonGroup>
+          </TooltipProvider>
         </HStack>
       </header>
 
