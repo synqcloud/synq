@@ -54,7 +54,6 @@ export function LibraryRow({
     staleTime: 0,
   });
 
-  // Reset when expanding/collapsing or stockFilter changes
   useEffect(() => {
     setAllSets([]);
     setOffset(0);
@@ -62,7 +61,6 @@ export function LibraryRow({
     setIsLoading(false);
   }, [expanded, stockFilter]);
 
-  // Populate first batch
   useEffect(() => {
     if (expanded && initialSets && allSets.length === 0) {
       setAllSets(initialSets);
@@ -93,7 +91,6 @@ export function LibraryRow({
     }
   }, [isLoading, hasMore, expanded, library.id, offset, stockFilter]);
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!expanded || !hasMore || isLoading || allSets.length === 0) return;
 
@@ -111,70 +108,42 @@ export function LibraryRow({
     return () => observer.disconnect();
   }, [expanded, hasMore, isLoading, allSets.length, offset, loadMore]);
 
+  const outOfStock = library.stock === 0;
+
   return (
     <div key={library.id}>
       <div
-        className="group flex items-center px-4 py-2 cursor-pointer
-          transition-all duration-200 ease-out bg-muted
-          hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent
-          hover:pl-5 hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]
-          active:scale-[0.99] rounded-sm"
+        className="group flex items-center gap-3 px-4 py-3 cursor-pointer
+          transition-all duration-150 ease-out bg-muted hover:bg-muted/80
+          border-l-2 border-transparent hover:border-primary rounded-md"
         onClick={() => setExpanded((prev) => !prev)}
       >
         {expanded ? (
-          <ChevronDown
-            className="w-4 h-4 mr-2 text-muted-foreground
-            transition-all duration-200
-            group-hover:text-primary group-hover:scale-110"
-          />
+          <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         ) : (
-          <ChevronRight
-            className="w-4 h-4 mr-2 text-muted-foreground
-            transition-all duration-200
-            group-hover:text-primary group-hover:translate-x-1"
-          />
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         )}
-        <span
-          className="flex-1 font-light text-lg text-foreground
-          transition-colors duration-200
-          group-hover:text-primary"
-        >
-          {library.name}
+
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="text-base font-medium text-foreground group-hover:text-primary transition-colors">
+            {library.name}
+          </span>
           {library.stock !== null && (
             <span
-              className="ml-2 px-2 py-0.5 bg-muted text-muted-foreground
-              text-xs font-medium rounded
-              transition-all duration-200
-              group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105
-              inline-block"
+              className={`text-sm font-semibold px-3 py-1 rounded-full flex-shrink-0 ${
+                outOfStock
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-muted-foreground/10 text-foreground"
+              }`}
             >
               {library.stock}
             </span>
           )}
-          {library.stock === 0 && (
-            <span
-              className="ml-1 text-xs text-red-500
-              transition-opacity duration-200
-              group-hover:opacity-80"
-            >
-              (Out of Stock)
-            </span>
-          )}
-        </span>
-        {/*<HStack
-          align="center"
-          gap={1.5}
-          className="border rounded-md px-1.5 py-1"
-        >
-          <TcgplayerIcon className="h-4 w-4" />
-          <span className="text-xs font-semibold transition-colors duration-200 group-hover:text-primary flex items-center">
-            {formatCurrency(library.total_value || 0, currency)}
-          </span>
-        </HStack>*/}
+        </div>
       </div>
 
       {expanded && (
-        <div>
+        <div className="space-y-0.5">
           {allSets.map((set) => (
             <SetRow key={set.id} set={set} stockFilter={stockFilter} />
           ))}

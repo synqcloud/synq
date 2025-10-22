@@ -1,7 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button, HStack, Input } from "@synq/ui/component";
-import { X } from "lucide-react";
+import {
+  Button,
+  ButtonGroup,
+  HStack,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  Spinner,
+} from "@synq/ui/component";
+
+import { X, SearchIcon, LoaderIcon } from "lucide-react";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 
 export type StockFilterType = "all" | "in-stock" | "out-of-stock";
@@ -80,63 +89,67 @@ export default function InventoryTableFilters({
   ];
 
   return (
-    <div className="flex items-center gap-4 justify-between">
+    <HStack gap={4} justify="between" align="center">
       {/* Left side: Group By */}
-      <div className="flex items-center gap-2">
+      <HStack gap={2} align="center">
         <span className="text-sm text-muted-foreground whitespace-nowrap">
           Group by:
         </span>
         <HStack gap={1}>
-          {groupByButtons.map((btn) => (
-            <Button
-              key={btn.value}
-              onClick={() => handleGroupByChange(btn.value)}
-              size="sm"
-              disabled={isLoading || isSearchActive}
-              className={
-                groupBy === btn.value
-                  ? "px-3 py-2 bg-primary text-primary-foreground rounded text-xs font-medium h-9"
-                  : "px-3 py-2 bg-muted/30 rounded border border-border/50 text-xs text-muted-foreground font-light h-9"
-              }
-            >
-              {btn.label}
-            </Button>
-          ))}
+          <ButtonGroup>
+            {groupByButtons.map((btn) => (
+              <Button
+                key={btn.value}
+                onClick={() => handleGroupByChange(btn.value)}
+                size="sm"
+                disabled={isLoading || isSearchActive}
+                className={
+                  groupBy === btn.value
+                    ? "bg-primary text-primary-foreground rounded font-medium"
+                    : "bg-muted/30 rounded border border-border/50 text-muted-foreground font-light"
+                }
+              >
+                {btn.label}
+              </Button>
+            ))}
+          </ButtonGroup>
         </HStack>
-      </div>
+      </HStack>
 
       {/* Right side: Search and Stock Filters */}
-      <div className="flex items-center gap-2">
-        <div className="w-80 max-w-[60%] relative">
-          <Input
+      <HStack gap={2} align="center">
+        <InputGroup>
+          <InputGroupInput
             placeholder="Search cards..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             disabled={isLoading}
-            className="pr-8"
           />
-          {isSearchActive && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-sm hover:bg-muted"
-              type="button"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-        <HStack gap={1}>
+          <InputGroupAddon align="inline-end">
+            {isLoading ? (
+              <Spinner />
+            ) : isSearchActive ? (
+              <Button
+                onClick={clearSearch}
+                type="button"
+                variant="ghost"
+                size="icon"
+              >
+                <X />
+              </Button>
+            ) : (
+              <SearchIcon className="text-muted-foreground" />
+            )}
+          </InputGroupAddon>
+        </InputGroup>
+        <ButtonGroup>
           {filterButtons.map((b) => (
             <Button
               key={b}
               onClick={() => handleFilterChange(b)}
+              variant={selected === b ? "default" : "outline"}
               size="sm"
               disabled={isLoading || isSearchActive}
-              className={
-                selected === b
-                  ? "px-3 py-2 bg-primary/10 rounded border border-primary/20 text-xs text-primary font-light h-9"
-                  : "px-3 py-2 bg-muted/30 rounded border border-border/50 text-xs text-muted-foreground font-light h-9"
-              }
             >
               {b === "all"
                 ? "All"
@@ -145,8 +158,8 @@ export default function InventoryTableFilters({
                   : "Out of Stock"}
             </Button>
           ))}
-        </HStack>
-      </div>
-    </div>
+        </ButtonGroup>
+      </HStack>
+    </HStack>
   );
 }

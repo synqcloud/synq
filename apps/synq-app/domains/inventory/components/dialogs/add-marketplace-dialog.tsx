@@ -148,7 +148,7 @@ export function AddMarketplaceDialog({
         <DialogHeader>
           <HStack gap={2} align="center">
             <Plus className="w-5 h-5 text-primary" />
-            <DialogTitle>Add Marketplaces</DialogTitle>
+            <DialogTitle>Marketplaces</DialogTitle>
           </HStack>
           <DialogDescription>
             Select marketplaces where you want to list this stock item.

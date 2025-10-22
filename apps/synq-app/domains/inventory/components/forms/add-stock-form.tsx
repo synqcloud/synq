@@ -38,7 +38,7 @@ export function AddStockForm({
 }: AddStockFormProps) {
   const { conditions, languages, sources } = useStockData();
   const { isValid } = form.formState;
-  const [createTransaction, setCreateTransaction] = React.useState(true);
+  const [createTransaction, setCreateTransaction] = React.useState(false);
 
   // Update the form value when createTransaction changes and trigger validation
   React.useEffect(() => {
@@ -127,7 +127,7 @@ export function AddStockForm({
             )}
           />
 
-          <FormField
+          {/*<FormField
             control={form.control}
             name="cogs"
             render={({ field }) => (
@@ -149,12 +149,12 @@ export function AddStockForm({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          />*/}
         </div>
 
         {/* Row 3: SKU and Location */}
         <div className="grid grid-cols-2 gap-4">
-          <FormField
+          {/*<FormField
             control={form.control}
             name="sku"
             render={({ field }) => (
@@ -166,9 +166,9 @@ export function AddStockForm({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          />*/}
 
-          <FormField
+          {/*<FormField
             control={form.control}
             name="location"
             render={({ field }) => (
@@ -180,7 +180,7 @@ export function AddStockForm({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          />*/}
         </div>
 
         {/* Row 4: Transaction Toggle and Fields */}

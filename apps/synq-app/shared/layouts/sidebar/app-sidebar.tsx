@@ -208,7 +208,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               asChild
               className={cn(
                 isCollapsed &&
-                  "w-14 h-14 p-0 flex items-center justify-center rounded-2xl border border-sidebar-border  hover:bg-sidebar-accent/60 transition-colors shadow-sm",
+                  "w-14 h-14 p-0 flex items-center justify-center rounded-lg border border-sidebar-border  hover:bg-sidebar-accent/60 transition-colors shadow-sm",
               )}
             >
               <Link href="/home">

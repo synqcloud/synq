@@ -79,113 +79,120 @@ export function StockEditSheet({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4">
-          <VStack gap={4}>
-            {/* Quantity */}
-            <VStack gap={2}>
-              <Label htmlFor="quantity" className="text-sm font-medium">
-                Quantity
-              </Label>
-              <Input
-                id="quantity"
-                type="number"
-                min={1}
-                value={editData.quantity}
-                onChange={(e) =>
-                  onFieldChange("quantity", parseInt(e.target.value) || 0)
-                }
-              />
-            </VStack>
+          <VStack gap={3}>
+            {/* Quantity and Condition Row */}
+            <HStack gap={3}>
+              <VStack gap={1} className="flex-1">
+                <Label htmlFor="quantity" className="text-xs font-medium">
+                  Quantity
+                </Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  min={1}
+                  value={editData.quantity}
+                  onChange={(e) =>
+                    onFieldChange("quantity", parseInt(e.target.value) || 0)
+                  }
+                  className="h-9"
+                />
+              </VStack>
 
-            {/* Condition */}
-            <VStack gap={2}>
-              <Label htmlFor="condition" className="text-sm font-medium">
-                Condition
-              </Label>
-              <Select
-                value={editData.condition || ""}
-                onValueChange={(val) => onFieldChange("condition", val)}
-              >
-                <SelectTrigger id="condition">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  {conditions.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </VStack>
+              <VStack gap={1} className="flex-1">
+                <Label htmlFor="condition" className="text-xs font-medium">
+                  Condition
+                </Label>
+                <Select
+                  value={editData.condition || ""}
+                  onValueChange={(val) => onFieldChange("condition", val)}
+                >
+                  <SelectTrigger id="condition" className="h-9">
+                    <SelectValue placeholder="Select condition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {conditions.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </VStack>
+            </HStack>
 
-            {/* Cost (COGS) */}
-            <VStack gap={2}>
-              <Label htmlFor="cogs" className="text-sm font-medium">
-                Cost (COGS)
-              </Label>
-              <Input
-                id="cogs"
-                type="number"
-                step={0.01}
-                min={0}
-                value={editData.cogs || ""}
-                onChange={(e) =>
-                  onFieldChange("cogs", parseFloat(e.target.value) || 0)
-                }
-              />
-            </VStack>
+            {/* Cost and Language Row */}
+            <HStack gap={3}>
+              <VStack gap={1} className="flex-1">
+                <Label htmlFor="cogs" className="text-xs font-medium">
+                  Cost (COGS)
+                </Label>
+                <Input
+                  id="cogs"
+                  type="number"
+                  step={0.01}
+                  min={0}
+                  value={editData.cogs || ""}
+                  onChange={(e) =>
+                    onFieldChange("cogs", parseFloat(e.target.value) || 0)
+                  }
+                  className="h-9"
+                />
+              </VStack>
 
-            {/* SKU */}
-            <VStack gap={2}>
-              <Label htmlFor="sku" className="text-sm font-medium">
-                SKU
-              </Label>
-              <Input
-                id="sku"
-                value={editData.sku || ""}
-                onChange={(e) => onFieldChange("sku", e.target.value)}
-                placeholder="Enter SKU"
-              />
-            </VStack>
+              <VStack gap={1} className="flex-1">
+                <Label htmlFor="language" className="text-xs font-medium">
+                  Language
+                </Label>
+                <Select
+                  value={editData.language || ""}
+                  onValueChange={(val) => onFieldChange("language", val)}
+                >
+                  <SelectTrigger id="language" className="h-9">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {languages.map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </VStack>
+            </HStack>
 
-            {/* Location */}
-            <VStack gap={2}>
-              <Label htmlFor="location" className="text-sm font-medium">
-                Location
-              </Label>
-              <Input
-                id="location"
-                value={editData.location || ""}
-                onChange={(e) => onFieldChange("location", e.target.value)}
-                placeholder="Enter location"
-              />
-            </VStack>
+            {/* SKU and Location Row */}
+            <HStack gap={3}>
+              <VStack gap={1} className="flex-1">
+                <Label htmlFor="sku" className="text-xs font-medium">
+                  SKU
+                </Label>
+                <Input
+                  id="sku"
+                  value={editData.sku || ""}
+                  onChange={(e) => onFieldChange("sku", e.target.value)}
+                  placeholder="Enter SKU"
+                  className="h-9"
+                />
+              </VStack>
 
-            {/* Language */}
-            <VStack gap={2}>
-              <Label htmlFor="language" className="text-sm font-medium">
-                Language
-              </Label>
-              <Select
-                value={editData.language || ""}
-                onValueChange={(val) => onFieldChange("language", val)}
-              >
-                <SelectTrigger id="language">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </VStack>
+              <VStack gap={1} className="flex-1">
+                <Label htmlFor="location" className="text-xs font-medium">
+                  Location
+                </Label>
+                <Input
+                  id="location"
+                  value={editData.location || ""}
+                  onChange={(e) => onFieldChange("location", e.target.value)}
+                  placeholder="Enter location"
+                  className="h-9"
+                />
+              </VStack>
+            </HStack>
 
             {/* Marketplaces */}
-            <VStack gap={2}>
-              <Label className="text-sm font-medium">Marketplaces</Label>
+            <VStack gap={1}>
+              <Label className="text-xs font-medium">Marketplaces</Label>
               <TooltipProvider delayDuration={0}>
                 <HStack gap={2} align="center" wrap="wrap">
                   {marketplaces.length > 0 ? (
@@ -199,7 +206,7 @@ export function StockEditSheet({
                       ))}
                     </>
                   ) : (
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-muted-foreground text-xs">
                       No marketplaces added
                     </span>
                   )}

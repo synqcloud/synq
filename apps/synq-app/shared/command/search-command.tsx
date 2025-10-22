@@ -6,6 +6,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { InventoryService } from "@synq/supabase/services";
 import { Loader2, AlertCircle, Plus, Search, X } from "lucide-react";
 import { AddStockDialog } from "@/domains/inventory/components/dialogs/add-stock-dialog";
+import { Kbd, Spinner } from "@synq/ui/component";
 
 interface SearchCommandProps {
   open: boolean;
@@ -210,7 +211,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
               ) : isLoading ? (
                 <div className="flex h-full items-center justify-center">
                   <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <Spinner />
                     <span className="text-xs text-muted-foreground">
                       Searching...
                     </span>
@@ -400,8 +401,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   Add Stock
                 </button>
                 <div className="mt-2 text-center text-xs text-muted-foreground">
-                  Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd>{" "}
-                  to add
+                  Press <Kbd>Enter</Kbd> to add
                 </div>
               </div>
             </div>
