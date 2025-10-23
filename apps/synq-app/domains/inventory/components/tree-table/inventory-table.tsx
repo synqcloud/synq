@@ -5,7 +5,7 @@
  */
 "use client";
 // Core
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // Components
 import InventoryTableSkeleton from "./inventory-table-skeleton";
 import { LibraryRow } from "./library-row/library-row";
@@ -16,15 +16,41 @@ import InventoryTableFilters, {
   GroupByType,
 } from "./inventory-table-filters";
 import InventoryTableSearchResults from "./inventory-table-search-results";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+  Button,
+  Kbd,
+} from "@synq/ui/component";
+import { Package, Search } from "lucide-react";
 // Services
 import { InventoryService } from "@synq/supabase/services";
 import { useQuery } from "@tanstack/react-query";
 import { InventoryTableSummary } from "./inventory-table-summary";
+import { SearchCommand } from "@/shared/command/search-command";
 
 export default function InventoryTable() {
   const [stockFilter, setStockFilter] = useState<StockFilterType>("all");
   const [groupBy, setGroupBy] = useState<GroupByType>("game");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Keyboard shortcut for search (Cmd+P or Ctrl+P)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "p") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Fetch data based on groupBy
   const { data: libraries = [], isLoading: librariesLoading } = useQuery({
@@ -84,8 +110,27 @@ export default function InventoryTable() {
     if (groupBy === "game") {
       if (libraries.length === 0) {
         return (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
-            <p>No items in your inventory.</p>
+          <div className="flex items-center justify-center h-full p-4">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Package />
+                </EmptyMedia>
+                <EmptyTitle>No items in your inventory</EmptyTitle>
+                <EmptyDescription>
+                  Start by adding cards to your collection
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={() => setSearchOpen(true)} className="gap-2">
+                  <Search className="h-4 w-4" />
+                  Search cards
+                  <div className="hidden items-center gap-1 sm:flex">
+                    <Kbd>⌘ + P</Kbd>
+                  </div>
+                </Button>
+              </EmptyContent>
+            </Empty>
           </div>
         );
       }
@@ -98,8 +143,27 @@ export default function InventoryTable() {
     if (groupBy === "set") {
       if (sets.length === 0) {
         return (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
-            <p>No sets in your inventory.</p>
+          <div className="flex items-center justify-center h-full p-4">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Package />
+                </EmptyMedia>
+                <EmptyTitle>No sets in your inventory</EmptyTitle>
+                <EmptyDescription>
+                  Start by adding cards to your collection
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={() => setSearchOpen(true)} className="gap-2">
+                  <Search className="h-4 w-4" />
+                  Search cards
+                  <div className="hidden items-center gap-1 sm:flex">
+                    <Kbd>⌘ + P</Kbd>
+                  </div>
+                </Button>
+              </EmptyContent>
+            </Empty>
           </div>
         );
       }
@@ -112,8 +176,27 @@ export default function InventoryTable() {
     if (groupBy === "card") {
       if (cards.length === 0) {
         return (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
-            <p>No cards in your inventory.</p>
+          <div className="flex items-center justify-center h-full p-4">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Package />
+                </EmptyMedia>
+                <EmptyTitle>No cards in your inventory</EmptyTitle>
+                <EmptyDescription>
+                  Start by adding cards to your collection
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={() => setSearchOpen(true)} className="gap-2">
+                  <Search className="h-4 w-4" />
+                  Search cards
+                  <div className="hidden items-center gap-1 sm:flex">
+                    <Kbd>⌘ + P</Kbd>
+                  </div>
+                </Button>
+              </EmptyContent>
+            </Empty>
           </div>
         );
       }
@@ -126,19 +209,24 @@ export default function InventoryTable() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full relative">
-      <div className="p-4 bg-muted border-b">
-        <InventoryTableFilters
-          onChange={setStockFilter}
-          onGroupByChange={setGroupBy}
-          isLoading={isLoading}
-          onSearchChange={setSearchQuery}
-        />
+    <>
+      <div className="flex flex-col h-full w-full relative">
+        <div className="p-4 bg-muted border-b">
+          <InventoryTableFilters
+            onChange={setStockFilter}
+            onGroupByChange={setGroupBy}
+            isLoading={isLoading}
+            onSearchChange={setSearchQuery}
+          />
+        </div>
+
+        <div className="flex-1 overflow-auto">{renderContent()}</div>
+
+        {/*<InventoryTableSummary />*/}
       </div>
 
-      <div className="flex-1 overflow-auto">{renderContent()}</div>
-
-      {/*<InventoryTableSummary />*/}
-    </div>
+      {/* Search Command */}
+      <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
+    </>
   );
 }

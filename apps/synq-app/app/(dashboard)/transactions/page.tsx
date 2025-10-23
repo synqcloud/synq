@@ -6,7 +6,15 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { TransactionTable } from "@/features/transactions/components/table/transaction-table";
 import TransactionsFilters from "@/features/transactions/components/transactions-filters";
 import TransactionsSkeleton from "@/features/transactions/components/transactions-skeleton";
-import { Spinner } from "@synq/ui/component";
+import {
+  Spinner,
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@synq/ui/component";
+import { AlertCircle, ArrowRightLeft } from "lucide-react";
 // Services
 import {
   TransactionService,
@@ -136,11 +144,21 @@ export default function TransactionsPage() {
     return <TransactionsSkeleton rows={PAGE_SIZE} />;
   }
 
-  // TODO: Refactor empty placeholder
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center text-red-500">
-        Failed to load orders.
+      <div className="h-full flex items-center justify-center p-4">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <AlertCircle />
+            </EmptyMedia>
+            <EmptyTitle>Failed to load transactions</EmptyTitle>
+            <EmptyDescription>
+              An error occurred while loading your transactions. Please try
+              again.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     );
   }
@@ -166,17 +184,39 @@ export default function TransactionsPage() {
         ref={scrollContainerRef}
         className="h-full overflow-y-scroll p-4 space-y-4"
       >
-        <TransactionTable transactions={transactions} />
-        <div ref={sentinelRef} />
-        {isFetchingNextPage && (
-          <div className="flex items-center justify-center py-4">
-            <Spinner />
+        {transactions.length === 0 ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ArrowRightLeft />
+                </EmptyMedia>
+                <EmptyTitle>No transactions found</EmptyTitle>
+                <EmptyDescription>
+                  {Object.keys(filters).some(
+                    (key) => filters[key as keyof typeof filters],
+                  )
+                    ? "Try adjusting your filters to see more results"
+                    : "Start by creating your first transaction"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </div>
-        )}
-        {!hasNextPage && transactions.length > 0 && (
-          <div className="text-center text-muted-foreground text-sm py-4">
-            No more transactions
-          </div>
+        ) : (
+          <>
+            <TransactionTable transactions={transactions} />
+            <div ref={sentinelRef} />
+            {isFetchingNextPage && (
+              <div className="flex items-center justify-center py-4">
+                <Spinner />
+              </div>
+            )}
+            {!hasNextPage && transactions.length > 0 && (
+              <div className="text-center text-muted-foreground text-sm py-4">
+                No more transactions
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
