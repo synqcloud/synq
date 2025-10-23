@@ -1,37 +1,35 @@
 "use client";
-
 import React from "react";
 import { IntegrationCard } from "./integration-card";
 import { INTEGRATIONS } from "../config/integrations.config";
 
 interface IntegrationGridProps {
   installedIntegrations: string[];
-  onConnect: (type: string) => void;
-  onDisconnect: (type: string) => Promise<void>;
-  onViewInventory?: () => void;
+  onConnectAction: (type: string) => void;
+  onDisconnectAction: (type: string) => Promise<void>;
+  onSyncAction?: (type: string) => Promise<void>;
   loading?: boolean;
 }
 
 export const IntegrationGrid: React.FC<IntegrationGridProps> = ({
   installedIntegrations,
-  onConnect,
-  onDisconnect,
-  onViewInventory,
+  onConnectAction,
+  onDisconnectAction,
+  onSyncAction,
   loading,
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {INTEGRATIONS.map((integration) => {
         const isInstalled = installedIntegrations.includes(integration.type);
-
         return (
           <IntegrationCard
             key={integration.name}
             integration={integration}
             isInstalled={isInstalled}
-            onConnect={() => onConnect(integration.type)}
-            onDisconnect={() => onDisconnect(integration.type)}
-            onViewInventory={onViewInventory}
+            onConnect={() => onConnectAction(integration.type)}
+            onDisconnect={() => onDisconnectAction(integration.type)}
+            onSync={onSyncAction}
             loading={loading}
           />
         );

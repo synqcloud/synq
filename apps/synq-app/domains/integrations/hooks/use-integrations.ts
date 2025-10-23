@@ -18,9 +18,9 @@ export const useIntegrations = () => {
     }
   };
 
-  const disconnect = async (type: string) => {
+  const disconnect = async (type: string): Promise<void> => {
     if (!confirm(`Are you sure you want to disconnect ${type}?`)) {
-      return false;
+      return; // Just return without a value
     }
 
     try {
@@ -30,7 +30,6 @@ export const useIntegrations = () => {
       if (integration) {
         await IntegrationsService.deleteIntegration(integration.id, "client");
         await loadIntegrations();
-        return true;
       }
     } catch (error) {
       console.error("Failed to disconnect:", error);
