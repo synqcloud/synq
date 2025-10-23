@@ -228,7 +228,7 @@ export default function TransactionsFilters({
       <div className="flex items-center gap-3 justify-between">
         <HStack gap={3} className="flex-1">
           {/* Status */}
-          <div className="w-44">
+          <div>
             <Select
               value={status}
               onValueChange={(v) => {
@@ -251,7 +251,7 @@ export default function TransactionsFilters({
           </div>
 
           {/* Type */}
-          <div className="w-44">
+          <div>
             <Select
               value={type}
               onValueChange={(v) => {
@@ -273,7 +273,7 @@ export default function TransactionsFilters({
           </div>
 
           {/* Source */}
-          <div className="w-44">
+          <div>
             <Select
               value={source}
               onValueChange={(v) => {
@@ -286,7 +286,7 @@ export default function TransactionsFilters({
               <SelectTrigger>
                 <SelectValue placeholder="All sources" />
               </SelectTrigger>
-              <SelectContent emptyPlaceholder="No sources">
+              <SelectContent aria-placeholder="No sources">
                 <SelectItem value="all">All sources</SelectItem>
                 {sources.map((s) => (
                   <SelectItem key={s} value={s}>

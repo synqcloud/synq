@@ -10,7 +10,7 @@ import {
   Spinner,
 } from "@synq/ui/component";
 
-import { X, SearchIcon, LoaderIcon } from "lucide-react";
+import { X, SearchIcon } from "lucide-react";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 
 export type StockFilterType = "all" | "in-stock" | "out-of-stock";
@@ -20,13 +20,13 @@ const STORAGE_KEY_FILTER = "inventory-stock-filter";
 const STORAGE_KEY_GROUPBY = "inventory-group-by";
 
 export default function InventoryTableFilters({
-  onChange,
-  onGroupByChange,
+  onChangeAction,
+  onGroupByChangeAction,
   isLoading = false,
   onSearchChange,
 }: {
-  onChange: (v: StockFilterType) => void;
-  onGroupByChange: (v: GroupByType) => void;
+  onChangeAction: (v: StockFilterType) => void;
+  onGroupByChangeAction: (v: GroupByType) => void;
   isLoading?: boolean;
   onSearchChange?: (q: string) => void;
 }) {
@@ -52,11 +52,11 @@ export default function InventoryTableFilters({
 
       setSelected(initialFilter);
       setGroupBy(initialGroupBy);
-      onChange(initialFilter);
-      onGroupByChange(initialGroupBy);
+      onChangeAction(initialFilter);
+      onGroupByChangeAction(initialGroupBy);
       mounted = true;
     }
-  }, [onChange, onGroupByChange]);
+  }, [onChangeAction, onGroupByChangeAction]);
 
   // Emit debounced search
   useEffect(() => {
@@ -67,14 +67,14 @@ export default function InventoryTableFilters({
     if (isSearchActive) return;
     setSelected(v);
     localStorage.setItem(STORAGE_KEY_FILTER, v);
-    onChange(v);
+    onChangeAction(v);
   };
 
   const handleGroupByChange = (v: GroupByType) => {
     if (isSearchActive) return;
     setGroupBy(v);
     localStorage.setItem(STORAGE_KEY_GROUPBY, v);
-    onGroupByChange(v);
+    onGroupByChangeAction(v);
   };
 
   const clearSearch = () => {
@@ -134,6 +134,7 @@ export default function InventoryTableFilters({
                 type="button"
                 variant="ghost"
                 size="icon"
+                className="h-4 w-4"
               >
                 <X />
               </Button>

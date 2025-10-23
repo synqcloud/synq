@@ -213,8 +213,8 @@ export default function InventoryTable() {
       <div className="flex flex-col h-full w-full relative">
         <div className="p-4 bg-muted border-b">
           <InventoryTableFilters
-            onChange={setStockFilter}
-            onGroupByChange={setGroupBy}
+            onChangeAction={setStockFilter}
+            onGroupByChangeAction={setGroupBy}
             isLoading={isLoading}
             onSearchChange={setSearchQuery}
           />

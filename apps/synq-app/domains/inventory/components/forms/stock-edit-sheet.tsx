@@ -13,9 +13,10 @@ import {
   SelectContent,
   SelectItem,
   Button,
-  VStack,
-  HStack,
-  Label,
+  Field,
+  FieldLabel,
+  FieldDescription,
+  FieldGroup,
   TooltipProvider,
   Tooltip,
   TooltipTrigger,
@@ -79,13 +80,11 @@ export function StockEditSheet({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4">
-          <VStack gap={3}>
+          <FieldGroup>
             {/* Quantity and Condition Row */}
-            <HStack gap={3}>
-              <VStack gap={1} className="flex-1">
-                <Label htmlFor="quantity" className="text-xs font-medium">
-                  Quantity
-                </Label>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="quantity">Quantity</FieldLabel>
                 <Input
                   id="quantity"
                   type="number"
@@ -94,19 +93,16 @@ export function StockEditSheet({
                   onChange={(e) =>
                     onFieldChange("quantity", parseInt(e.target.value) || 0)
                   }
-                  className="h-9"
                 />
-              </VStack>
+              </Field>
 
-              <VStack gap={1} className="flex-1">
-                <Label htmlFor="condition" className="text-xs font-medium">
-                  Condition
-                </Label>
+              <Field>
+                <FieldLabel htmlFor="condition">Condition</FieldLabel>
                 <Select
                   value={editData.condition || ""}
                   onValueChange={(val) => onFieldChange("condition", val)}
                 >
-                  <SelectTrigger id="condition" className="h-9">
+                  <SelectTrigger id="condition">
                     <SelectValue placeholder="Select condition" />
                   </SelectTrigger>
                   <SelectContent>
@@ -117,15 +113,13 @@ export function StockEditSheet({
                     ))}
                   </SelectContent>
                 </Select>
-              </VStack>
-            </HStack>
+              </Field>
+            </div>
 
             {/* Cost and Language Row */}
-            <HStack gap={3}>
-              <VStack gap={1} className="flex-1">
-                <Label htmlFor="cogs" className="text-xs font-medium">
-                  Cost (COGS)
-                </Label>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="cogs">Cost (COGS)</FieldLabel>
                 <Input
                   id="cogs"
                   type="number"
@@ -135,19 +129,16 @@ export function StockEditSheet({
                   onChange={(e) =>
                     onFieldChange("cogs", parseFloat(e.target.value) || 0)
                   }
-                  className="h-9"
                 />
-              </VStack>
+              </Field>
 
-              <VStack gap={1} className="flex-1">
-                <Label htmlFor="language" className="text-xs font-medium">
-                  Language
-                </Label>
+              <Field>
+                <FieldLabel htmlFor="language">Language</FieldLabel>
                 <Select
                   value={editData.language || ""}
                   onValueChange={(val) => onFieldChange("language", val)}
                 >
-                  <SelectTrigger id="language" className="h-9">
+                  <SelectTrigger id="language">
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
                   <SelectContent>
@@ -158,43 +149,40 @@ export function StockEditSheet({
                     ))}
                   </SelectContent>
                 </Select>
-              </VStack>
-            </HStack>
+              </Field>
+            </div>
 
             {/* SKU and Location Row */}
-            <HStack gap={3}>
-              <VStack gap={1} className="flex-1">
-                <Label htmlFor="sku" className="text-xs font-medium">
-                  SKU
-                </Label>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="sku">SKU</FieldLabel>
                 <Input
                   id="sku"
                   value={editData.sku || ""}
                   onChange={(e) => onFieldChange("sku", e.target.value)}
                   placeholder="Enter SKU"
-                  className="h-9"
                 />
-              </VStack>
+              </Field>
 
-              <VStack gap={1} className="flex-1">
-                <Label htmlFor="location" className="text-xs font-medium">
-                  Location
-                </Label>
+              <Field>
+                <FieldLabel htmlFor="location">Location</FieldLabel>
                 <Input
                   id="location"
                   value={editData.location || ""}
                   onChange={(e) => onFieldChange("location", e.target.value)}
                   placeholder="Enter location"
-                  className="h-9"
                 />
-              </VStack>
-            </HStack>
+              </Field>
+            </div>
 
             {/* Marketplaces */}
-            <VStack gap={1}>
-              <Label className="text-xs font-medium">Marketplaces</Label>
+            <Field>
+              <FieldLabel>Marketplaces</FieldLabel>
+              <FieldDescription>
+                Manage which marketplaces this stock is available on
+              </FieldDescription>
               <TooltipProvider delayDuration={0}>
-                <HStack gap={2} align="center" wrap="wrap">
+                <div className="flex items-center gap-2 flex-wrap">
                   {marketplaces.length > 0 ? (
                     <>
                       {marketplaces.map((mp: string) => (
@@ -206,7 +194,7 @@ export function StockEditSheet({
                       ))}
                     </>
                   ) : (
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-muted-foreground text-sm">
                       No marketplaces added
                     </span>
                   )}
@@ -225,14 +213,14 @@ export function StockEditSheet({
                       Add marketplace
                     </TooltipContent>
                   </Tooltip>
-                </HStack>
+                </div>
               </TooltipProvider>
-            </VStack>
-          </VStack>
+            </Field>
+          </FieldGroup>
         </div>
 
         <SheetFooter>
-          <HStack gap={2} className="w-full">
+          <div className="flex gap-2 w-full">
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <X className="w-4 h-4 mr-2" />
               Cancel
@@ -245,7 +233,7 @@ export function StockEditSheet({
               <Check className="w-4 h-4 mr-2" />
               Save Changes
             </Button>
-          </HStack>
+          </div>
         </SheetFooter>
       </SheetContentConstrained>
     </Sheet>

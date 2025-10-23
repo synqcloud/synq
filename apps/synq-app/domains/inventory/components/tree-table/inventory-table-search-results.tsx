@@ -3,6 +3,16 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { InventoryService, PriceService } from "@synq/supabase/services";
 import CardRow from "./card-row/card-row";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  HStack,
+  Spinner,
+} from "@synq/ui/component";
+import { Search } from "lucide-react";
 
 export default function InventoryTableSearchResults({
   query,
@@ -38,17 +48,27 @@ export default function InventoryTableSearchResults({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-6 text-muted-foreground">
+      <HStack justify="center" align="center" className="h-full w-full">
+        <Spinner />
         Searching…
-      </div>
+      </HStack>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center py-6 text-muted-foreground">
-        No results for &quot;{normalized}&quot;
-      </div>
+      <Empty className="h-full">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Search />
+          </EmptyMedia>
+          <EmptyTitle>No matching card</EmptyTitle>
+          <EmptyDescription>
+            {" "}
+            We could not find results for &quot;{normalized}&quot;
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
