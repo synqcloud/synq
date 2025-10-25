@@ -2,6 +2,7 @@
 // Core
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 // Components
 import { TransactionTable } from "@/features/transactions/components/table/transaction-table";
 import TransactionsFilters from "@/features/transactions/components/transactions-filters";
@@ -13,8 +14,10 @@ import {
   EmptyMedia,
   EmptyTitle,
   EmptyDescription,
+  EmptyContent,
+  Button,
 } from "@synq/ui/component";
-import { AlertCircle, ArrowRightLeft } from "lucide-react";
+import { AlertCircle, ArrowRightLeft, Plus, Store, Zap } from "lucide-react";
 // Services
 import {
   TransactionService,
@@ -22,8 +25,13 @@ import {
   TransactionType,
 } from "@synq/supabase/services";
 import { InventoryService } from "@synq/supabase/services";
+// Context
+import { useQuickTransaction } from "@/shared/contexts/quick-transaction-context";
 
 export default function TransactionsPage() {
+  const router = useRouter();
+  const { openSheet } = useQuickTransaction();
+
   useEffect(() => {
     document.title = "Transactions";
   }, []);
@@ -140,6 +148,10 @@ export default function TransactionsPage() {
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
+  const hasActiveFilters = Object.keys(filters).some(
+    (key) => filters[key as keyof typeof filters],
+  );
+
   if (isLoading) {
     return <TransactionsSkeleton rows={PAGE_SIZE} />;
   }
@@ -193,13 +205,25 @@ export default function TransactionsPage() {
                 </EmptyMedia>
                 <EmptyTitle>No transactions found</EmptyTitle>
                 <EmptyDescription>
-                  {Object.keys(filters).some(
-                    (key) => filters[key as keyof typeof filters],
-                  )
+                  {hasActiveFilters
                     ? "Try adjusting your filters to see more results"
-                    : "Start by creating your first transaction"}
+                    : "Start by creating your first transaction or import from a marketplace"}
                 </EmptyDescription>
               </EmptyHeader>
+              {!hasActiveFilters && (
+                <EmptyContent>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => openSheet()}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Manually
+                    </Button>
+                    <Button onClick={() => router.push("/integrations")}>
+                      <Zap className="h-4 w-4 mr-2" />
+                      Connect Marketplace
+                    </Button>
+                  </div>
+                </EmptyContent>
+              )}
             </Empty>
           </div>
         ) : (

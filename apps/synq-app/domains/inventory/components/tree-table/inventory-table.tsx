@@ -26,7 +26,7 @@ import {
   Button,
   Kbd,
 } from "@synq/ui/component";
-import { Package, Search } from "lucide-react";
+import { Package, Search, AlertCircle } from "lucide-react";
 // Services
 import { InventoryService } from "@synq/supabase/services";
 import { useQuery } from "@tanstack/react-query";
@@ -53,7 +53,11 @@ export default function InventoryTable() {
   }, []);
 
   // Fetch data based on groupBy
-  const { data: libraries = [], isLoading: librariesLoading } = useQuery({
+  const {
+    data: libraries = [],
+    isLoading: librariesLoading,
+    error: librariesError,
+  } = useQuery({
     queryKey: ["libraries", stockFilter],
     queryFn: () =>
       InventoryService.getUserCoreLibrary("client", {
@@ -65,7 +69,11 @@ export default function InventoryTable() {
     staleTime: 0,
   });
 
-  const { data: sets = [], isLoading: setsLoading } = useQuery({
+  const {
+    data: sets = [],
+    isLoading: setsLoading,
+    error: setsError,
+  } = useQuery({
     queryKey: ["all-sets", stockFilter],
     queryFn: () =>
       InventoryService.fetchSetsByLibrary("client", null, {
@@ -77,7 +85,11 @@ export default function InventoryTable() {
     staleTime: 0,
   });
 
-  const { data: cards = [], isLoading: cardsLoading } = useQuery({
+  const {
+    data: cards = [],
+    isLoading: cardsLoading,
+    error: cardsError,
+  } = useQuery({
     queryKey: ["all-cards", stockFilter],
     queryFn: () =>
       InventoryService.fetchCardsBySet("client", null, {
@@ -90,6 +102,7 @@ export default function InventoryTable() {
   });
 
   const isLoading = librariesLoading || setsLoading || cardsLoading;
+  const error = librariesError || setsError || cardsError;
 
   // Render content based on groupBy
   const renderContent = () => {
@@ -99,6 +112,25 @@ export default function InventoryTable() {
           query={searchQuery}
           options={{ stockFilter: "all" }}
         />
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex items-center justify-center h-full p-4">
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <AlertCircle />
+              </EmptyMedia>
+              <EmptyTitle>Failed to load inventory</EmptyTitle>
+              <EmptyDescription>
+                An error occurred while loading your inventory. Please try
+                again.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        </div>
       );
     }
 
