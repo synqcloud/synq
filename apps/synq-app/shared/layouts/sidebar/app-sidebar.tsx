@@ -67,7 +67,7 @@ const featureItems: NavItem[] = [
 
 // SETTINGS ITEMS
 const settingsItems: NavItem[] = [
-  { title: "Integrations", url: "/integrations", icon: Zap },
+  { title: "Integrations", url: "/integrations", icon: Zap, disabled: true },
   // { title: "Library", url: "/library", icon: BookOpen },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
@@ -83,14 +83,12 @@ const NavItem = ({
   const segment = useSelectedLayoutSegment();
   const { isMobile, setOpenMobile } = useSidebar();
   const isActive = segment === item.url.slice(1);
-  const router = useRouter();
   const button = (
     <SidebarMenuButton
       onClick={() => isMobile && setOpenMobile(false)}
       isActive={isActive}
       className={cn(
         "flex items-center justify-start gap-3 py-2.5 rounded-md transition-all duration-200 h-10 w-full font-light tracking-[-0.01em] text-sm",
-        "hover:text-sidebar-primary hover:bg-sidebar-accent/50",
         isActive && "!text-sidebar-primary bg-sidebar-accent font-medium",
         item.disabled &&
           "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-inherit",

@@ -14,11 +14,11 @@ import {
   TooltipContent,
 } from "@synq/ui/component";
 import {
-  Plus,
   Edit,
   ShoppingBag,
   ChevronRight,
   SquareArrowUp,
+  FileCog,
 } from "lucide-react";
 import { AddMarketplaceDialog } from "../../dialogs/add-marketplace-dialog";
 import { StockEditSheet } from "@/domains/inventory/components/forms/stock-edit-sheet";
@@ -190,6 +190,11 @@ export function CardVariantRow({
           {isOutOfStock && (
             <span className="text-xs text-red-500 ml-2">(Out of Stock)</span>
           )}
+
+          {stock?.sku && <span className="text-xs">sku: {stock.sku}</span>}
+          {stock?.location && (
+            <span className="text-xs">location: {stock.location}</span>
+          )}
         </div>
 
         {/* Marketplaces */}
@@ -238,12 +243,9 @@ export function CardVariantRow({
                 className="h-7 w-7 p-0"
               >
                 <ShoppingBag
-                  className={cn(
-                    "h-3.5 w-3.5 transition-all",
-                    isInTransaction
-                      ? "text-primary fill-primary/20 "
-                      : "text-muted-foreground ",
-                  )}
+                  className={cn("h-3.5 w-3.5 transition-all", {
+                    "text-primary fill-primary/20": isInTransaction,
+                  })}
                 />
               </Button>
             </TooltipTrigger>
@@ -263,7 +265,7 @@ export function CardVariantRow({
                 }}
                 className="h-7 w-7 p-0"
               >
-                <Edit className="w-3.5 h-3.5" />
+                <FileCog className="w-3.5 h-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">

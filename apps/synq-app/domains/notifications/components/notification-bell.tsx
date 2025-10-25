@@ -43,7 +43,7 @@ const NotificationBell: React.FC = () => {
       className="relative p-2 h-9 w-9"
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
     >
-      <Bell className="h-4 w-4" />
+      <Bell className="h-4 w-4 hover:fill-primary/20" />
       {unreadCount > 0 && (
         <>
           {/* Amber dot indicator - positioned relative to the button, not the icon */}
