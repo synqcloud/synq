@@ -151,10 +151,10 @@ export default function NotificationsPage() {
           title: "Stock discrepancy detected",
           body: (
             <>
-              <span className="font-medium">{cardName}</span> may need updating.
+              <span className="font-medium">{cardName}</span> stock changed.
               {notification.marketplace && (
                 <>
-                  <span> or update stock in </span>
+                  <span> Remember to update stock in </span>
                   <MarketplaceIcon
                     marketplace={notification.marketplace.name}
                     showLabel

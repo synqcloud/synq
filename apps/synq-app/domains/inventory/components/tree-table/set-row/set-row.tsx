@@ -15,12 +15,15 @@ const CARDS_PER_BATCH = 44;
 export default function SetRow({
   set,
   stockFilter,
+  standalone = false,
 }: {
   set: Pick<CoreSet, "id" | "name"> & {
     stock: number | null;
     is_upcoming: boolean;
+    total_value: number | null;
   };
   stockFilter: StockFilterType;
+  standalone?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [allCards, setAllCards] = useState<
@@ -96,7 +99,7 @@ export default function SetRow({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, hasMore, expanded, offset, set.id]);
+  }, [isLoading, hasMore, expanded, offset, set.id, stockFilter]);
 
   useEffect(() => {
     if (!expanded || !hasMore || isLoading || allCards.length === 0) return;
@@ -125,56 +128,64 @@ export default function SetRow({
     staleTime: 5 * 60 * 1000,
   });
 
+  const paddingLeft = standalone ? 16 : 16 + 1 * 20;
+  const outOfStock = set.stock === 0;
+
   return (
     <div>
       <div
-        className={`
-          flex items-center px-4 py-2 cursor-pointer hover:bg-muted/30 transition-colors
-          ${set.stock === 0 ? "opacity-60" : ""}
-        `}
-        style={{ paddingLeft: `${16 + 1 * 24}px` }}
+        className="group flex items-center gap-3 px-4 py-2.5 cursor-pointer
+          transition-all duration-150 ease-out bg-accent/60 hover:bg-accent/80
+          border-l-2 border-transparent hover:border-primary/60 rounded-md"
+        style={{ paddingLeft: `${paddingLeft}px` }}
         onClick={() => setExpanded((e) => !e)}
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 mr-2 text-muted-foreground" />
+          <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         ) : (
-          <ChevronRight className="w-4 h-4 mr-2 text-muted-foreground" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         )}
 
-        <div className="flex items-center flex-1">
-          <span className="font-light text-md text-foreground">{set.name}</span>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span
+            className={`text-sm font-normal transition-colors ${
+              outOfStock
+                ? "text-muted-foreground group-hover:text-destructive"
+                : "text-foreground group-hover:text-primary"
+            }`}
+          >
+            {set.name}
+          </span>
 
-          {/* Upcoming Badge */}
-          {set.is_upcoming && (
-            <div className="ml-2 flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-full">
-              <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                Upcoming
-              </span>
-            </div>
-          )}
-
-          {/* Stock Badge */}
           {set.stock !== null && (
-            <span className="ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded">
+            <span
+              className={`text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 ${
+                outOfStock
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
               {set.stock}
             </span>
           )}
 
-          {/* Out of Stock */}
-          {set.stock === 0 && (
-            <span className="ml-1 text-xs text-red-500">(Out of Stock)</span>
+          {set.is_upcoming && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 border border-primary/30 rounded-full text-[10px] font-medium text-primary flex-shrink-0">
+              <Clock className="w-2.5 h-2.5" />
+              Upcoming
+            </span>
           )}
         </div>
       </div>
 
       {expanded && (
-        <div>
+        <div className="space-y-0.5">
           {allCards.map((card) => (
             <CardRow
               key={card.id}
               card={card}
               hasAlert={alertCardIds.has(card.id)}
+              standalone={standalone}
             />
           ))}
 

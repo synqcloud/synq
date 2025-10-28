@@ -12,6 +12,21 @@ export type TransactionType =
 export type ProductType =
   Database["public"]["Views"]["user_transaction_items_with_cards"]["Row"];
 
+export type QuickTransactionItem = {
+  stock_id: string;
+  core_card_id: string;
+  card_name: string;
+  condition: string | null;
+  language: string;
+  max_quantity: number;
+  tcgplayer_price: number | null;
+  cardmarket_price: number | null;
+  image_url: string | null;
+  collector_number: string | null;
+  set_name: string | null;
+  rarity: string | null;
+};
+
 export type ProductTypePartial = Pick<
   ProductType,
   | "item_id"
@@ -307,7 +322,7 @@ export class TransactionService extends ServiceBase {
     },
   ): Promise<Array<TransactionWithQuantity>> {
     const userId = await this.getCurrentUserId(context);
-    console.log(params?.filters);
+
     return this.execute(
       async () => {
         const client = await this.getClient(context);
@@ -356,6 +371,45 @@ export class TransactionService extends ServiceBase {
       {
         service: "TransactionService",
         method: "fetchUserTransactionItems",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Get stock items for quick transaction
+   * Fetches card details with pricing for creating quick transactions
+   */
+  static async getQuickTransactionItems(
+    context: "client" | "server" = "client",
+    stockIds: string[],
+  ): Promise<QuickTransactionItem[]> {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data, error } = await client.rpc(
+          "get_quick_transaction_items",
+          {
+            p_stock_ids: stockIds,
+          },
+        );
+
+        if (error) {
+          // Handle the specific PGRST116 error (no rows returned)
+          if (error.code === "PGRST116") {
+            return [];
+          }
+          throw error;
+        }
+
+        return (data || []) as QuickTransactionItem[];
+      },
+      {
+        service: "InventoryService",
+        method: "getQuickTransactionItems",
         userId: userId || undefined,
       },
     );

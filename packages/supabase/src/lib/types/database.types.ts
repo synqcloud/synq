@@ -38,16 +38,22 @@ export type Database = {
         Row: {
           cardmarket_price: number | null
           core_card_id: string
+          previous_cardmarket_price: number | null
+          previous_tcgplayer_price: number | null
           tcgplayer_price: number | null
         }
         Insert: {
           cardmarket_price?: number | null
           core_card_id: string
+          previous_cardmarket_price?: number | null
+          previous_tcgplayer_price?: number | null
           tcgplayer_price?: number | null
         }
         Update: {
           cardmarket_price?: number | null
           core_card_id?: string
+          previous_cardmarket_price?: number | null
+          previous_tcgplayer_price?: number | null
           tcgplayer_price?: number | null
         }
         Relationships: [
@@ -399,37 +405,38 @@ export type Database = {
           },
         ]
       }
-      user_library_access: {
+      user_integrations: {
         Row: {
-          core_library_id: string
-          created_at: string | null
+          created_at: string
+          credentials: Json
           id: string
-          updated_at: string | null
+          integration_type: string
+          last_synced_at: string | null
+          status: string
+          updated_at: string
           user_id: string
         }
         Insert: {
-          core_library_id: string
-          created_at?: string | null
+          created_at?: string
+          credentials?: Json
           id?: string
-          updated_at?: string | null
+          integration_type: string
+          last_synced_at?: string | null
+          status?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
-          core_library_id?: string
-          created_at?: string | null
+          created_at?: string
+          credentials?: Json
           id?: string
-          updated_at?: string | null
+          integration_type?: string
+          last_synced_at?: string | null
+          status?: string
+          updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_library_access_core_library_id_fkey"
-            columns: ["core_library_id"]
-            isOneToOne: false
-            referencedRelation: "core_libraries"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_preferences: {
         Row: {
@@ -668,8 +675,48 @@ export type Database = {
       }
     }
     Functions: {
+      get_analytics_dashboard: {
+        Args: { p_end_date?: string; p_start_date?: string; p_user_id: string }
+        Returns: {
+          marketplace_performance: Json
+          sets_performance: Json
+          summary_stats: Json
+          top_cards: Json
+        }[]
+      }
+      get_card_performance: {
+        Args: {
+          p_end_date?: string
+          p_limit?: number
+          p_start_date?: string
+          p_user_id: string
+        }
+        Returns: {
+          avg_sale_price: number
+          card_id: string
+          card_name: string
+          condition: string
+          current_inventory: number
+          first_sale_date: string
+          last_sale_date: string
+          profit_margin_pct: number
+          rarity: string
+          roi_pct: number
+          set_name: string
+          stock_id: string
+          total_cost: number
+          total_profit: number
+          total_revenue: number
+          units_sold: number
+          velocity_per_day: number
+        }[]
+      }
       get_card_stock: {
-        Args: { p_core_card_id?: string; p_user_id: string }
+        Args: {
+          p_core_card_id?: string
+          p_is_active?: boolean
+          p_user_id: string
+        }
         Returns: {
           card_name: string
           cogs: number
@@ -683,6 +730,59 @@ export type Database = {
           set_name: string
           sku: string
           stock_id: string
+        }[]
+      }
+      get_marketplace_performance: {
+        Args: { p_end_date?: string; p_start_date?: string; p_user_id: string }
+        Returns: {
+          avg_transaction_value: number
+          avg_unit_price: number
+          fee_percentage: number
+          marketplace: string
+          net_revenue: number
+          profit_margin_pct: number
+          total_cost: number
+          total_fees: number
+          total_profit: number
+          total_revenue: number
+          total_shipping: number
+          total_taxes: number
+          transaction_count: number
+          units_sold: number
+        }[]
+      }
+      get_quick_transaction_items: {
+        Args: { p_stock_ids: string[] }
+        Returns: {
+          card_name: string
+          cardmarket_price: number
+          collector_number: string
+          condition: string
+          core_card_id: string
+          image_url: string
+          language: string
+          max_quantity: number
+          rarity: string
+          set_name: string
+          stock_id: string
+          tcgplayer_price: number
+        }[]
+      }
+      get_set_performance: {
+        Args: { p_end_date?: string; p_start_date?: string; p_user_id: string }
+        Returns: {
+          avg_sale_price: number
+          inventory_turn_rate: number
+          profit_margin_pct: number
+          set_code: string
+          set_id: string
+          set_name: string
+          total_cost: number
+          total_inventory_value: number
+          total_profit: number
+          total_revenue: number
+          unique_cards_sold: number
+          units_sold: number
         }[]
       }
       get_user_cards_with_stock: {
@@ -708,18 +808,34 @@ export type Database = {
           tcgplayer_price: number
         }[]
       }
+      get_user_inventory_summary: {
+        Args: { p_user_id: string }
+        Returns: {
+          total_inventory_value: number
+          total_items: number
+          total_stock: number
+        }[]
+      }
       get_user_libraries_with_stock: {
-        Args: {
-          p_library_ids: string[]
-          p_limit?: number
-          p_offset?: number
-          p_stock_filter?: string
-          p_user_id: string
-        }
+        Args:
+          | {
+              p_library_ids: string[]
+              p_limit?: number
+              p_offset?: number
+              p_stock_filter?: string
+              p_user_id: string
+            }
+          | {
+              p_limit?: number
+              p_offset?: number
+              p_stock_filter?: string
+              p_user_id: string
+            }
         Returns: {
           id: string
           name: string
           stock: number
+          total_value: number
         }[]
       }
       get_user_marketplaces: {
@@ -752,6 +868,7 @@ export type Database = {
           is_upcoming: boolean
           name: string
           stock: number
+          total_value: number
         }[]
       }
       get_user_transactions: {

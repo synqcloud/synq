@@ -4,6 +4,10 @@ import SetRow from "../set-row/set-row";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { CoreLibrary, InventoryService } from "@synq/supabase/services";
 import { StockFilterType } from "../inventory-table-filters";
+import { HStack } from "@synq/ui/component";
+import { formatCurrency } from "@/shared/utils/format-currency";
+import { useCurrency } from "@/shared/contexts/currency-context";
+import { TcgplayerIcon } from "@/shared/icons/icons";
 
 const SETS_PER_BATCH = 44;
 
@@ -11,22 +15,28 @@ export function LibraryRow({
   library,
   stockFilter,
 }: {
-  library: Pick<CoreLibrary, "id" | "name"> & { stock: number | null };
+  library: Pick<CoreLibrary, "id" | "name"> & {
+    stock: number | null;
+    total_value: number | null;
+  };
   stockFilter: StockFilterType;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [allSets, setAllSets] = useState<
     Array<{
       id: string;
       name: string;
       stock: number | null;
       is_upcoming: boolean;
+      total_value: number | null;
     }>
   >([]);
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
+
+  const { currency } = useCurrency();
 
   const queryKey = expanded
     ? ["sets", library.id, expanded, stockFilter]
@@ -44,7 +54,6 @@ export function LibraryRow({
     staleTime: 0,
   });
 
-  // Reset when expanding/collapsing or stockFilter changes
   useEffect(() => {
     setAllSets([]);
     setOffset(0);
@@ -52,7 +61,6 @@ export function LibraryRow({
     setIsLoading(false);
   }, [expanded, stockFilter]);
 
-  // Populate first batch
   useEffect(() => {
     if (expanded && initialSets && allSets.length === 0) {
       setAllSets(initialSets);
@@ -83,7 +91,6 @@ export function LibraryRow({
     }
   }, [isLoading, hasMore, expanded, library.id, offset, stockFilter]);
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!expanded || !hasMore || isLoading || allSets.length === 0) return;
 
@@ -101,32 +108,42 @@ export function LibraryRow({
     return () => observer.disconnect();
   }, [expanded, hasMore, isLoading, allSets.length, offset, loadMore]);
 
+  const outOfStock = library.stock === 0;
+
   return (
     <div key={library.id}>
       <div
-        className="flex items-center px-4 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+        className="group flex items-center gap-3 px-4 py-3 cursor-pointer
+          transition-all duration-150 ease-out bg-muted hover:bg-muted/80
+          border-l-2 border-transparent hover:border-primary rounded-md"
         onClick={() => setExpanded((prev) => !prev)}
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 mr-2 text-muted-foreground" />
+          <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         ) : (
-          <ChevronRight className="w-4 h-4 mr-2 text-muted-foreground" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         )}
-        <span className="flex-1 font-light text-lg text-foreground">
-          {library.name}
+
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="text-base font-medium text-foreground group-hover:text-primary transition-colors">
+            {library.name}
+          </span>
           {library.stock !== null && (
-            <span className="ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded">
+            <span
+              className={`text-sm font-semibold px-3 py-1 rounded-full flex-shrink-0 ${
+                outOfStock
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-muted-foreground/10 text-foreground"
+              }`}
+            >
               {library.stock}
             </span>
           )}
-          {library.stock === 0 && (
-            <span className="ml-1 text-xs text-red-500">(Out of Stock)</span>
-          )}
-        </span>
+        </div>
       </div>
 
       {expanded && (
-        <div>
+        <div className="space-y-0.5">
           {allSets.map((set) => (
             <SetRow key={set.id} set={set} stockFilter={stockFilter} />
           ))}

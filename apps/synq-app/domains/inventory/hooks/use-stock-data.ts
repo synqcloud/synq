@@ -49,11 +49,9 @@ export const STOCK_SOURCES = [
   "eBay",
   "Amazon",
   "Shopify",
+  "Manapool",
   // Physical/direct sources
   "in-store",
-  "person",
-  "trade",
-  "manual",
 ];
 
 export function useStockData() {

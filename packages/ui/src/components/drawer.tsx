@@ -1,8 +1,6 @@
 "use client";
-
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
-
 import { cn } from "#lib/utils.js";
 
 const Drawer = ({
@@ -17,9 +15,7 @@ const Drawer = ({
 Drawer.displayName = "Drawer";
 
 const DrawerTrigger: typeof DrawerPrimitive.Trigger = DrawerPrimitive.Trigger;
-
 const DrawerPortal = DrawerPrimitive.Portal;
-
 const DrawerClose: typeof DrawerPrimitive.Close = DrawerPrimitive.Close;
 
 const DrawerOverlay: React.ForwardRefExoticComponent<
@@ -60,6 +56,35 @@ const DrawerContent: React.ForwardRefExoticComponent<
   </DrawerPortal>
 ));
 DrawerContent.displayName = "DrawerContent";
+
+// NEW: Constrained Drawer Content (no portal, absolute positioning)
+const DrawerContentConstrained: React.ForwardRefExoticComponent<
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> &
+    React.RefAttributes<React.ElementRef<typeof DrawerPrimitive.Content>>
+> = React.forwardRef<
+  React.ElementRef<typeof DrawerPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <>
+    {/* Constrained overlay - absolute instead of fixed */}
+    <DrawerPrimitive.Overlay
+      className={cn("absolute inset-0 z-40 bg-black/80")}
+    />
+    {/* Constrained content - absolute instead of fixed */}
+    <DrawerPrimitive.Content
+      ref={ref}
+      className={cn(
+        "absolute inset-x-0 bottom-0 z-50 flex h-auto flex-col rounded-t-[10px] border bg-background",
+        className,
+      )}
+      {...props}
+    >
+      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
+      {children}
+    </DrawerPrimitive.Content>
+  </>
+));
+DrawerContentConstrained.displayName = "DrawerContentConstrained";
 
 const DrawerHeader = ({
   className,
@@ -123,6 +148,7 @@ export {
   DrawerTrigger,
   DrawerClose,
   DrawerContent,
+  DrawerContentConstrained,
   DrawerHeader,
   DrawerFooter,
   DrawerTitle,

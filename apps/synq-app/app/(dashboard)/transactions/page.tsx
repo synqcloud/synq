@@ -2,11 +2,22 @@
 // Core
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 // Components
 import { TransactionTable } from "@/features/transactions/components/table/transaction-table";
 import TransactionsFilters from "@/features/transactions/components/transactions-filters";
 import TransactionsSkeleton from "@/features/transactions/components/transactions-skeleton";
-import { Spinner } from "@synq/ui/component";
+import {
+  Spinner,
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+  Button,
+} from "@synq/ui/component";
+import { AlertCircle, ArrowRightLeft, Plus, Store, Zap } from "lucide-react";
 // Services
 import {
   TransactionService,
@@ -14,8 +25,13 @@ import {
   TransactionType,
 } from "@synq/supabase/services";
 import { InventoryService } from "@synq/supabase/services";
+// Context
+import { useQuickTransaction } from "@/shared/contexts/quick-transaction-context";
 
 export default function TransactionsPage() {
+  const router = useRouter();
+  const { openSheet } = useQuickTransaction();
+
   useEffect(() => {
     document.title = "Transactions";
   }, []);
@@ -132,15 +148,29 @@ export default function TransactionsPage() {
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
+  const hasActiveFilters = Object.keys(filters).some(
+    (key) => filters[key as keyof typeof filters],
+  );
+
   if (isLoading) {
     return <TransactionsSkeleton rows={PAGE_SIZE} />;
   }
 
-  // TODO: Refactor empty placeholder
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center text-red-500">
-        Failed to load orders.
+      <div className="h-full flex items-center justify-center p-4">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <AlertCircle />
+            </EmptyMedia>
+            <EmptyTitle>Failed to load transactions</EmptyTitle>
+            <EmptyDescription>
+              An error occurred while loading your transactions. Please try
+              again.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     );
   }
@@ -166,17 +196,51 @@ export default function TransactionsPage() {
         ref={scrollContainerRef}
         className="h-full overflow-y-scroll p-4 space-y-4"
       >
-        <TransactionTable transactions={transactions} />
-        <div ref={sentinelRef} />
-        {isFetchingNextPage && (
-          <div className="flex items-center justify-center py-4">
-            <Spinner />
+        {transactions.length === 0 ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ArrowRightLeft />
+                </EmptyMedia>
+                <EmptyTitle>No transactions found</EmptyTitle>
+                <EmptyDescription>
+                  {hasActiveFilters
+                    ? "Try adjusting your filters to see more results"
+                    : "Start by creating your first transaction or import from a marketplace"}
+                </EmptyDescription>
+              </EmptyHeader>
+              {!hasActiveFilters && (
+                <EmptyContent>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => openSheet()}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Manually
+                    </Button>
+                    <Button onClick={() => router.push("/integrations")}>
+                      <Zap className="h-4 w-4 mr-2" />
+                      Connect Marketplace
+                    </Button>
+                  </div>
+                </EmptyContent>
+              )}
+            </Empty>
           </div>
-        )}
-        {!hasNextPage && transactions.length > 0 && (
-          <div className="text-center text-muted-foreground text-sm py-4">
-            No more transactions
-          </div>
+        ) : (
+          <>
+            <TransactionTable transactions={transactions} />
+            <div ref={sentinelRef} />
+            {isFetchingNextPage && (
+              <div className="flex items-center justify-center py-4">
+                <Spinner />
+              </div>
+            )}
+            {!hasNextPage && transactions.length > 0 && (
+              <div className="text-center text-muted-foreground text-sm py-4">
+                No more transactions
+              </div>
+            )}
+          </>
         )}
       </div>
     </>

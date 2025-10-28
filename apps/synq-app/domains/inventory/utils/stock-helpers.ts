@@ -6,7 +6,7 @@ import { EditData } from "../hooks/use-stock-edit";
  */
 export function createInitialEditData(stock: UserStockWithListings): EditData {
   return {
-    quantity: stock.quantity || 1,
+    quantity: stock.quantity || 0,
     condition: stock.condition || "",
     cogs: stock.cogs || 0,
     sku: stock.sku || "",

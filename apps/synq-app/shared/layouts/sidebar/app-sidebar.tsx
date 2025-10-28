@@ -38,6 +38,7 @@ import {
   Siren,
   ClockFading,
   Plus,
+  ChartSpline,
 } from "lucide-react";
 
 // SHARED COMPONENTS
@@ -55,32 +56,19 @@ interface NavItem {
 
 // NAV ITEMS
 const navItems: NavItem[] = [
-  { title: "Home", url: "/home", icon: Home },
-  {
-    title: "Stock Updates",
-    url: "/stock-updates",
-    icon: ClockFading,
-    disabled: true,
-  },
+  { title: "Analytics", url: "/home", icon: ChartSpline },
 ];
 
 // FEATURE ITEMS
 const featureItems: NavItem[] = [
   { title: "Inventory", url: "/inventory", icon: Package },
   { title: "Transactions", url: "/transactions", icon: ArrowRightLeft },
-  {
-    title: "Alerts & Automation",
-    url: "/alerts",
-    icon: Siren,
-    disabled: true,
-  },
-  { title: "Reports", url: "/reports", icon: ScrollText, disabled: true },
 ];
 
 // SETTINGS ITEMS
 const settingsItems: NavItem[] = [
   { title: "Integrations", url: "/integrations", icon: Zap, disabled: true },
-  { title: "Library", url: "/library", icon: BookOpen },
+  // { title: "Library", url: "/library", icon: BookOpen },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
@@ -95,14 +83,12 @@ const NavItem = ({
   const segment = useSelectedLayoutSegment();
   const { isMobile, setOpenMobile } = useSidebar();
   const isActive = segment === item.url.slice(1);
-  const router = useRouter();
   const button = (
     <SidebarMenuButton
       onClick={() => isMobile && setOpenMobile(false)}
       isActive={isActive}
       className={cn(
         "flex items-center justify-start gap-3 py-2.5 rounded-md transition-all duration-200 h-10 w-full font-light tracking-[-0.01em] text-sm",
-        "hover:text-sidebar-primary hover:bg-sidebar-accent/50",
         isActive && "!text-sidebar-primary bg-sidebar-accent font-medium",
         item.disabled &&
           "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-inherit",
@@ -116,18 +102,6 @@ const NavItem = ({
           <span className="flex-1 min-w-0 text-sm font-light tracking-[-0.01em]">
             {item.title}
           </span>
-          {item.title === "Transactions" && (
-            <div
-              className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 inline-flex items-center justify-center cursor-pointer hover:bg-gray-100 rounded"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                router.push("/transactions/new");
-              }}
-            >
-              <Plus />
-            </div>
-          )}
         </>
       )}
       {item.title === "View Page" && !isCollapsed && (
@@ -232,7 +206,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               asChild
               className={cn(
                 isCollapsed &&
-                  "w-14 h-14 p-0 flex items-center justify-center rounded-2xl border border-sidebar-border  hover:bg-sidebar-accent/60 transition-colors shadow-sm",
+                  "w-14 h-14 p-0 flex items-center justify-center rounded-lg border border-sidebar-border  hover:bg-sidebar-accent/60 transition-colors shadow-sm",
               )}
             >
               <Link href="/home">
@@ -265,7 +239,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="px-0">
-        <FeedbackButton isCollapsed={isCollapsed} />
         <NavUser isCollapsed={isCollapsed} />
       </SidebarFooter>
     </Sidebar>

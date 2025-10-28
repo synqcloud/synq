@@ -1,210 +1,209 @@
 // Core
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+
 // Components
-import StockTable from "../stock-row/stock-table";
 import PriceAlertButton from "./price-alerts-button";
-import {
-  ChevronDown,
-  ChevronRight,
-  CreditCard,
-  ExternalLink,
-  Eye,
-  Plus,
-} from "lucide-react";
-// Services
-import { CoreCard } from "@synq/supabase/services";
-import { Button, HStack } from "@synq/ui/component";
-import { Popover, PopoverContent, PopoverTrigger } from "@synq/ui/component";
 import { AddStockDialog } from "../../dialogs/add-stock-dialog";
+import { ChevronDown, ChevronRight, Eye, Plus } from "lucide-react";
+import {
+  Button,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@synq/ui/component";
+import { HStack, VStack } from "@synq/ui/component";
+
+// Services
+import {
+  CoreCard,
+  InventoryService,
+  UserStockWithListings,
+} from "@synq/supabase/services";
 import { cn } from "@synq/ui/utils";
+
+// Import the CardVariantRow component
+import { CardVariantRow } from "./card-variant-row";
 
 export default function CardRow({
   card,
   hasAlert,
+  standalone = false,
 }: {
   card: Pick<
     CoreCard,
     "id" | "name" | "tcgplayer_id" | "image_url" | "rarity" | "collector_number"
   > & {
     stock: number | null;
+    tcgplayer_price: number | null;
   };
   hasAlert: boolean;
+  standalone?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [imagePopoverOpen, setImagePopoverOpen] = useState(false);
+  const [imageHovered, setImageHovered] = useState(false);
   const [addStockDialogOpen, setAddStockDialogOpen] = useState(false);
   const outOfStock = card.stock === 0;
 
-  const handleRowClick = () => setExpanded(!expanded);
+  const { data: stockVariants, isLoading } = useQuery({
+    queryKey: ["stock", card.id, true],
+    queryFn: () => InventoryService.fetchStockByCard("client", card.id, true),
+    enabled: expanded,
+  });
 
-  const handleImageClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setImagePopoverOpen(true);
-  };
+  const handleRowClick = () => setExpanded(!expanded);
 
   const handleAddStockClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setAddStockDialogOpen(true);
   };
 
-  const handleExternalLinkClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const url = card.tcgplayer_id
-      ? `https://www.tcgplayer.com/product/${card.tcgplayer_id}`
-      : `https://www.tcgplayer.com/search/all/product?q=${encodeURIComponent(card.name)}`;
-    window.open(url, "_blank");
-  };
+  const paddingLeft = standalone ? 16 : 16 + 2 * 20;
+  const variantPaddingLeft = paddingLeft + 50;
 
   return (
-    <div key={card.id} className="group">
-      {imagePopoverOpen && (
-        <div
-          className="fixed inset-0 bg-background/20 z-40"
-          onClick={() => setImagePopoverOpen(false)}
-        />
-      )}
-
-      <div
-        className={`
-          flex items-center px-4 py-2 cursor-pointer hover:bg-muted/15
-          border-l border-border transition-colors
-          ${outOfStock ? "opacity-50" : ""}
-          ${imagePopoverOpen ? "pointer-events-none" : ""}
-        `}
-        style={{
-          paddingLeft: `${16 + 2 * 24}px`,
-          marginLeft: `${16 + 1 * 24}px`,
-        }}
+    <VStack gap={0} className="group">
+      <HStack
+        gap={3}
+        align="center"
+        className={cn(
+          "group px-4 py-2 cursor-pointer transition-all duration-150 ease-out bg-accent/40 hover:bg-accent/60 border-l-2 border-transparent hover:border-primary/40 rounded-md",
+          outOfStock && "opacity-50",
+        )}
+        style={{ paddingLeft: `${paddingLeft}px` }}
         onClick={handleRowClick}
       >
-        <CreditCard className="w-3.5 h-3.5 mr-2.5 text-muted-foreground/70 flex-shrink-0" />
-
         {expanded ? (
-          <ChevronDown className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+          <ChevronDown className="w-4 h-4 text-muted-foreground/60 flex-shrink-0" />
         ) : (
-          <ChevronRight className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground/60 flex-shrink-0" />
         )}
 
-        <div className="flex items-center flex-1 min-w-0">
+        {card.image_url && (
+          <Popover open={imageHovered} onOpenChange={setImageHovered}>
+            <PopoverTrigger asChild>
+              <div
+                onMouseEnter={() => setImageHovered(true)}
+                onMouseLeave={() => setImageHovered(false)}
+                className="h-6 w-6 flex items-center justify-center rounded hover:bg-accent transition-colors flex-shrink-0 cursor-pointer"
+                title="Hover to view card image"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto p-2 max-w-sm z-50"
+              side="left"
+              align="center"
+              sideOffset={10}
+              onMouseEnter={() => setImageHovered(true)}
+              onMouseLeave={() => setImageHovered(false)}
+            >
+              <VStack gap={2}>
+                <div className="relative overflow-hidden rounded-lg border bg-background shadow-lg">
+                  <img
+                    src={card.image_url}
+                    alt={`${card.name} card image`}
+                    className="h-80 w-auto object-contain max-w-none"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/placeholder-card.png";
+                    }}
+                  />
+                </div>
+                <VStack gap={0} className="text-center">
+                  <p className="text-sm font-medium truncate">{card.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Move cursor away to close
+                  </p>
+                </VStack>
+              </VStack>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        <HStack gap={2} align="center" className="flex-1 min-w-0">
+          {card.collector_number && (
+            <span className="text-[11px] font-mono text-muted-foreground flex-shrink-0">
+              #{card.collector_number}
+            </span>
+          )}
           <span
-            className={cn("font-light text-sm", {
+            className={cn("text-sm font-light truncate", {
               "text-foreground": !outOfStock,
-              "text-muted-foreground": outOfStock || card.stock === null,
+              "text-muted-foreground": outOfStock,
             })}
           >
-            {card.collector_number && (
-              <span className="inline-block mr-1.5 px-1 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium rounded">
-                #{card.collector_number}
-              </span>
-            )}
             {card.name}
-            {card.stock !== null && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                ({card.stock})
-              </span>
-            )}
-            {outOfStock && (
-              <span className="ml-1 text-xs text-red-500">(Out of Stock)</span>
-            )}
           </span>
-
-          <div className="flex items-center gap-1 ml-2">
-            {card.image_url && (
-              <Popover
-                open={imagePopoverOpen}
-                onOpenChange={setImagePopoverOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleImageClick}
-                    className="h-6 w-6 p-0 hover:bg-muted/50 rounded transition-colors opacity-0 group-hover:opacity-100"
-                    title="View card image"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-2 max-w-sm z-50"
-                  side="left"
-                  align="center"
-                  sideOffset={10}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="space-y-2">
-                    <div className="relative overflow-hidden rounded-lg border bg-background shadow-lg">
-                      <img
-                        src={card.image_url}
-                        alt={`${card.name} card image`}
-                        className="h-80 w-auto object-contain max-w-none"
-                        loading="lazy"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder-card.png";
-                        }}
-                      />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium truncate">
-                        {card.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Click outside to close
-                      </p>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleAddStockClick}
-              className="h-6 w-6 p-0 hover:bg-muted/50 rounded transition-colors opacity-0 group-hover:opacity-100"
-              title="Add stock"
+          {card.stock !== null && (
+            <span
+              className={`text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 ${
+                outOfStock
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-muted/50 text-muted-foreground"
+              }`}
             >
-              <Plus className="w-3.5 h-3.5 text-muted-foreground" />
-            </Button>
-
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleExternalLinkClick}
-              className="h-6 w-6 p-0 hover:bg-muted/50 rounded transition-colors opacity-0 group-hover:opacity-100"
-              title={
-                card.tcgplayer_id ? "View on TCGPlayer" : "Search on TCGPlayer"
-              }
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-            </Button>
-          </div>
-        </div>
-
-        <HStack gap={4}>
-          {card.stock != null && (
-            <div
-              className={`${hasAlert ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}
-            >
-              <PriceAlertButton
-                cardId={card.id}
-                hasAlert={hasAlert}
-                className="h-6 w-6"
-              />
-            </div>
+              {card.stock}
+            </span>
           )}
         </HStack>
-      </div>
+
+        <HStack gap={2} align="center" className="flex-shrink-0">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleAddStockClick}
+            className="h-6 w-6 p-0 rounded opacity-0 group-hover:opacity-100 hover:bg-accent transition-all"
+            title="Add stock"
+          >
+            <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+          </Button>
+
+          <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
+        </HStack>
+      </HStack>
 
       {expanded && (
-        <div
-          className="border-l border-border/50"
-          style={{ marginLeft: `${16 + 2 * 24}px` }}
-        >
-          <StockTable cardId={card.id} cardName={card.name} />
-        </div>
+        <VStack gap={0}>
+          {isLoading ? (
+            <HStack
+              gap={3}
+              align="center"
+              className="px-4 py-2.5 bg-background/50"
+              style={{ paddingLeft: `${variantPaddingLeft}px` }}
+            >
+              <HStack gap={2} align="center">
+                <div className="w-3 h-3 border-2 border-muted border-t-foreground rounded-full animate-spin"></div>
+                <span className="text-xs text-muted-foreground">
+                  Loading variants...
+                </span>
+              </HStack>
+            </HStack>
+          ) : stockVariants && stockVariants.length > 0 ? (
+            stockVariants.map((stock: UserStockWithListings) => (
+              <CardVariantRow
+                key={stock.stock_id}
+                stock={stock}
+                cardId={card.id}
+                paddingLeft={variantPaddingLeft}
+              />
+            ))
+          ) : (
+            <HStack
+              gap={3}
+              align="center"
+              className="px-4 py-2.5 bg-background/50"
+              style={{ paddingLeft: `${variantPaddingLeft}px` }}
+            >
+              <span className="text-xs text-muted-foreground">
+                No variants available
+              </span>
+            </HStack>
+          )}
+        </VStack>
       )}
 
       <AddStockDialog
@@ -213,6 +212,6 @@ export default function CardRow({
         cardId={card.id}
         cardName={card.name}
       />
-    </div>
+    </VStack>
   );
 }

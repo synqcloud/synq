@@ -1,7 +1,5 @@
 import { Database } from "src/lib/types";
 import { ServiceBase } from "./base-service";
-import { LibraryService } from "./library-service";
-
 export type CoreLibrary = Database["public"]["Tables"]["core_libraries"]["Row"];
 export type CoreSet = Database["public"]["Tables"]["core_sets"]["Row"];
 export type CoreCard = Database["public"]["Tables"]["core_cards"]["Row"];
@@ -63,20 +61,25 @@ export class InventoryService extends ServiceBase {
       limit?: number;
       stockFilter?: "all" | "in-stock" | "out-of-stock";
     },
-  ): Promise<Array<{ id: string; name: string; stock: number | null }>> {
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+      stock: number | null;
+      total_value: number | null;
+    }>
+  > {
     const userId = await this.getCurrentUserId(context);
     const { offset = 0, limit, stockFilter = "all" } = options || {};
 
     return this.execute(
       async () => {
         const client = await this.getClient(context);
-        const userLibraries = await LibraryService.getUserLibraries(context);
 
         const { data: libraries, error } = await client.rpc(
           "get_user_libraries_with_stock",
           {
             p_user_id: userId,
-            p_library_ids: userLibraries,
             p_offset: offset,
             p_limit: limit ?? undefined, // don't pass null
             p_stock_filter: stockFilter,
@@ -88,6 +91,7 @@ export class InventoryService extends ServiceBase {
           id: string;
           name: string;
           stock: number | null;
+          total_value: number | null;
         }>;
       },
       {
@@ -99,11 +103,46 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
+   * Get user's core libraries with stock totals
+   */
+  static async getCoreLibraries(
+    context: "client" | "server" = "client",
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+    }>
+  > {
+    const userId = await this.getCurrentUserId(context);
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data: libraries, error } = await client
+          .from("core_libraries")
+          .select(`id, name`);
+
+        if (error) throw error;
+        return (libraries ?? []) as Array<{
+          id: string;
+          name: string;
+        }>;
+      },
+      {
+        service: "InventoryService",
+        method: "getCoreLibrary",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
    * Get sets by library with stock totals
    */
   static async fetchSetsByLibrary(
     context: "client" | "server" = "client",
-    libraryId: string,
+    libraryId: string | null,
     options?: {
       offset?: number;
       limit?: number;
@@ -115,6 +154,7 @@ export class InventoryService extends ServiceBase {
       name: string;
       stock: number | null;
       is_upcoming: boolean;
+      total_value: number | null;
     }>
   > {
     const userId = await this.getCurrentUserId(context);
@@ -136,13 +176,13 @@ export class InventoryService extends ServiceBase {
         );
 
         if (error) throw error;
-        return (sets ?? []) as Array<
-          {
-            id: string;
-            name: string;
-            stock: number | null;
-          } & { is_upcoming: boolean }
-        >;
+        return (sets ?? []) as Array<{
+          id: string;
+          name: string;
+          stock: number | null;
+          total_value: number | null;
+          is_upcoming: boolean;
+        }>;
       },
       {
         service: "InventoryService",
@@ -157,7 +197,7 @@ export class InventoryService extends ServiceBase {
    */
   static async fetchCardsBySet(
     context: "client" | "server" = "client",
-    setId: string,
+    setId: string | null,
     options?: {
       offset?: number;
       limit?: number;
@@ -228,18 +268,19 @@ export class InventoryService extends ServiceBase {
   static async fetchStockByCard(
     context: "client" | "server" = "client",
     cardId: string,
+    isActive: boolean = true,
   ): Promise<UserStockWithListings[]> {
     const userId = await this.getCurrentUserId(context);
+    console.log("Current user:", userId);
     return this.execute(
       async () => {
         const client = await this.getClient(context);
-
         // Add explicit error handling for empty results
         const { data, error, count } = await client.rpc("get_card_stock", {
           p_user_id: userId,
           p_core_card_id: cardId,
+          p_is_active: isActive,
         });
-
         if (error) {
           // Handle the specific PGRST116 error
           if (error.code === "PGRST116") {
@@ -247,12 +288,45 @@ export class InventoryService extends ServiceBase {
           }
           throw error;
         }
-
         return data || [];
       },
       {
         service: "InventoryService",
         method: "fetchStockByCard",
+        userId: userId || undefined,
+      },
+    );
+  }
+
+  /**
+   * Get stock entries for a specific card with marketplace listings
+   */
+  static async fetchInventoryTableSummary(
+    context: "client" | "server" = "client",
+  ): Promise<{
+    total_items: number | null;
+    total_stock: number | null;
+    total_inventory_value: number | null;
+  }> {
+    const userId = await this.getCurrentUserId(context);
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        // Add explicit error handling for empty results
+        const { data, error } = await client.rpc("get_user_inventory_summary", {
+          p_user_id: userId,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        return data[0];
+      },
+      {
+        service: "InventoryService",
+        method: "fetchInventoryTableSummary",
         userId: userId || undefined,
       },
     );
@@ -419,6 +493,70 @@ export class InventoryService extends ServiceBase {
   }
 
   /**
+   * Search cards by library without stock filters.
+   */
+  static async searchCardsByLibrary(
+    context: "client" | "server" = "client",
+    libraryId: string,
+    searchQuery: string,
+    options?: {
+      offset?: number;
+      limit?: number;
+    },
+  ): Promise<
+    Array<
+      Pick<
+        CoreCard,
+        | "id"
+        | "name"
+        | "tcgplayer_id"
+        | "image_url"
+        | "rarity"
+        | "collector_number"
+      > & {
+        core_set_name: string;
+        stock: number | null;
+      }
+    >
+  > {
+    const { offset = 0, limit } = options || {};
+
+    return this.execute(
+      async () => {
+        const client = await this.getClient(context);
+
+        const { data, error } = await client.rpc("search_cards_by_library", {
+          p_library_id: libraryId,
+          p_search_query: searchQuery,
+          p_offset: offset,
+          p_limit: limit ?? 50,
+        });
+
+        if (error) throw error;
+
+        return (data ?? []) as Array<
+          Pick<
+            CoreCard,
+            | "id"
+            | "name"
+            | "tcgplayer_id"
+            | "image_url"
+            | "rarity"
+            | "collector_number"
+          > & {
+            core_set_name: string;
+            stock: number | null;
+          }
+        >;
+      },
+      {
+        service: "InventoryService",
+        method: "searchCardsByLibrary",
+      },
+    );
+  }
+
+  /**
    * Search cards with stock to create transactions
    */
   static async searchCardsByName(
@@ -428,6 +566,7 @@ export class InventoryService extends ServiceBase {
       offset?: number;
       limit?: number;
       stockFilter?: "all" | "in-stock" | "out-of-stock";
+      libraryId?: string;
     },
   ): Promise<
     Array<
@@ -458,7 +597,8 @@ export class InventoryService extends ServiceBase {
           "get_user_cards_with_stock",
           {
             p_user_id: userId,
-            p_set_id: null, // ✅ no specific set
+            p_library_id: options?.libraryId,
+            p_set_id: null, // no specific set
             p_search_query: searchQuery,
             p_offset: offset,
             p_limit: limit ?? null,

@@ -83,13 +83,39 @@ export function AddStockDialog({
         stockData,
       );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["stock", cardId] });
-      queryClient.invalidateQueries({ queryKey: ["libraries"] });
-      queryClient.invalidateQueries({ queryKey: ["sets"] });
-      queryClient.invalidateQueries({ queryKey: ["cards"] });
-      queryClient.invalidateQueries({ queryKey: ["userTransactions"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory-search"] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["stock"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["libraries"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["sets"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["cards"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["userTransactions"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["inventory-search"],
+          exact: false,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["inventory-table-summary"],
+          exact: false,
+        }),
+        // …other invalidations
+      ]);
+
       toast.success("Stock added successfully!");
       form.reset();
       onOpenChangeAction(false);

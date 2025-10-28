@@ -39,6 +39,8 @@ export function MarketplaceIcon({
       return "/cardtrader.svg";
     } else if (lowerMarketplace.includes("amazon")) {
       return "/amazon.svg";
+    } else if (lowerMarketplace.includes("manapool")) {
+      return "/manapool.svg";
     }
     return null;
   };

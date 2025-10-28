@@ -10,6 +10,7 @@ import {
   CardTitle,
   VStack,
   HStack,
+  Spinner,
 } from "@synq/ui/component";
 import { CreditCard, Loader2, ArrowLeft } from "lucide-react";
 import Image from "next/image";
@@ -164,7 +165,7 @@ const PlanRequiredPage = () => {
                   >
                     {isLoading ? (
                       <HStack gap={3} align="center">
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Spinner />
                         <span>Processing...</span>
                       </HStack>
                     ) : (
@@ -197,7 +198,7 @@ const PlanRequiredPage = () => {
                   >
                     {isLoading ? (
                       <HStack gap={3} align="center">
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Spinner />
                         <span>Processing...</span>
                       </HStack>
                     ) : (
