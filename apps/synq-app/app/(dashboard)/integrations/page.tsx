@@ -82,17 +82,8 @@ export default function IntegrationPage() {
   }
 
   return (
-    <div className="h-full bg-background">
+    <div className="h-full ">
       <div className="p-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-normal tracking-tight mb-2">
-            Integrations
-          </h1>
-          <p className="text-[13px] text-muted-foreground/80">
-            Connect your store to sync inventory and orders
-          </p>
-        </div>
-
         <IntegrationGrid
           installedIntegrations={installedIntegrations}
           onConnectAction={handleConnectAction}

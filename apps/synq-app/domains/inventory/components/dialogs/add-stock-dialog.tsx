@@ -126,7 +126,12 @@ export function AddStockDialog({
   });
 
   const handleSubmit = (values: AddStockFormData) => {
-    addStockMutation.mutate(values);
+    const sanitizedValues = {
+      ...values,
+      condition: values.condition.replace(/^(tcg-|cm-)/, ""), // remove 'tcg-' or 'cm-'
+    };
+
+    addStockMutation.mutate(sanitizedValues);
   };
 
   const handleCancel = () => {

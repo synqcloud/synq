@@ -22,15 +22,20 @@ import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
+  Badge,
 } from "@synq/ui/component";
-import { Plus, Edit, ShoppingBag } from "lucide-react";
+import { Plus, Edit, ShoppingBag, FileCog } from "lucide-react";
 
 // Hooks and utilities
 import { useStockEdit } from "@/features/inventory/hooks/use-stock-edit";
 import { useStockData } from "@/domains/inventory/hooks/use-stock-data";
 import { useCurrency } from "@/shared/contexts/currency-context";
 import { formatCurrency } from "@/shared/utils/format-currency";
-import { getConditionColor } from "@/features/inventory/utils/condition-colors";
+import {
+  getConditionColor,
+  getConditionShortCode,
+  getConditionVariant,
+} from "@/features/inventory/utils/condition-colors";
 import { validateStock } from "@/domains/inventory/utils/stock-validation";
 import {
   buildStockUpdatePayload,
@@ -172,9 +177,9 @@ export default function StockTableRow({ stock, cardId }: StockTableRowProps) {
             <span className="font-medium">{stock.quantity || "-"}</span>
 
             {/* Condition */}
-            <span className={getConditionColor(stock.condition)}>
-              {stock.condition || "-"}
-            </span>
+            <Badge variant={getConditionVariant(stock.condition)}>
+              {getConditionShortCode(stock.condition) || "-"}
+            </Badge>
 
             {/* Cost (COGS) */}
             <span className="text-accent-foreground">
@@ -219,37 +224,47 @@ export default function StockTableRow({ stock, cardId }: StockTableRowProps) {
             </TooltipProvider>
 
             {/* Actions */}
-            <HStack align="center">
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleAddToTransaction}
-                      disabled={isOutOfStock}
-                      className="h-6 w-6 p-0 group"
-                    >
-                      <ShoppingBag
-                        className={cn("h-3 w-3 transition-all", {
-                          "text-primary": isInTransaction,
-                        })}
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
-                    {transactionButtonTooltip}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <HStack gap={1} align="center">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button size="icon" variant="ghost" onClick={handleEdit}>
-                    <Edit className="w-4 h-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToTransaction();
+                    }}
+                    disabled={isOutOfStock}
+                    className="h-7 w-7 p-0"
+                  >
+                    <ShoppingBag
+                      className={cn("h-3.5 w-3.5 transition-all", {
+                        "text-primary fill-primary/20": isInTransaction,
+                      })}
+                    />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
-                  Edit stock
+                  {transactionButtonTooltip}
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit();
+                    }}
+                    className="h-7 w-7 p-0"
+                  >
+                    <FileCog className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  Edit variant
                 </TooltipContent>
               </Tooltip>
             </HStack>

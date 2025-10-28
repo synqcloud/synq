@@ -172,17 +172,10 @@ export function CardVariantRow({
 
         {/* Condition & Language */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <span
-            className={cn(
-              "text-sm font-medium",
-              getConditionColor(stock.condition),
-            )}
-          >
+          <span className={cn("text-sm ", getConditionColor(stock.condition))}>
             {stock.condition || "—"}
           </span>
-          <span className="text-sm text-muted-foreground">
-            {stock.language || "—"}
-          </span>
+          <span className="text-sm">{stock.language || "—"}</span>
           <span className="text-sm font-medium text-foreground">
             ({stock.quantity || 0})
           </span>
@@ -191,10 +184,9 @@ export function CardVariantRow({
             <span className="text-xs text-red-500 ml-2">(Out of Stock)</span>
           )}
 
-          {stock?.sku && <span className="text-xs">sku: {stock.sku}</span>}
-          {stock?.location && (
-            <span className="text-xs">location: {stock.location}</span>
-          )}
+          <span className="text-xs">sku: {stock.sku || ""}</span>
+
+          <span className="text-xs">location: {stock.location || ""}</span>
         </div>
 
         {/* Marketplaces */}

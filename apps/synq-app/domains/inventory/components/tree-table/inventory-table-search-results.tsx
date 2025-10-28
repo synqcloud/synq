@@ -100,7 +100,6 @@ export default function InventoryTableSearchResults({
               rarity: card.rarity,
               image_url: card.image_url,
               collector_number: card.collector_number,
-              tcgplayer_price: card.tcgplayer_price,
             }}
             hasAlert={alertCardIds.has(card.id)}
           />

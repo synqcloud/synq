@@ -96,7 +96,7 @@ export default function StockTable({
       >
         <Plus className="w-4 h-4 text-primary" />
         <span className="text-sm font-light tracking-[-0.01em] text-muted-foreground">
-          Add new purchase
+          Add new stock
         </span>
       </HStack>
 
