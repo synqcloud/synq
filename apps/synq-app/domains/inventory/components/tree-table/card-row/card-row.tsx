@@ -17,6 +17,8 @@ import { Button, HStack } from "@synq/ui/component";
 import { Popover, PopoverContent, PopoverTrigger } from "@synq/ui/component";
 import { AddStockDialog } from "../../dialogs/add-stock-dialog";
 import { cn } from "@synq/ui/utils";
+import { formatCurrency } from "@/shared/utils/format-currency";
+import { useCurrency } from "@/shared/contexts/currency-context";
 
 export default function CardRow({
   card,
@@ -27,6 +29,9 @@ export default function CardRow({
     "id" | "name" | "tcgplayer_id" | "image_url" | "rarity" | "collector_number"
   > & {
     stock: number | null;
+    tcgplayer_price: number | null;
+    cardmarket_rpice: number | null;
+    card_price: number | null;
   };
   hasAlert: boolean;
 }) {
@@ -34,6 +39,8 @@ export default function CardRow({
   const [imagePopoverOpen, setImagePopoverOpen] = useState(false);
   const [addStockDialogOpen, setAddStockDialogOpen] = useState(false);
   const outOfStock = card.stock === 0;
+
+  const { currency } = useCurrency();
 
   const handleRowClick = () => setExpanded(!expanded);
 
@@ -174,6 +181,10 @@ export default function CardRow({
         </div>
 
         <HStack gap={2} align="center" className="flex-shrink-0">
+          <span className="font-semibold text-md text-muted-foreground">
+            {card.card_price ? formatCurrency(card?.card_price, currency) : "-"}
+          </span>
+          <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
           <Button
             size="icon"
             variant="ghost"
@@ -183,8 +194,6 @@ export default function CardRow({
           >
             <Plus className="w-3.5 h-3.5 text-muted-foreground" />
           </Button>
-
-          <PriceAlertButton cardId={card.id} hasAlert={hasAlert} />
         </HStack>
       </div>
 

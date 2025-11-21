@@ -215,7 +215,9 @@ export class InventoryService extends ServiceBase {
         | "collector_number"
       > & {
         stock: number | null;
-        tcgplayer_price: number;
+        tcgplayer_price: number | null;
+        cardmarket_rpice: number | null;
+        card_price: number | null;
       }
     >
   > {
@@ -251,6 +253,8 @@ export class InventoryService extends ServiceBase {
           > & {
             stock: number | null;
             tcgplayer_price: number;
+            cardmarket_rpice: number | null;
+            card_price: number | null;
           }
         >;
       },

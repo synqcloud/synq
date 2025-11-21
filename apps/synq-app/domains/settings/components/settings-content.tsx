@@ -1,7 +1,7 @@
 "use client";
 
 // ICONS
-import { User, AlertTriangle } from "lucide-react";
+import { User, AlertTriangle, Earth } from "lucide-react";
 
 // UI COMPONENTS
 import {
@@ -32,6 +32,7 @@ import { AccountForm } from "./forms/account-form";
 // API
 import type { UserSettings } from "@synq/supabase/types";
 import { useState } from "react";
+import { RegionForm } from "./forms/region-form";
 
 // Animation variants
 const fadeInUp = {
@@ -60,6 +61,14 @@ const settingsSections = [
     description: "Update your account information and profile.",
     content: (data: UserSettings) => <AccountForm initialData={data.user} />,
     icon: <User className="w-5 h-5" />,
+    color: "blue",
+  },
+  {
+    key: "region",
+    title: "Region",
+    description: "Select your selling region.",
+    content: (data: UserSettings) => <RegionForm />,
+    icon: <Earth className="w-5 h-5" />,
     color: "blue",
   },
   {

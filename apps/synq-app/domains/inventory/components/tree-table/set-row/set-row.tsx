@@ -36,6 +36,8 @@ export default function SetRow({
       > & {
         stock: number | null;
         tcgplayer_price: number | null;
+        cardmarket_rpice: number | null;
+        card_price: number | null;
       }
     >
   >([]);
