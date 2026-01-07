@@ -14,6 +14,7 @@ import CardRow from "./card-row/card-row";
 import InventoryTableFilters, {
   StockFilterType,
   GroupByType,
+  MarketplaceFilterType,
 } from "./inventory-table-filters";
 import InventoryTableSearchResults from "./inventory-table-search-results";
 import {
@@ -36,6 +37,8 @@ import { SearchCommand } from "@/shared/command/search-command";
 export default function InventoryTable() {
   const [stockFilter, setStockFilter] = useState<StockFilterType>("all");
   const [groupBy, setGroupBy] = useState<GroupByType>("game");
+  const [marketplaceFilter, setMarketplaceFilter] =
+    useState<MarketplaceFilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -52,18 +55,29 @@ export default function InventoryTable() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Fetch marketplace counts
+  const { data: marketplaceCounts = {} } = useQuery({
+    queryKey: ["marketplace-counts", stockFilter, groupBy],
+    queryFn: () =>
+      InventoryService.getMarketplaceCounts("client", {
+        stockFilter,
+      }),
+    staleTime: 0,
+  });
+
   // Fetch data based on groupBy
   const {
     data: libraries = [],
     isLoading: librariesLoading,
     error: librariesError,
   } = useQuery({
-    queryKey: ["libraries", stockFilter],
+    queryKey: ["libraries", stockFilter, marketplaceFilter],
     queryFn: () =>
       InventoryService.getUserCoreLibrary("client", {
         offset: 0,
         limit: 1000,
         stockFilter,
+        marketplaceFilter,
       }),
     enabled: groupBy === "game",
     staleTime: 0,
@@ -74,12 +88,13 @@ export default function InventoryTable() {
     isLoading: setsLoading,
     error: setsError,
   } = useQuery({
-    queryKey: ["all-sets", stockFilter],
+    queryKey: ["all-sets", stockFilter, marketplaceFilter],
     queryFn: () =>
       InventoryService.fetchSetsByLibrary("client", null, {
         offset: 0,
         limit: 1000,
         stockFilter,
+        marketplaceFilter,
       }),
     enabled: groupBy === "set",
     staleTime: 0,
@@ -90,12 +105,13 @@ export default function InventoryTable() {
     isLoading: cardsLoading,
     error: cardsError,
   } = useQuery({
-    queryKey: ["all-cards", stockFilter],
+    queryKey: ["all-cards", stockFilter, marketplaceFilter],
     queryFn: () =>
       InventoryService.fetchCardsBySet("client", null, {
         offset: 0,
         limit: 1000,
         stockFilter,
+        marketplaceFilter,
       }),
     enabled: groupBy === "card",
     staleTime: 0,
@@ -110,7 +126,7 @@ export default function InventoryTable() {
       return (
         <InventoryTableSearchResults
           query={searchQuery}
-          options={{ stockFilter: "all" }}
+          options={{ stockFilter: "all", marketplaceFilter }}
         />
       );
     }
@@ -150,7 +166,9 @@ export default function InventoryTable() {
                 </EmptyMedia>
                 <EmptyTitle>No items in your inventory</EmptyTitle>
                 <EmptyDescription>
-                  Start by adding cards to your collection
+                  {marketplaceFilter !== "all"
+                    ? `No cards found with the selected marketplace filter`
+                    : "Start by adding cards to your collection"}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -167,7 +185,12 @@ export default function InventoryTable() {
         );
       }
       return libraries.map((lib) => (
-        <LibraryRow key={lib.id} library={lib} stockFilter={stockFilter} />
+        <LibraryRow
+          key={lib.id}
+          library={lib}
+          stockFilter={stockFilter}
+          marketplaceFilter={marketplaceFilter}
+        />
       ));
     }
 
@@ -183,7 +206,9 @@ export default function InventoryTable() {
                 </EmptyMedia>
                 <EmptyTitle>No sets in your inventory</EmptyTitle>
                 <EmptyDescription>
-                  Start by adding cards to your collection
+                  {marketplaceFilter !== "all"
+                    ? `No sets found with the selected marketplace filter`
+                    : "Start by adding cards to your collection"}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -200,7 +225,12 @@ export default function InventoryTable() {
         );
       }
       return sets.map((set) => (
-        <SetRow key={set.id} set={set} stockFilter={stockFilter} />
+        <SetRow
+          key={set.id}
+          set={set}
+          stockFilter={stockFilter}
+          marketplaceFilter={marketplaceFilter}
+        />
       ));
     }
 
@@ -216,7 +246,9 @@ export default function InventoryTable() {
                 </EmptyMedia>
                 <EmptyTitle>No cards in your inventory</EmptyTitle>
                 <EmptyDescription>
-                  Start by adding cards to your collection
+                  {marketplaceFilter !== "all"
+                    ? `No cards found with the selected marketplace filter`
+                    : "Start by adding cards to your collection"}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -243,12 +275,14 @@ export default function InventoryTable() {
   return (
     <>
       <div className="flex flex-col h-full w-full relative">
-        <div className="p-4 bg-muted border-b">
+        <div className="p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
           <InventoryTableFilters
             onChangeAction={setStockFilter}
             onGroupByChangeAction={setGroupBy}
+            onMarketplaceFilterChange={setMarketplaceFilter}
             isLoading={isLoading}
             onSearchChange={setSearchQuery}
+            marketplaceCounts={marketplaceCounts}
           />
         </div>
 

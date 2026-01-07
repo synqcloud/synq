@@ -43,6 +43,7 @@ import {
 } from "@/features/inventory/utils/stock-helpers";
 import { useQuickTransaction } from "@/shared/contexts/quick-transaction-context";
 import { cn } from "@synq/ui/utils";
+import { LANGUAGE_FLAGS } from "@/features/inventory/utils/language-flag";
 
 type StockTableRowProps = {
   stock: UserStockWithListings;
@@ -193,8 +194,12 @@ export default function StockTableRow({ stock, cardId }: StockTableRowProps) {
             <span className="text-foreground">{stock.location || "-"}</span>
 
             {/* Language */}
-            <span className="text-foreground">{stock.language || "-"}</span>
-
+            <span className="text-foreground flex items-center gap-1">
+              {LANGUAGE_FLAGS[stock.language] && (
+                <span>{LANGUAGE_FLAGS[stock.language]}</span>
+              )}
+              {stock.language || "-"}
+            </span>
             {/* Marketplaces */}
             <TooltipProvider delayDuration={0}>
               <HStack gap={2} align="center" wrap="wrap">
@@ -359,7 +364,12 @@ export default function StockTableRow({ stock, cardId }: StockTableRowProps) {
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">
                     Language
                   </Label>
-                  <span className="text-sm">{stock.language || "-"}</span>
+                  <span className="text-foreground flex items-center gap-1">
+                    {LANGUAGE_FLAGS[stock.language] && (
+                      <span>{LANGUAGE_FLAGS[stock.language]}</span>
+                    )}
+                    {stock.language || "-"}
+                  </span>
                 </VStack>
               </HStack>
             </HStack>

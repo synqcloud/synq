@@ -19,30 +19,30 @@ export function SynqProviders({
 }: SynqProvidersProps) {
   const [queryClient] = useState(() => new QueryClient());
 
-  useEffect(() => {
-    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-      api_host: "/ingest",
-      ui_host: "https://us.posthog.com",
-      defaults: "2025-05-24",
-      capture_exceptions: true,
-      debug: process.env.NODE_ENV === "development",
-    });
-  }, []);
+  // useEffect(() => {
+  //   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+  //     api_host: "/ingest",
+  //     ui_host: "https://us.posthog.com",
+  //     defaults: "2025-05-24",
+  //     capture_exceptions: true,
+  //     debug: process.env.NODE_ENV === "development",
+  //   });
+  // }, []);
 
   return (
-    <PHProvider client={posthog}>
-      <QueryClientProvider client={queryClient}>
-        <QuickTransactionProvider>
-          <NextThemesProvider
-            attribute="class"
-            defaultTheme={initialTheme}
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TooltipProvider>{children}</TooltipProvider>
-          </NextThemesProvider>
-        </QuickTransactionProvider>
-      </QueryClientProvider>
-    </PHProvider>
+    // <PHProvider client={posthog}>
+    <QueryClientProvider client={queryClient}>
+      <QuickTransactionProvider>
+        <NextThemesProvider
+          attribute="class"
+          defaultTheme={initialTheme}
+          enableSystem
+          disableTransitionOnChange
+        >
+          <TooltipProvider>{children}</TooltipProvider>
+        </NextThemesProvider>
+      </QuickTransactionProvider>
+    </QueryClientProvider>
+    // </PHProvider>
   );
 }

@@ -26,7 +26,7 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --ring: 220 90% 60%; /* same as primary */
-    --radius: 0.325rem;
+    --radius: 0.825rem;
     --chart-1: 220 70% 75%; /* pastel blue for positive bars */
     --chart-2: 45 85% 75%; /* pastel yellow for negative bars */
     --chart-3: 148 30% 46%; /* pastel green for positive bars */
@@ -63,7 +63,7 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --ring: 220 70% 65%; /* same as primary */
-    --radius: 0.325rem; /* same as light theme */
+    --radius: 0.825rem; /* same as light theme */
     --chart-1: 220 60% 70%; /* soft blue for positive bars */
     --chart-2: 45 70% 70%; /* muted yellow for contrast */
     --chart-3: 148 30% 46%; /* soft purple */

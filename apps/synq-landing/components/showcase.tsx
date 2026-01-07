@@ -1,342 +1,429 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, X, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Check,
+  RefreshCw,
+  DollarSign,
+  Package,
+  Shield,
+  Zap,
+  BarChart3,
+  Bell,
+  Users,
+  Lock,
+  Palette,
+  Globe,
+} from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { Button } from "@synq/ui/component";
 
 export function Showcase() {
-  const [currentImage, setCurrentImage] = useState(0);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [clickedImage, setClickedImage] = useState<{
-    src: string;
-    alt: string;
-  } | null>(null);
-
-  const images = [
-    {
-      src: "/brand/synq-inventory.png",
-      alt: "Inventory Management Dashboard",
-      title: "Inventory Management",
-      description:
-        "Track your card inventory with precision. Monitor stock levels, conditions, and values across all your collections.",
-    },
-    {
-      src: "/brand/synq-transactions.png",
-      alt: "Transactions Dashboard",
-      title: "Transactions",
-      description:
-        "Track all your buying and selling activities. Monitor fees, profits, and transaction history with detailed analytics.",
-    },
-    {
-      src: "/brand/synq-library.png",
-      alt: "Library Dashboard",
-      title: "Card Game Data Access",
-      description:
-        "Access comprehensive card databases for multiple TCGs. Import card data, and create custom libraries for your specific product groups.",
-    },
-  ];
-
-  // Core features data
-  const coreFeatures = [
-    {
-      title: "Inventory Management",
-      description:
-        "Navigate on your card inventory quickly on the inventory panel. Monitor and take actions on stock levels, prices, conditions and more",
-      image: "/brand/synq-inventory.png",
-      alt: "Inventory Management Dashboard",
-      features: [
-        "Real-time stock tracking",
-        "Physical location tracking",
-        "Condition & grading support",
-      ],
-      cta: "Start managing inventory",
-    },
-    {
-      title: "Transactions",
-      description:
-        "Track all your buying and selling activities. Monitor fees, profits, and transaction history with detailed analytics.",
-      image: "/brand/synq-transactions.png",
-      alt: "Transactions Dashboard",
-      features: [
-        "Buy/sell tracking",
-        "Grading submissions",
-        "Damage & loss tracking",
-        "Returns & refunds",
-      ],
-      cta: "View transactions",
-    },
-    {
-      title: "Card Game Data Access",
-      description:
-        "Access comprehensive card databases for multiple TCGs. Import card data, and create custom libraries for your specific product groups.",
-      image: "/brand/synq-library.png",
-      alt: "Library Dashboard",
-      features: [
-        "Add existing inventories from library",
-        "Create custom product groups",
-        "Complete card data & pricing",
-      ],
-      cta: "Explore library",
-    },
-  ];
-
-  const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
-  };
-
   return (
-    <>
-      <motion.div
-        className="bg-background py-16 border-t border-border"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.7, ease: [0.25, 0.25, 0, 1] }}
-      >
-        <div className="max-w-6xl mx-auto px-8 lg:px-12">
-          <motion.h2
-            className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-[-0.01em] text-foreground mb-6 text-center"
+    <div className="bg-background">
+      {/* Social Proof / Trust Badges */}
+      <section className="py-16 px-4 sm:px-8 border-b border-border">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, ease: [0.25, 0.25, 0, 1] }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
           >
-            Core Features
-          </motion.h2>
-          <motion.p
-            className="text-sm font-light tracking-[-0.01em] text-muted-foreground max-w-2xl mx-auto mb-12 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, ease: [0.25, 0.25, 0, 1], delay: 0.1 }}
-          >
-            Preview the core features powering your experience.
-          </motion.p>
+            <p className="text-sm font-light text-muted-foreground mb-8">
+              Trusted by leading TCG sellers
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-12 opacity-60">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded bg-muted" />
+                <span className="text-sm font-medium text-foreground">
+                  TCGPlayer
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded bg-muted" />
+                <span className="text-sm font-medium text-foreground">
+                  Cardmarket
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded bg-muted" />
+                <span className="text-sm font-medium text-foreground">
+                  eBay
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-          <div className="space-y-16">
-            {/* Image Carousel - Hidden for now */}
-            {/* <motion.div
-              className="relative max-w-4xl mx-auto"
+      {/* Main Value Prop - "Synq comes in three flavors" */}
+      <section className="py-24 px-4 sm:px-8">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light tracking-[-0.02em] text-foreground mb-4">
+              Synq comes in three flavors.
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+            {/* Flavor 1 - Web App */}
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{
-                duration: 0.6,
-                ease: [0.25, 0.25, 0, 1],
-                delay: 0.2
-              }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-orange-500/5 via-pink-500/5 to-orange-500/5 p-8 hover:shadow-lg transition-shadow"
             >
-              <button
-                onClick={prevImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white border border-gray-200 rounded-full p-2 shadow-sm transition-all duration-200"
-              >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-
-              <button
-                onClick={nextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white border border-gray-200 rounded-full p-2 shadow-sm transition-all duration-200"
-              >
-                <ChevronRight className="w-5 h-5 text-gray-600" />
-              </button>
-
-              <div className="relative">
-                <div
-                  className="cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => setIsImageModalOpen(true)}
-                >
-                  <Image
-                    src={images[currentImage].src}
-                    alt={images[currentImage].alt}
-                    width={800}
-                    height={600}
-                    className="w-full h-auto rounded-lg shadow-lg object-cover"
-                  />
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 rounded-b-lg">
-                  <h3 className="text-xl font-light tracking-[-0.01em] text-white mb-2">
-                    {images[currentImage].title}
-                  </h3>
-                  <p className="text-sm font-light tracking-[-0.01em] text-white/80">
-                    {images[currentImage].description}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-center gap-2 mt-6">
-                {images.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImage(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                      index === currentImage
-                        ? "bg-gray-800"
-                        : "bg-gray-300 hover:bg-gray-400"
-                    }`}
-                  />
-                ))}
-              </div>
-            </motion.div> */}
-
-            {/* Core Features Grid */}
-            <div className="space-y-16">
-              {coreFeatures.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  className={`flex flex-col lg:flex-row lg:items-start lg:gap-12 border border-border rounded-lg p-8 shadow-sm bg-card ${
-                    index % 2 === 1 ? "lg:flex-row-reverse" : ""
-                  }`}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{
-                    duration: 0.6,
-                    ease: [0.25, 0.25, 0, 1],
-                    delay: (index + 1) * 0.1,
-                  }}
-                >
-                  <div className="lg:w-1/2 lg:flex-shrink-0 mb-8 lg:mb-0">
-                    <div
-                      className="cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => {
-                        setClickedImage({
-                          src: feature.image,
-                          alt: feature.alt,
-                        });
-                        setIsImageModalOpen(true);
-                      }}
-                    >
-                      <Image
-                        src={feature.image}
-                        alt={feature.alt}
-                        width={600}
-                        height={400}
-                        className="w-full h-auto rounded-lg shadow-sm object-cover"
-                      />
+              <div className="relative z-10">
+                {/* Screenshot placeholder */}
+                <div className="mb-6 rounded-lg border border-border overflow-hidden bg-card">
+                  <div className="aspect-[4/3] bg-gradient-to-br from-muted/50 to-muted/30 flex items-center justify-center">
+                    <div className="text-center p-8">
+                      <Package className="w-12 h-12 text-primary mx-auto mb-3" />
+                      <p className="text-xs text-muted-foreground">
+                        Dashboard Interface
+                      </p>
                     </div>
                   </div>
-                  <div className="lg:w-1/2 lg:flex-1">
-                    <h3 className="text-2xl font-light tracking-[-0.01em] text-foreground mb-4">
-                      {feature.title}
-                    </h3>
-                    <p className="text-base font-light tracking-[-0.01em] text-muted-foreground mb-8 leading-relaxed">
-                      {feature.description}
-                    </p>
+                </div>
 
-                    <ul className="space-y-3 mb-8">
-                      {feature.features.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
-                          <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                          <span className="text-base font-light tracking-[-0.01em] text-foreground">
-                            {item}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                <h3 className="text-2xl font-medium text-foreground mb-3">
+                  Web App
+                </h3>
+                <p className="text-base font-light text-muted-foreground mb-6 leading-relaxed">
+                  Sync inventory across marketplaces from your browser. Manage
+                  listings, update prices, and track sales in real-time.
+                </p>
+                <Button variant="default" size="sm">
+                  Sign up to try
+                </Button>
+              </div>
+            </motion.div>
 
-            {/* Social Proof Section */}
+            {/* Flavor 2 - API Integration */}
             <motion.div
-              className="mt-16 pt-16 border-t border-border"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{
-                duration: 0.6,
-                ease: [0.25, 0.25, 0, 1],
-                delay: 0.4,
-              }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-emerald-500/5 via-teal-500/5 to-cyan-500/5 p-8 hover:shadow-lg transition-shadow"
             >
-              <div className="text-center mb-12">
-                <h2 className="text-xl font-light tracking-[-0.01em] text-foreground mb-4">
-                  Real World Results
-                </h2>
-                <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-                  Try it out and tell us what changed for the better since you
-                  switched to Synq.
-                </p>
-              </div>
+              <div className="relative z-10">
+                {/* Screenshot placeholder */}
+                <div className="mb-6 rounded-lg border border-border overflow-hidden bg-card">
+                  <div className="aspect-[4/3] bg-gradient-to-br from-muted/50 to-muted/30 flex items-center justify-center">
+                    <div className="text-center p-8">
+                      <RefreshCw className="w-12 h-12 text-primary mx-auto mb-3" />
+                      <p className="text-xs text-muted-foreground">
+                        API Integration
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="text-center">
-                <div className="inline-flex items-center gap-4">
-                  <a
-                    href="#contact"
-                    className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                  >
-                    Contact Us
-                    <svg
-                      className="w-4 h-4 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </a>
-                  <span className="text-muted-foreground">or</span>
-                  <a
-                    href="mailto:hello@synq.com"
-                    className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                  >
-                    Share Feedback
-                    <svg
-                      className="w-4 h-4 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </a>
+                <h3 className="text-2xl font-medium text-foreground mb-3">
+                  API Access
+                </h3>
+                <p className="text-base font-light text-muted-foreground mb-6 leading-relaxed">
+                  Integrate Synq into your existing tools and workflows. Build
+                  custom solutions with our developer-friendly API.
+                </p>
+                <Button variant="default" size="sm">
+                  Sign up to try
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Testimonials Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+            {[
+              {
+                quote:
+                  "Synq has completely transformed how I manage my inventory across TCGPlayer and eBay. What used to take hours now takes minutes.",
+                author: "Sarah Chen",
+                role: "TCG Seller",
+                initial: "S",
+              },
+              {
+                quote:
+                  "The auto-sync feature is a game changer. I never have to worry about overselling or manually updating quantities anymore.",
+                author: "Mike Rodriguez",
+                role: "Card Shop Owner",
+                initial: "M",
+              },
+              {
+                quote:
+                  "Finally, a tool that understands the TCG market. The pricing suggestions based on market data have increased my profits significantly.",
+                author: "Alex Kim",
+                role: "Individual Seller",
+                initial: "A",
+              },
+              {
+                quote:
+                  "Integration was seamless. Within 30 minutes I had all my marketplaces connected and syncing perfectly.",
+                author: "Jamie Taylor",
+                role: "Online Retailer",
+                initial: "J",
+              },
+              {
+                quote:
+                  "The time I save with Synq allows me to focus on sourcing better inventory instead of managing spreadsheets.",
+                author: "Chris Martinez",
+                role: "Local Game Store",
+                initial: "C",
+              },
+              {
+                quote:
+                  "Best investment for my card business. The ROI paid for itself in the first month from time savings alone.",
+                author: "Dana Wilson",
+                role: "TCG Dealer",
+                initial: "D",
+              },
+            ].map((testimonial, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="p-6 rounded-lg border border-border bg-card"
+              >
+                <p className="text-sm font-light text-foreground mb-4 leading-relaxed italic">
+                  "{testimonial.quote}"
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-medium text-primary">
+                      {testimonial.initial}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-foreground">
+                      {testimonial.author}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {testimonial.role}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* "Built for sellers who want to ship better products, faster" */}
+      <section className="py-24 px-4 sm:px-8 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-light tracking-[-0.02em] text-foreground mb-4">
+              Built for sellers who want to
+              <br />
+              ship better products, faster.
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: RefreshCw,
+                title: "Auto-Sync",
+                description:
+                  "Sync inventory changes across all marketplaces automatically in real-time.",
+              },
+              {
+                icon: Lock,
+                title: "Secure Authentication",
+                description:
+                  "Enterprise-grade security with encrypted API connections to protect your accounts.",
+              },
+              {
+                icon: Globe,
+                title: "Multi-Platform",
+                description:
+                  "Support for TCGPlayer, Cardmarket, eBay and more marketplaces coming soon.",
+              },
+              {
+                icon: Bell,
+                title: "Smart Notifications",
+                description:
+                  "Get alerts for low stock, price changes, and sync status updates.",
+              },
+              {
+                icon: Palette,
+                title: "Custom Themes",
+                description:
+                  "Personalize your dashboard with light and dark themes that match your workflow.",
+              },
+              {
+                icon: BarChart3,
+                title: "Analytics & Reports",
+                description:
+                  "Track sales performance, inventory turnover, and profit margins across platforms.",
+              },
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="p-6 rounded-lg border border-border bg-card"
+              >
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm font-light text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Spotlight with Image */}
+      <section className="py-24 px-4 sm:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Image */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="relative"
+            >
+              <div className="rounded-lg border border-border overflow-hidden bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10">
+                <div className="aspect-[4/3] flex items-center justify-center p-8">
+                  <div className="text-center">
+                    <DollarSign className="w-16 h-16 text-primary mx-auto mb-4" />
+                    <p className="text-sm text-muted-foreground">
+                      Pricing Dashboard
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right side - Content */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-3xl sm:text-4xl font-light tracking-[-0.02em] text-foreground mb-4">
+                Smart Pricing
+              </h2>
+              <p className="text-lg font-light text-muted-foreground mb-6 leading-relaxed">
+                Update prices across all your marketplaces with one click. Our
+                algorithm analyzes market data to suggest optimal pricing
+                strategies.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Bulk price updates across platforms",
+                  "Market-based pricing suggestions",
+                  "Competitive analysis tools",
+                  "Automated repricing rules",
+                ].map((item, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-base font-light text-foreground">
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Button variant="default" size="lg">
+                Learn more about pricing
+              </Button>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Reversed Feature Spotlight */}
+      <section className="py-24 px-4 sm:px-8 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="order-2 lg:order-1"
+            >
+              <h2 className="text-3xl sm:text-4xl font-light tracking-[-0.02em] text-foreground mb-4">
+                Inventory Insights
+              </h2>
+              <p className="text-lg font-light text-muted-foreground mb-6 leading-relaxed">
+                Get a complete view of your inventory performance. Track which
+                cards are selling, identify slow movers, and optimize your stock
+                levels.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Real-time inventory analytics",
+                  "Sales velocity tracking",
+                  "Profitability reports",
+                  "Stock level recommendations",
+                ].map((item, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-base font-light text-foreground">
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Button variant="default" size="lg">
+                See analytics features
+              </Button>
+            </motion.div>
+
+            {/* Right side - Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="relative order-1 lg:order-2"
+            >
+              <div className="rounded-lg border border-border overflow-hidden bg-gradient-to-br from-orange-500/10 via-pink-500/10 to-purple-500/10">
+                <div className="aspect-[4/3] flex items-center justify-center p-8">
+                  <div className="text-center">
+                    <BarChart3 className="w-16 h-16 text-primary mx-auto mb-4" />
+                    <p className="text-sm text-muted-foreground">
+                      Analytics Dashboard
+                    </p>
+                  </div>
                 </div>
               </div>
             </motion.div>
           </div>
         </div>
-      </motion.div>
-
-      {/* Image Modal */}
-      {isImageModalOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={() => setIsImageModalOpen(false)}
-        >
-          <div className="relative max-w-6xl max-h-[90vh] w-full">
-            <button
-              onClick={() => setIsImageModalOpen(false)}
-              className="absolute -top-12 right-0 text-foreground hover:text-muted-foreground transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <Image
-              src={clickedImage?.src || images[currentImage].src}
-              alt={clickedImage?.alt || images[currentImage].alt}
-              width={1200}
-              height={800}
-              className="w-full h-auto rounded-lg shadow-2xl object-contain"
-            />
-          </div>
-        </div>
-      )}
-    </>
+      </section>
+    </div>
   );
 }

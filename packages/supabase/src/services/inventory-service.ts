@@ -60,6 +60,7 @@ export class InventoryService extends ServiceBase {
       offset?: number;
       limit?: number;
       stockFilter?: "all" | "in-stock" | "out-of-stock";
+      marketplaceFilter?: string;
     },
   ): Promise<
     Array<{
@@ -70,19 +71,36 @@ export class InventoryService extends ServiceBase {
     }>
   > {
     const userId = await this.getCurrentUserId(context);
-    const { offset = 0, limit, stockFilter = "all" } = options || {};
+    const {
+      offset = 0,
+      limit,
+      stockFilter = "all",
+      marketplaceFilter = "all",
+    } = options || {};
 
     return this.execute(
       async () => {
         const client = await this.getClient(context);
 
+        // First, get all library IDs
+        const { data: allLibraries, error: libError } = await client
+          .from("core_libraries")
+          .select("id");
+
+        if (libError) throw libError;
+
+        const libraryIds = allLibraries?.map((lib) => lib.id) || [];
+
+        // Then call the function with all required parameters
         const { data: libraries, error } = await client.rpc(
           "get_user_libraries_with_stock",
           {
+            p_library_ids: libraryIds,
             p_user_id: userId,
-            p_offset: offset,
-            p_limit: limit ?? undefined, // don't pass null
             p_stock_filter: stockFilter,
+            p_offset: offset,
+            p_limit: limit ?? undefined,
+            p_marketplace_filter: marketplaceFilter,
           },
         );
 
@@ -140,6 +158,7 @@ export class InventoryService extends ServiceBase {
   /**
    * Get sets by library with stock totals
    */
+
   static async fetchSetsByLibrary(
     context: "client" | "server" = "client",
     libraryId: string | null,
@@ -147,6 +166,7 @@ export class InventoryService extends ServiceBase {
       offset?: number;
       limit?: number;
       stockFilter?: "all" | "in-stock" | "out-of-stock";
+      marketplaceFilter?: string;
     },
   ): Promise<
     Array<{
@@ -158,7 +178,12 @@ export class InventoryService extends ServiceBase {
     }>
   > {
     const userId = await this.getCurrentUserId(context);
-    const { offset = 0, limit, stockFilter = "all" } = options || {};
+    const {
+      offset = 0,
+      limit,
+      stockFilter = "all",
+      marketplaceFilter = "all",
+    } = options || {};
 
     return this.execute(
       async () => {
@@ -167,11 +192,12 @@ export class InventoryService extends ServiceBase {
         const { data: sets, error } = await client.rpc(
           "get_user_sets_with_stock",
           {
-            p_user_id: userId,
             p_library_id: libraryId,
-            p_offset: offset,
-            p_limit: limit ?? undefined, // don't pass null
+            p_user_id: userId,
             p_stock_filter: stockFilter,
+            p_offset: offset,
+            p_limit: limit ?? undefined,
+            p_marketplace_filter: marketplaceFilter,
           },
         );
 
@@ -202,6 +228,7 @@ export class InventoryService extends ServiceBase {
       offset?: number;
       limit?: number;
       stockFilter?: "all" | "in-stock" | "out-of-stock";
+      marketplaceFilter?: string;
     },
   ): Promise<
     Array<
@@ -222,7 +249,12 @@ export class InventoryService extends ServiceBase {
     >
   > {
     const userId = await this.getCurrentUserId(context);
-    const { offset = 0, limit, stockFilter = "all" } = options || {};
+    const {
+      offset = 0,
+      limit,
+      stockFilter = "all",
+      marketplaceFilter = "all",
+    } = options || {};
 
     return this.execute(
       async () => {
@@ -232,11 +264,14 @@ export class InventoryService extends ServiceBase {
           "get_user_cards_with_stock",
           {
             p_user_id: userId,
+            p_library_id: null,
             p_set_id: setId,
+            p_search_query: null,
             p_offset: offset,
-            p_limit: limit ?? undefined, // avoid passing null
+            p_limit: limit ?? undefined,
             p_stock_filter: stockFilter,
             p_sort_by: "collector_number",
+            p_marketplace_filter: marketplaceFilter,
           },
         );
 
@@ -265,7 +300,6 @@ export class InventoryService extends ServiceBase {
       },
     );
   }
-
   /**
    * Get stock entries for a specific card with marketplace listings
    */
