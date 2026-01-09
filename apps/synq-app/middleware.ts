@@ -9,8 +9,22 @@ export async function middleware(request: NextRequest) {
       },
     });
 
-    const supabase = await createClient();
     const pathname = request.nextUrl.pathname;
+
+    // Maintenance mode check - redirect all requests to maintenance page if enabled
+    const maintenanceMode = process.env.MAINTENANCE_MODE === "true";
+    if (maintenanceMode && pathname !== "/maintenance") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/maintenance";
+      return NextResponse.redirect(url);
+    }
+
+    // Allow access to maintenance page even when not in maintenance mode
+    if (pathname === "/maintenance") {
+      return response;
+    }
+
+    const supabase = await createClient();
 
     // Allow access to webhook endpoints without authentication
     if (pathname.startsWith("/api/stripe")) {
