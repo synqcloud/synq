@@ -23,7 +23,7 @@
     "@types/lodash-es": "^4.17.12",
     "@types/react-dropzone": "^5.1.0",
     "framer-motion": "^12.6.5",
-    "next": "15.0.3",
+    "next": "16.1.1",
     "posthog-js": "^1.270.0",
     "posthog-node": "^5.9.2",
     "react": "^19.0.0",
@@ -34,8 +34,8 @@
     "use-debounce": "^10.0.4"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^15.5.3",
-    "@next/codemod": "^15.3.0-canary.31",
+    "@next/bundle-analyzer": "16.1.1",
+    "@next/codemod": "16.1.1",
     "@synq/eslint-config": "*",
     "@synq/typescript-config": "*",
     "@types/node": "^20",
